@@ -1,10 +1,12 @@
 # CHANGELOG
 
 Auto-updated by workflow.
-Last generated: 2026-04-05 12:56:05Z
+Last generated: 2026-04-05 12:58:52Z
 
 ## Unreleased
 
+- 2026-04-05 `15c3fc8` "Add_package_signature_placeholder_fields_and_schema_validation"
+- 2026-04-05 `fe4102e` docs: auto-update explain and changelog
 - 2026-04-05 `6eb55d1` "Add_scheduler_aging_boost_policy_for_low_priority_fairness"
 - 2026-04-05 `f0b77b3` docs: auto-update explain and changelog
 - 2026-04-05 `9a56599` "Add_configurable_docs_heatmap_trend_windows"
@@ -18,5 +20,3 @@ Last generated: 2026-04-05 12:56:05Z
 - 2026-04-05 `469b842` "Add_json_endpoint_for_custom_window_histogram_query"
 - 2026-04-05 `bd00809` docs: auto-update explain and changelog
 - 2026-04-05 `63ab58e` "Add_custom_window_scheduler_reason_histogram_query_api"
-- 2026-04-05 `b2060fd` docs: auto-update explain and changelog
-- 2026-04-05 `36f49b1` "Add_property_style_network_trace_json_generator_tests"

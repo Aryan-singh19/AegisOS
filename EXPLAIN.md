@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 12:56:05Z
+Last generated: 2026-04-05 12:58:52Z
 
 ## What AegisOS Is Building
 
@@ -39,7 +39,6 @@ We implement in vertical slices:
 - #79 "Trace_json_property_perf_baseline_and_seed_corpus" (priority-p1, security)
 - #70 Actor_registry_persistent_backing_store (priority-p1, security)
 - #40 Apply_branch_protection_profile_on_main (priority-p1)
-- #38 Package_signature_metadata_fields (priority-p1, security)
 - #37 Package_profile_compatibility_matrix (priority-p1)
 - #35 Package_schema_migration_helper (priority-p1)
 - #34 Sanitizer_suppressions_baseline (priority-p1)
@@ -63,18 +62,18 @@ Recent commit touches in `weekly` window (higher means more active recently):
 
 - kernel: 47
 - userland: 86
-- packages: 24
-- docs: 145
+- packages: 37
+- docs: 147
 - workflows: 13
 - tests: 55
 - tools: 1
 - platform: 1
-- scripts: 25
+- scripts: 26
 - other: 14
 
 Open issue pressure by component signal:
 
-- security: 4
+- security: 3
 - kernel: 0
 - packages: 2
 - docs: 0
@@ -82,6 +81,8 @@ Open issue pressure by component signal:
 
 ## Recent Engineering Changes
 
+- `15c3fc8` (2026-04-05): "Add_package_signature_placeholder_fields_and_schema_validation"
+- `fe4102e` (2026-04-05): docs: auto-update explain and changelog
 - `6eb55d1` (2026-04-05): "Add_scheduler_aging_boost_policy_for_low_priority_fairness"
 - `f0b77b3` (2026-04-05): docs: auto-update explain and changelog
 - `9a56599` (2026-04-05): "Add_configurable_docs_heatmap_trend_windows"
@@ -95,5 +96,3 @@ Open issue pressure by component signal:
 - `469b842` (2026-04-05): "Add_json_endpoint_for_custom_window_histogram_query"
 - `bd00809` (2026-04-05): docs: auto-update explain and changelog
 - `63ab58e` (2026-04-05): "Add_custom_window_scheduler_reason_histogram_query_api"
-- `b2060fd` (2026-04-05): docs: auto-update explain and changelog
-- `36f49b1` (2026-04-05): "Add_property_style_network_trace_json_generator_tests"
