@@ -191,6 +191,33 @@ static int test_permission_center_policy_summary_rejects_invalid_policy(void) {
   return 0;
 }
 
+static int test_permission_center_summary_respects_policy_gates(void) {
+  aegis_sandbox_policy_t policy = {
+      211u,
+      AEGIS_CAP_FS_READ | AEGIS_CAP_FS_WRITE,
+      1u,
+      0u,
+      0u,
+      0u,
+      0u,
+      AEGIS_SANDBOX_POLICY_SCHEMA_VERSION,
+      2u};
+  char json[512];
+  if (aegis_permission_center_policy_summary_json(&policy, json, sizeof(json)) != 0) {
+    fprintf(stderr, "expected summary endpoint to serialize gated policy\n");
+    return 1;
+  }
+  if (strstr(json, "\"fs_write\":1") == 0) {
+    fprintf(stderr, "expected capability visibility to show fs_write capability bit: %s\n", json);
+    return 1;
+  }
+  if (strstr(json, "\"fs.write\":\"deny\"") == 0) {
+    fprintf(stderr, "expected action map to deny fs.write when policy gate is off: %s\n", json);
+    return 1;
+  }
+  return 0;
+}
+
 int main(void) {
   if (test_valid_policy() != 0) {
     return 1;
@@ -214,6 +241,9 @@ int main(void) {
     return 1;
   }
   if (test_permission_center_policy_summary_rejects_invalid_policy() != 0) {
+    return 1;
+  }
+  if (test_permission_center_summary_respects_policy_gates() != 0) {
     return 1;
   }
   puts("sandbox policy tests passed");

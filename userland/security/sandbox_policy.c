@@ -287,11 +287,11 @@ int aegis_permission_center_policy_summary_json(const aegis_sandbox_policy_t *po
       (unsigned int)((caps & AEGIS_CAP_NET_CLIENT) != 0u ? 1u : 0u),
       (unsigned int)((caps & AEGIS_CAP_NET_SERVER) != 0u ? 1u : 0u),
       (unsigned int)((caps & AEGIS_CAP_DEVICE_IO) != 0u ? 1u : 0u),
-      (caps & AEGIS_CAP_FS_READ) != 0u ? "allow" : "deny",
-      (caps & AEGIS_CAP_FS_WRITE) != 0u ? "allow" : "deny",
-      (caps & AEGIS_CAP_NET_CLIENT) != 0u ? "allow" : "deny",
-      (caps & AEGIS_CAP_NET_SERVER) != 0u ? "allow" : "deny",
-      (caps & AEGIS_CAP_DEVICE_IO) != 0u ? "allow" : "deny");
+      policy->allow_fs_read != 0u ? "allow" : "deny",
+      policy->allow_fs_write != 0u ? "allow" : "deny",
+      policy->allow_net_client != 0u ? "allow" : "deny",
+      policy->allow_net_server != 0u ? "allow" : "deny",
+      policy->allow_device_io != 0u ? "allow" : "deny");
   if (written < 0 || (size_t)written >= output_size) {
     return -1;
   }
