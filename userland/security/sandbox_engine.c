@@ -44,6 +44,13 @@ static void append_trace(char *trace, size_t trace_size, const char *fmt, ...) {
   (void)written;
 }
 
+typedef struct {
+  int matched_rules;
+  int winner_rule_index;
+  int winner_score;
+  uint8_t tie_break_deny;
+} aegis_net_trace_stats_t;
+
 static int find_policy_index(const aegis_policy_engine_t *engine, uint32_t process_id, size_t *index) {
   size_t i;
   if (engine == 0 || index == 0 || process_id == 0) {
@@ -827,12 +834,19 @@ static int check_network_with_ip_internal(const aegis_policy_engine_t *engine,
                                           const char *resolved_ipv6,
                                           char *trace,
                                           size_t trace_size,
+                                          aegis_net_trace_stats_t *stats,
                                           aegis_policy_decision_t *decision) {
   int base_rc;
   size_t i;
   int best_score = -1;
   int best_allow = 0;
   int best_index = -1;
+  if (stats != 0) {
+    stats->matched_rules = 0;
+    stats->winner_rule_index = -1;
+    stats->winner_score = -1;
+    stats->tie_break_deny = 0;
+  }
   set_trace(trace, trace_size, "");
   if (action != AEGIS_ACTION_NET_CONNECT && action != AEGIS_ACTION_NET_BIND) {
     set_reason(decision, "network check requires net action", 0);
@@ -943,6 +957,9 @@ static int check_network_with_ip_internal(const aegis_policy_engine_t *engine,
     if (action_match == 0) {
       continue;
     }
+    if (stats != 0) {
+      stats->matched_rules += 1;
+    }
     range = (uint16_t)(rule->port_end - rule->port_start);
     score += host_specificity_score(rule->host_pattern);
     score += (rule->protocol == AEGIS_NET_PROTO_ANY) ? 0 : 100;
@@ -958,6 +975,9 @@ static int check_network_with_ip_internal(const aegis_policy_engine_t *engine,
       /* deterministic safety tie-break: deny wins at equal specificity */
       best_allow = 0;
       best_index = (int)i;
+      if (stats != 0) {
+        stats->tie_break_deny = 1u;
+      }
       append_trace(trace, trace_size, " tie-break=deny");
     }
   }
@@ -968,10 +988,18 @@ static int check_network_with_ip_internal(const aegis_policy_engine_t *engine,
   }
   if (!best_allow) {
     set_reason(decision, "denied by network scope rule", 0);
+    if (stats != 0) {
+      stats->winner_rule_index = best_index;
+      stats->winner_score = best_score;
+    }
     append_trace(trace, trace_size, " winner=rule[%d] decision=deny score=%d", best_index, best_score);
     return 0;
   }
   set_reason(decision, "allowed by network scope", 1);
+  if (stats != 0) {
+    stats->winner_rule_index = best_index;
+    stats->winner_score = best_score;
+  }
   append_trace(trace, trace_size, " winner=rule[%d] decision=allow score=%d", best_index, best_score);
   return 1;
 }
@@ -987,7 +1015,7 @@ int aegis_policy_engine_check_network_with_ip_ex(const aegis_policy_engine_t *en
                                                  const char *resolved_ipv6,
                                                  aegis_policy_decision_t *decision) {
   return check_network_with_ip_internal(engine, store, process_id, action, host, port, protocol,
-                                        resolved_ipv4, resolved_ipv6, 0, 0u, decision);
+                                        resolved_ipv4, resolved_ipv6, 0, 0u, 0, decision);
 }
 
 int aegis_policy_engine_check_network_with_ip_trace(const aegis_policy_engine_t *engine,
@@ -1003,5 +1031,40 @@ int aegis_policy_engine_check_network_with_ip_trace(const aegis_policy_engine_t 
                                                     size_t trace_size,
                                                     aegis_policy_decision_t *decision) {
   return check_network_with_ip_internal(engine, store, process_id, action, host, port, protocol,
-                                        resolved_ipv4, resolved_ipv6, trace, trace_size, decision);
+                                        resolved_ipv4, resolved_ipv6, trace, trace_size, 0, decision);
+}
+
+int aegis_policy_engine_check_network_with_ip_trace_json(const aegis_policy_engine_t *engine,
+                                                         const aegis_capability_store_t *store,
+                                                         uint32_t process_id,
+                                                         aegis_action_t action,
+                                                         const char *host,
+                                                         uint16_t port,
+                                                         aegis_net_protocol_t protocol,
+                                                         uint32_t resolved_ipv4,
+                                                         const char *resolved_ipv6,
+                                                         char *json_trace,
+                                                         size_t json_trace_size,
+                                                         aegis_policy_decision_t *decision) {
+  aegis_net_trace_stats_t stats;
+  int rc;
+  int written;
+  if (json_trace == 0 || json_trace_size == 0u) {
+    return -1;
+  }
+  json_trace[0] = '\0';
+  rc = check_network_with_ip_internal(engine, store, process_id, action, host, port, protocol,
+                                      resolved_ipv4, resolved_ipv6, 0, 0u, &stats, decision);
+  written = snprintf(json_trace, json_trace_size,
+                     "{\"process_id\":%u,\"host\":\"%s\",\"port\":%u,\"protocol\":%u,"
+                     "\"matched_rules\":%d,\"winner_rule_index\":%d,\"winner_score\":%d,"
+                     "\"tie_break_deny\":%u,\"decision_allowed\":%u,\"decision_reason\":\"%s\"}",
+                     process_id, host != 0 ? host : "", (unsigned int)port, (unsigned int)protocol,
+                     stats.matched_rules, stats.winner_rule_index, stats.winner_score,
+                     (unsigned int)stats.tie_break_deny, (unsigned int)(decision != 0 ? decision->allowed : 0u),
+                     decision != 0 ? decision->reason : "");
+  if (written < 0 || (size_t)written >= json_trace_size) {
+    return -1;
+  }
+  return rc;
 }

@@ -162,5 +162,17 @@ int aegis_policy_engine_check_network_with_ip_trace(const aegis_policy_engine_t 
                                                     char *trace,
                                                     size_t trace_size,
                                                     aegis_policy_decision_t *decision);
+int aegis_policy_engine_check_network_with_ip_trace_json(const aegis_policy_engine_t *engine,
+                                                         const aegis_capability_store_t *store,
+                                                         uint32_t process_id,
+                                                         aegis_action_t action,
+                                                         const char *host,
+                                                         uint16_t port,
+                                                         aegis_net_protocol_t protocol,
+                                                         uint32_t resolved_ipv4,
+                                                         const char *resolved_ipv6,
+                                                         char *json_trace,
+                                                         size_t json_trace_size,
+                                                         aegis_policy_decision_t *decision);
 
 #endif

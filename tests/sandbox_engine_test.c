@@ -361,6 +361,59 @@ static int test_network_scope_debug_trace(void) {
   return 0;
 }
 
+static int test_network_scope_debug_trace_json(void) {
+  aegis_capability_store_t cap_store;
+  aegis_policy_engine_t engine;
+  aegis_sandbox_policy_t policy = {
+      4004u, AEGIS_CAP_NET_CLIENT, 0u, 0u, 1u, 0u, 0u};
+  aegis_policy_decision_t decision;
+  char json_trace[1024];
+
+  aegis_capability_store_init(&cap_store);
+  aegis_policy_engine_init(&engine);
+  if (aegis_capability_issue(&cap_store, 4004u, AEGIS_CAP_NET_CLIENT) != 0) {
+    fprintf(stderr, "json trace capability issue failed\n");
+    return 1;
+  }
+  if (aegis_policy_engine_set_policy(&engine, &policy) != 0) {
+    fprintf(stderr, "json trace set policy failed\n");
+    return 1;
+  }
+  if (aegis_policy_engine_add_net_rule(
+          &engine, 4004u, "*.tracejson.local", 443, 443, AEGIS_NET_PROTO_TCP, 1u, 0u, 1u) != 0) {
+    fprintf(stderr, "json trace add allow rule failed\n");
+    return 1;
+  }
+  if (aegis_policy_engine_add_net_rule(
+          &engine, 4004u, "*.tracejson.local", 443, 443, AEGIS_NET_PROTO_TCP, 1u, 1u, 0u) != 0) {
+    fprintf(stderr, "json trace add deny tie rule failed\n");
+    return 1;
+  }
+  if (aegis_policy_engine_check_network_with_ip_trace_json(&engine,
+                                                           &cap_store,
+                                                           4004u,
+                                                           AEGIS_ACTION_NET_CONNECT,
+                                                           "api.tracejson.local",
+                                                           443,
+                                                           AEGIS_NET_PROTO_TCP,
+                                                           0u,
+                                                           0,
+                                                           json_trace,
+                                                           sizeof(json_trace),
+                                                           &decision) != 0) {
+    fprintf(stderr, "expected json trace deny due to tie-break\n");
+    return 1;
+  }
+  if (strstr(json_trace, "\"matched_rules\":2") == 0 ||
+      strstr(json_trace, "\"tie_break_deny\":1") == 0 ||
+      strstr(json_trace, "\"decision_allowed\":0") == 0 ||
+      strstr(json_trace, "\"winner_rule_index\":") == 0) {
+    fprintf(stderr, "json trace missing expected fields: %s\n", json_trace);
+    return 1;
+  }
+  return 0;
+}
+
 static int test_symlink_scope_resolution(void) {
   aegis_capability_store_t cap_store;
   aegis_policy_engine_t engine;
@@ -735,6 +788,9 @@ int main(void) {
     return 1;
   }
   if (test_network_scope_debug_trace() != 0) {
+    return 1;
+  }
+  if (test_network_scope_debug_trace_json() != 0) {
     return 1;
   }
   if (test_symlink_scope_resolution() != 0) {
