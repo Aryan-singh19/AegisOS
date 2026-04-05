@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 10:50:29Z
+Last generated: 2026-04-05 10:51:35Z
 
 ## What AegisOS Is Building
 
@@ -36,6 +36,7 @@ We implement in vertical slices:
 - none
 
 ### Priority P1
+- #45 Capability_audit_actor_identity_model (priority-p1, security)
 - #44 DNS_pin_ipv6_support (priority-p1, security)
 - #43 Network_scope_precedence_debug_trace (priority-p1, security)
 - #42 Filesystem_scope_wildcard_validation_rules (priority-p1, security)
@@ -63,13 +64,14 @@ We implement in vertical slices:
 
 ### Good First Task
 - #41 Onboarding_bootstrap_script_runner (good-first-task)
-- #9 Toolchain_bootstrap_for_contributors (good-first-task)
 
 ### Other
 - none
 
 ## Recent Engineering Changes
 
+- `1cd4bc7` (2026-04-05): Add_scheduler_metrics_snapshot_endpoint_and_tests
+- `81fda8b` (2026-04-05): docs: auto-update explain and changelog
 - `67fc1c3` (2026-04-05): Add_rotation_actor_reason_metadata_to_capability_audit
 - `5e0463e` (2026-04-05): docs: auto-update explain and changelog
 - `cc26bce` (2026-04-05): Add_dns_pinning_guard_for_network_rebinding_defense
@@ -83,5 +85,3 @@ We implement in vertical slices:
 - `9ebe78b` (2026-04-05): Fix_project_automation_with_PAT_secret_and_github_script_v8
 - `6f279cc` (2026-04-05): docs: auto-update explain and changelog
 - `43de16a` (2026-04-05): Add_contributor_onboarding_checklist_and_reference
-- `d8ee84a` (2026-04-05): docs: auto-update explain and changelog
-- `65fc46c` (2026-04-05): Add_branch_protection_profile_and_configuration_helper

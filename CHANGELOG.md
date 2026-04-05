@@ -1,10 +1,12 @@
 # CHANGELOG
 
 Auto-updated by workflow.
-Last generated: 2026-04-05 10:50:29Z
+Last generated: 2026-04-05 10:51:35Z
 
 ## Unreleased
 
+- 2026-04-05 `1cd4bc7` Add_scheduler_metrics_snapshot_endpoint_and_tests
+- 2026-04-05 `81fda8b` docs: auto-update explain and changelog
 - 2026-04-05 `67fc1c3` Add_rotation_actor_reason_metadata_to_capability_audit
 - 2026-04-05 `5e0463e` docs: auto-update explain and changelog
 - 2026-04-05 `cc26bce` Add_dns_pinning_guard_for_network_rebinding_defense
@@ -18,5 +20,3 @@ Last generated: 2026-04-05 10:50:29Z
 - 2026-04-05 `9ebe78b` Fix_project_automation_with_PAT_secret_and_github_script_v8
 - 2026-04-05 `6f279cc` docs: auto-update explain and changelog
 - 2026-04-05 `43de16a` Add_contributor_onboarding_checklist_and_reference
-- 2026-04-05 `d8ee84a` docs: auto-update explain and changelog
-- 2026-04-05 `65fc46c` Add_branch_protection_profile_and_configuration_helper
