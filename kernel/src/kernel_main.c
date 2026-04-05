@@ -513,3 +513,41 @@ int aegis_scheduler_switch_reason_count(const aegis_scheduler_t *scheduler, uint
   *count = scheduler->reason_switch_counts[switch_reason];
   return 0;
 }
+
+int aegis_scheduler_switch_reason_histogram_window(const aegis_scheduler_t *scheduler,
+                                                   uint32_t requested_window,
+                                                   uint32_t *applied_window,
+                                                   uint64_t *process_start_count,
+                                                   uint64_t *quantum_expired_count,
+                                                   uint64_t *process_exit_count,
+                                                   uint64_t *manual_yield_count) {
+  uint32_t samples;
+  uint32_t i;
+  uint64_t counts[5] = {0, 0, 0, 0, 0};
+  if (scheduler == 0 || applied_window == 0 || process_start_count == 0 ||
+      quantum_expired_count == 0 || process_exit_count == 0 || manual_yield_count == 0) {
+    return -1;
+  }
+  if (requested_window == 0u) {
+    return -1;
+  }
+  samples = scheduler->reason_switch_window_count;
+  if (requested_window < samples) {
+    samples = requested_window;
+  }
+  *applied_window = samples;
+  for (i = 0; i < samples; ++i) {
+    uint32_t idx = (scheduler->reason_switch_window_head + AEGIS_SCHEDULER_REASON_HISTOGRAM_WINDOW -
+                    samples + i) %
+                   AEGIS_SCHEDULER_REASON_HISTOGRAM_WINDOW;
+    uint8_t reason = scheduler->reason_switch_window[idx];
+    if (reason <= AEGIS_SWITCH_MANUAL_YIELD) {
+      counts[reason] += 1u;
+    }
+  }
+  *process_start_count = counts[AEGIS_SWITCH_PROCESS_START];
+  *quantum_expired_count = counts[AEGIS_SWITCH_QUANTUM_EXPIRED];
+  *process_exit_count = counts[AEGIS_SWITCH_PROCESS_EXIT];
+  *manual_yield_count = counts[AEGIS_SWITCH_MANUAL_YIELD];
+  return 0;
+}

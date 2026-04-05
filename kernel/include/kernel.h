@@ -117,5 +117,12 @@ int aegis_scheduler_wait_report_snapshot_json(const aegis_scheduler_wait_report_
                                               char *out, size_t out_size);
 int aegis_scheduler_switch_reason_count(const aegis_scheduler_t *scheduler, uint8_t switch_reason,
                                         uint64_t *count);
+int aegis_scheduler_switch_reason_histogram_window(const aegis_scheduler_t *scheduler,
+                                                   uint32_t requested_window,
+                                                   uint32_t *applied_window,
+                                                   uint64_t *process_start_count,
+                                                   uint64_t *quantum_expired_count,
+                                                   uint64_t *process_exit_count,
+                                                   uint64_t *manual_yield_count);
 
 #endif

@@ -321,6 +321,73 @@ static int test_scheduler_reason_histogram_window(void) {
   return 0;
 }
 
+static int test_scheduler_reason_histogram_custom_window_query(void) {
+  aegis_scheduler_t scheduler;
+  uint32_t pid = 0;
+  uint8_t switched = 0;
+  uint32_t applied_window = 0;
+  uint64_t ps = 0;
+  uint64_t qe = 0;
+  uint64_t pe = 0;
+  uint64_t my = 0;
+  int i;
+  aegis_scheduler_init(&scheduler);
+  aegis_scheduler_set_quantum(&scheduler, 1u);
+  if (aegis_scheduler_add(&scheduler, 9401u) != 0 || aegis_scheduler_add(&scheduler, 9402u) != 0) {
+    fprintf(stderr, "custom window add failed\n");
+    return 1;
+  }
+  for (i = 0; i < 24; ++i) {
+    if (aegis_scheduler_on_tick(&scheduler, &pid, &switched) != 0) {
+      fprintf(stderr, "custom window tick failed\n");
+      return 1;
+    }
+  }
+  if (aegis_scheduler_switch_reason_histogram_window(&scheduler,
+                                                     8u,
+                                                     &applied_window,
+                                                     &ps,
+                                                     &qe,
+                                                     &pe,
+                                                     &my) != 0) {
+    fprintf(stderr, "custom window query failed\n");
+    return 1;
+  }
+  if (applied_window != 8u) {
+    fprintf(stderr, "expected applied custom window 8\n");
+    return 1;
+  }
+  if ((ps + qe + pe + my) != 8u) {
+    fprintf(stderr, "expected custom window histogram sum to equal applied window\n");
+    return 1;
+  }
+  if (aegis_scheduler_switch_reason_histogram_window(&scheduler,
+                                                     128u,
+                                                     &applied_window,
+                                                     &ps,
+                                                     &qe,
+                                                     &pe,
+                                                     &my) != 0) {
+    fprintf(stderr, "custom large window query failed\n");
+    return 1;
+  }
+  if (applied_window > AEGIS_SCHEDULER_REASON_HISTOGRAM_WINDOW) {
+    fprintf(stderr, "applied window exceeded max rolling capacity\n");
+    return 1;
+  }
+  if (aegis_scheduler_switch_reason_histogram_window(&scheduler,
+                                                     0u,
+                                                     &applied_window,
+                                                     &ps,
+                                                     &qe,
+                                                     &pe,
+                                                     &my) == 0) {
+    fprintf(stderr, "expected zero requested window to fail\n");
+    return 1;
+  }
+  return 0;
+}
+
 static int test_scheduler_wait_latency_metrics(void) {
   aegis_scheduler_t scheduler;
   uint32_t pid = 0;
@@ -478,6 +545,9 @@ int main(void) {
     return 1;
   }
   if (test_scheduler_reason_histogram_window() != 0) {
+    return 1;
+  }
+  if (test_scheduler_reason_histogram_custom_window_query() != 0) {
     return 1;
   }
   if (test_scheduler_wait_latency_metrics() != 0) {
