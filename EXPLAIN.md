@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 11:08:44Z
+Last generated: 2026-04-05 11:11:16Z
 
 ## What AegisOS Is Building
 
@@ -36,19 +36,17 @@ We implement in vertical slices:
 - none
 
 ### Priority P1
-- #54 Scheduler_wait_report_snapshot_endpoint (priority-p1, kernel)
+- #56 Scheduler_reason_metrics_snapshot_endpoint_extension (priority-p1, kernel)
+- #55 Capability_audit_export_file_sink_and_pagination (priority-p1, security)
 - #53 Package_graph_rendering_guide (priority-p1)
 - #52 Sandbox_policy_hot_reload_version_guard (priority-p1, security)
 - #51 Sandbox_policy_versioned_json_schema (priority-p1, security)
-- #49 Scheduler_reason_code_metrics_breakdown (priority-p1, kernel)
 - #48 Docs_heatmap_trend_window (priority-p1)
-- #46 Scheduler_metrics_snapshot_serialization (priority-p1, kernel)
 - #45 Capability_audit_actor_identity_model (priority-p1, security)
 - #44 DNS_pin_ipv6_support (priority-p1, security)
 - #43 Network_scope_precedence_debug_trace (priority-p1, security)
 - #42 Filesystem_scope_wildcard_validation_rules (priority-p1, security)
 - #40 Apply_branch_protection_profile_on_main (priority-p1)
-- #39 Capability_audit_export_api (priority-p1, security)
 - #38 Package_signature_metadata_fields (priority-p1, security)
 - #37 Package_profile_compatibility_matrix (priority-p1)
 - #35 Package_schema_migration_helper (priority-p1)
@@ -64,6 +62,7 @@ We implement in vertical slices:
 
 ### Good First Task
 - #50 Onboarding_runner_ci_equivalence_check (good-first-task)
+- #9 Toolchain_bootstrap_for_contributors (good-first-task)
 
 ### Other
 - none
@@ -72,27 +71,29 @@ We implement in vertical slices:
 
 Recent commit touches (higher means more active recently):
 
-- kernel: 15
+- kernel: 18
 - userland: 22
 - packages: 14
 - docs: 49
 - workflows: 3
-- tests: 13
+- tests: 14
 - tools: 0
 - platform: 0
-- scripts: 6
+- scripts: 5
 - other: 0
 
 Open issue pressure by component signal:
 
 - security: 9
-- kernel: 4
+- kernel: 2
 - packages: 3
 - docs: 1
-- other: 3
+- other: 4
 
 ## Recent Engineering Changes
 
+- `f6168cd` (2026-04-05): Add_scheduler_wait_snapshot_endpoint_and_json_serializers
+- `7ba1c60` (2026-04-05): docs: auto-update explain and changelog
 - `b3e272f` (2026-04-05): Add_capability_audit_export_and_scheduler_reason_metrics
 - `faca1c9` (2026-04-05): docs: auto-update explain and changelog
 - `0533870` (2026-04-05): Add_package_dependency_graph_exports_and_scheduler_wait_report
@@ -106,5 +107,3 @@ Open issue pressure by component signal:
 - `72a0881` (2026-04-05): Add_context_switch_reason_codes_for_scheduler_ticks
 - `f0a640c` (2026-04-05): docs: auto-update explain and changelog
 - `2208524` (2026-04-05): Improve_docs_heatmap_with_local_issue_fallback_and_component_signals
-- `087521a` (2026-04-05): docs: auto-update explain and changelog
-- `3895338` (2026-04-05): Add_tick_based_wait_latency_metrics_for_scheduler

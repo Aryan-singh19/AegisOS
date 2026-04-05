@@ -1,10 +1,12 @@
 # CHANGELOG
 
 Auto-updated by workflow.
-Last generated: 2026-04-05 11:08:44Z
+Last generated: 2026-04-05 11:11:16Z
 
 ## Unreleased
 
+- 2026-04-05 `f6168cd` Add_scheduler_wait_snapshot_endpoint_and_json_serializers
+- 2026-04-05 `7ba1c60` docs: auto-update explain and changelog
 - 2026-04-05 `b3e272f` Add_capability_audit_export_and_scheduler_reason_metrics
 - 2026-04-05 `faca1c9` docs: auto-update explain and changelog
 - 2026-04-05 `0533870` Add_package_dependency_graph_exports_and_scheduler_wait_report
@@ -18,5 +20,3 @@ Last generated: 2026-04-05 11:08:44Z
 - 2026-04-05 `72a0881` Add_context_switch_reason_codes_for_scheduler_ticks
 - 2026-04-05 `f0a640c` docs: auto-update explain and changelog
 - 2026-04-05 `2208524` Improve_docs_heatmap_with_local_issue_fallback_and_component_signals
-- 2026-04-05 `087521a` docs: auto-update explain and changelog
-- 2026-04-05 `3895338` Add_tick_based_wait_latency_metrics_for_scheduler
