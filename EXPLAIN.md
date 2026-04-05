@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 10:44:05Z
+Last generated: 2026-04-05 10:46:19Z
 
 ## What AegisOS Is Building
 
@@ -36,6 +36,7 @@ We implement in vertical slices:
 - none
 
 ### Priority P1
+- #42 Filesystem_scope_wildcard_validation_rules (priority-p1, security)
 - #40 Apply_branch_protection_profile_on_main (priority-p1)
 - #39 Capability_audit_export_api (priority-p1, security)
 - #38 Package_signature_metadata_fields (priority-p1, security)
@@ -52,7 +53,6 @@ We implement in vertical slices:
 - #27 Symlink_resolution_filesystem_backend (priority-p1, security)
 - #26 Network_scope_dns_rebinding_guard (priority-p1, security)
 - #25 Network_scope_priority_and_specificity (priority-p1, security)
-- #21 Filesystem_scope_glob_patterns (priority-p1, security)
 - #14 Sandbox_policy_hot_reload (priority-p1, security)
 - #13 Sandbox_policy_serialization_format (priority-p1, security)
 
@@ -70,6 +70,8 @@ We implement in vertical slices:
 
 ## Recent Engineering Changes
 
+- `33b3b00` (2026-04-05): Add_deterministic_network_scope_precedence_with_tie_break_rules
+- `3206f06` (2026-04-05): docs: auto-update explain and changelog
 - `40c23d8` (2026-04-05): Add_filesystem_wildcard_scope_matching_and_tests
 - `cc8fe1d` (2026-04-05): docs: auto-update explain and changelog
 - `1ffc333` (2026-04-05): Fix_project_automation_workflow_syntax_and_token_fallback
@@ -83,5 +85,3 @@ We implement in vertical slices:
 - `0b4425a` (2026-04-05): Add_project_board_automation_and_capability_audit_pipeline
 - `1ab272f` (2026-04-05): docs: auto-update explain and changelog
 - `8d1da52` (2026-04-05): Add_expanded_core_packages_and_install_profiles
-- `c454d23` (2026-04-05): docs: auto-update explain and changelog
-- `fa8d88a` (2026-04-05): Add_package_dependency_cycle_detection_to_validator
