@@ -600,6 +600,46 @@ static int test_scheduler_snapshot_serialization(void) {
   return 0;
 }
 
+static int test_scheduler_fairness_snapshot_json_endpoint(void) {
+  aegis_scheduler_t scheduler;
+  uint32_t pid = 0;
+  uint8_t switched = 0;
+  char json[2048];
+  char tiny[32];
+  int i;
+  aegis_scheduler_init(&scheduler);
+  aegis_scheduler_set_quantum(&scheduler, 1u);
+  if (aegis_scheduler_add_with_priority(&scheduler, 9801u, AEGIS_PRIORITY_HIGH) != 0 ||
+      aegis_scheduler_add_with_priority(&scheduler, 9802u, AEGIS_PRIORITY_NORMAL) != 0 ||
+      aegis_scheduler_add_with_priority(&scheduler, 9803u, AEGIS_PRIORITY_LOW) != 0) {
+    fprintf(stderr, "fairness snapshot add failed\n");
+    return 1;
+  }
+  for (i = 0; i < 30; ++i) {
+    if (aegis_scheduler_on_tick(&scheduler, &pid, &switched) != 0) {
+      fprintf(stderr, "fairness snapshot tick failed\n");
+      return 1;
+    }
+  }
+  if (aegis_scheduler_fairness_snapshot_json(&scheduler, json, sizeof(json)) <= 0) {
+    fprintf(stderr, "fairness snapshot json generation failed\n");
+    return 1;
+  }
+  if (strstr(json, "\"schema_version\":1") == 0 ||
+      strstr(json, "\"queue_depth\":3") == 0 ||
+      strstr(json, "\"process_id\":9801") == 0 ||
+      strstr(json, "\"dispatch_share_bps\":") == 0 ||
+      strstr(json, "\"wait_ticks_total\":") == 0) {
+    fprintf(stderr, "fairness snapshot json missing fields: %s\n", json);
+    return 1;
+  }
+  if (aegis_scheduler_fairness_snapshot_json(&scheduler, tiny, sizeof(tiny)) >= 0) {
+    fprintf(stderr, "expected tiny fairness snapshot buffer to fail\n");
+    return 1;
+  }
+  return 0;
+}
+
 int main(void) {
   if (test_kernel_boot() != 0) {
     return 1;
@@ -641,6 +681,9 @@ int main(void) {
     return 1;
   }
   if (test_scheduler_snapshot_serialization() != 0) {
+    return 1;
+  }
+  if (test_scheduler_fairness_snapshot_json_endpoint() != 0) {
     return 1;
   }
   puts("kernel simulation check passed");

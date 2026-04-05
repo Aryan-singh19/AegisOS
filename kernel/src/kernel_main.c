@@ -602,3 +602,49 @@ int aegis_scheduler_switch_reason_histogram_window_json(const aegis_scheduler_t 
   }
   return written;
 }
+
+int aegis_scheduler_fairness_snapshot_json(const aegis_scheduler_t *scheduler,
+                                           char *out,
+                                           size_t out_size) {
+  size_t offset = 0;
+  size_t i;
+  int written = 0;
+  if (scheduler == 0 || out == 0 || out_size == 0u) {
+    return -1;
+  }
+  written = snprintf(out,
+                     out_size,
+                     "{\"schema_version\":1,\"queue_depth\":%llu,\"total_dispatches\":%llu,\"processes\":[",
+                     (unsigned long long)scheduler->count,
+                     (unsigned long long)scheduler->total_dispatches);
+  if (written < 0 || (size_t)written >= out_size) {
+    return -1;
+  }
+  offset = (size_t)written;
+  for (i = 0; i < scheduler->count; ++i) {
+    uint64_t share_bps = 0u;
+    if (scheduler->total_dispatches > 0u) {
+      share_bps = (scheduler->dispatch_counts[i] * 10000ull) / scheduler->total_dispatches;
+    }
+    written = snprintf(out + offset,
+                       out_size - offset,
+                       "%s{\"process_id\":%u,\"dispatch_count\":%u,\"dispatch_share_bps\":%llu,"
+                       "\"wait_ticks_total\":%llu,\"last_wait_latency\":%llu}",
+                       i == 0u ? "" : ",",
+                       scheduler->process_ids[i],
+                       scheduler->dispatch_counts[i],
+                       (unsigned long long)share_bps,
+                       (unsigned long long)scheduler->wait_ticks_total[i],
+                       (unsigned long long)scheduler->last_wait_latency[i]);
+    if (written < 0 || (size_t)written >= (out_size - offset)) {
+      return -1;
+    }
+    offset += (size_t)written;
+  }
+  written = snprintf(out + offset, out_size - offset, "]}");
+  if (written < 0 || (size_t)written >= (out_size - offset)) {
+    return -1;
+  }
+  offset += (size_t)written;
+  return (int)offset;
+}

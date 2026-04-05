@@ -128,5 +128,8 @@ int aegis_scheduler_switch_reason_histogram_window_json(const aegis_scheduler_t 
                                                         uint32_t requested_window,
                                                         char *out,
                                                         size_t out_size);
+int aegis_scheduler_fairness_snapshot_json(const aegis_scheduler_t *scheduler,
+                                           char *out,
+                                           size_t out_size);
 
 #endif
