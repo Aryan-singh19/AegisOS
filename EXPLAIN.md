@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 12:48:54Z
+Last generated: 2026-04-05 12:49:47Z
 
 ## What AegisOS Is Building
 
@@ -55,7 +55,6 @@ We implement in vertical slices:
 - none
 
 ### Good First Task
-- #50 Onboarding_runner_ci_equivalence_check (good-first-task)
 - #9 Toolchain_bootstrap_for_contributors (good-first-task)
 
 ### Other
@@ -66,11 +65,11 @@ We implement in vertical slices:
 Recent commit touches (higher means more active recently):
 
 - kernel: 12
-- userland: 28
-- packages: 0
+- userland: 25
+- packages: 1
 - docs: 40
 - workflows: 1
-- tests: 22
+- tests: 21
 - tools: 0
 - platform: 0
 - scripts: 12
@@ -82,10 +81,12 @@ Open issue pressure by component signal:
 - kernel: 1
 - packages: 3
 - docs: 1
-- other: 4
+- other: 3
 
 ## Recent Engineering Changes
 
+- `42f5deb` (2026-04-05): "Add_graphviz_rendering_guide_for_package_dependency_graph"
+- `7b57902` (2026-04-05): docs: auto-update explain and changelog
 - `02df452` (2026-04-05): "Add_onboarding_ci_command_equivalence_guardrails"
 - `4a96fa2` (2026-04-05): docs: auto-update explain and changelog
 - `4926515` (2026-04-05): "Add_seed_replay_harness_for_trace_json_property_tests"
@@ -99,5 +100,3 @@ Open issue pressure by component signal:
 - `967570c` (2026-04-05): "Add_batch_migration_filters_shards_and_trace_json_fuzz_tests"
 - `089484e` (2026-04-05): docs: auto-update explain and changelog
 - `2da5998` (2026-04-05): "Add_migration_dry_run_diff_preview_and_manifest_incremental_diff"
-- `046e182` (2026-04-05): docs: auto-update explain and changelog
-- `15c20a4` (2026-04-05): "Add_audit_sink_retention_manifest_generator_and_tests"

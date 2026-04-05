@@ -1,10 +1,12 @@
 # CHANGELOG
 
 Auto-updated by workflow.
-Last generated: 2026-04-05 12:48:54Z
+Last generated: 2026-04-05 12:49:47Z
 
 ## Unreleased
 
+- 2026-04-05 `42f5deb` "Add_graphviz_rendering_guide_for_package_dependency_graph"
+- 2026-04-05 `7b57902` docs: auto-update explain and changelog
 - 2026-04-05 `02df452` "Add_onboarding_ci_command_equivalence_guardrails"
 - 2026-04-05 `4a96fa2` docs: auto-update explain and changelog
 - 2026-04-05 `4926515` "Add_seed_replay_harness_for_trace_json_property_tests"
@@ -18,5 +20,3 @@ Last generated: 2026-04-05 12:48:54Z
 - 2026-04-05 `967570c` "Add_batch_migration_filters_shards_and_trace_json_fuzz_tests"
 - 2026-04-05 `089484e` docs: auto-update explain and changelog
 - 2026-04-05 `2da5998` "Add_migration_dry_run_diff_preview_and_manifest_incremental_diff"
-- 2026-04-05 `046e182` docs: auto-update explain and changelog
-- 2026-04-05 `15c20a4` "Add_audit_sink_retention_manifest_generator_and_tests"
