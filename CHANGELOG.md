@@ -1,10 +1,12 @@
 # CHANGELOG
 
 Auto-updated by workflow.
-Last generated: 2026-04-05 11:22:26Z
+Last generated: 2026-04-05 11:23:57Z
 
 ## Unreleased
 
+- 2026-04-05 `cfb4817` Add_scheduler_snapshot_schema_version_and_reason_breakdown
+- 2026-04-05 `9caf674` docs: auto-update explain and changelog
 - 2026-04-05 `6934178` Add_capability_actor_identity_model_and_validation
 - 2026-04-05 `bd9e491` docs: auto-update explain and changelog
 - 2026-04-05 `2606126` Add_filesystem_wildcard_validation_rules
@@ -18,5 +20,3 @@ Last generated: 2026-04-05 11:22:26Z
 - 2026-04-05 `f6168cd` Add_scheduler_wait_snapshot_endpoint_and_json_serializers
 - 2026-04-05 `7ba1c60` docs: auto-update explain and changelog
 - 2026-04-05 `b3e272f` Add_capability_audit_export_and_scheduler_reason_metrics
-- 2026-04-05 `faca1c9` docs: auto-update explain and changelog
-- 2026-04-05 `0533870` Add_package_dependency_graph_exports_and_scheduler_wait_report

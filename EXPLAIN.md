@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 11:22:26Z
+Last generated: 2026-04-05 11:23:57Z
 
 ## What AegisOS Is Building
 
@@ -36,6 +36,7 @@ We implement in vertical slices:
 - none
 
 ### Priority P1
+- #62 Capability_actor_registry_and_revocation_hooks (priority-p1, security)
 - #61 Filesystem_scope_wildcard_compiler_and_lint (priority-p1, security)
 - #60 Network_scope_trace_machine_readable_mode (priority-p1, security)
 - #59 DNS_pin_dual_stack_consistency_policy (priority-p1, security)
@@ -45,7 +46,6 @@ We implement in vertical slices:
 - #55 Capability_audit_export_file_sink_and_pagination (priority-p1, security)
 - #53 Package_graph_rendering_guide (priority-p1)
 - #48 Docs_heatmap_trend_window (priority-p1)
-- #45 Capability_audit_actor_identity_model (priority-p1, security)
 - #40 Apply_branch_protection_profile_on_main (priority-p1)
 - #38 Package_signature_metadata_fields (priority-p1, security)
 - #37 Package_profile_compatibility_matrix (priority-p1)
@@ -71,12 +71,12 @@ We implement in vertical slices:
 
 Recent commit touches (higher means more active recently):
 
-- kernel: 18
+- kernel: 21
 - userland: 34
 - packages: 3
 - docs: 44
-- workflows: 1
-- tests: 19
+- workflows: 0
+- tests: 20
 - tools: 0
 - platform: 0
 - scripts: 3
@@ -92,6 +92,8 @@ Open issue pressure by component signal:
 
 ## Recent Engineering Changes
 
+- `cfb4817` (2026-04-05): Add_scheduler_snapshot_schema_version_and_reason_breakdown
+- `9caf674` (2026-04-05): docs: auto-update explain and changelog
 - `6934178` (2026-04-05): Add_capability_actor_identity_model_and_validation
 - `bd9e491` (2026-04-05): docs: auto-update explain and changelog
 - `2606126` (2026-04-05): Add_filesystem_wildcard_validation_rules
@@ -105,5 +107,3 @@ Open issue pressure by component signal:
 - `f6168cd` (2026-04-05): Add_scheduler_wait_snapshot_endpoint_and_json_serializers
 - `7ba1c60` (2026-04-05): docs: auto-update explain and changelog
 - `b3e272f` (2026-04-05): Add_capability_audit_export_and_scheduler_reason_metrics
-- `faca1c9` (2026-04-05): docs: auto-update explain and changelog
-- `0533870` (2026-04-05): Add_package_dependency_graph_exports_and_scheduler_wait_report
