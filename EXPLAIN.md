@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 12:38:26Z
+Last generated: 2026-04-05 12:39:54Z
 
 ## What AegisOS Is Building
 
@@ -36,8 +36,7 @@ We implement in vertical slices:
 - none
 
 ### Priority P1
-- #75 Batch_migration_policy_filtering_and_sharding (priority-p1, security)
-- #73 Network_trace_json_control_character_fuzz_tests (priority-p1, security)
+- #76 Network_trace_json_property_based_generator (priority-p1, security)
 - #70 Actor_registry_persistent_backing_store (priority-p1, security)
 - #69 Scheduler_reason_histogram_custom_window_query (priority-p1, kernel)
 - #53 Package_graph_rendering_guide (priority-p1)
@@ -67,7 +66,7 @@ We implement in vertical slices:
 
 Recent commit touches (higher means more active recently):
 
-- kernel: 9
+- kernel: 6
 - userland: 40
 - packages: 0
 - docs: 40
@@ -80,7 +79,7 @@ Recent commit touches (higher means more active recently):
 
 Open issue pressure by component signal:
 
-- security: 5
+- security: 4
 - kernel: 2
 - packages: 3
 - docs: 1
@@ -88,6 +87,8 @@ Open issue pressure by component signal:
 
 ## Recent Engineering Changes
 
+- `36f49b1` (2026-04-05): "Add_property_style_network_trace_json_generator_tests"
+- `41c9387` (2026-04-05): docs: auto-update explain and changelog
 - `967570c` (2026-04-05): "Add_batch_migration_filters_shards_and_trace_json_fuzz_tests"
 - `089484e` (2026-04-05): docs: auto-update explain and changelog
 - `2da5998` (2026-04-05): "Add_migration_dry_run_diff_preview_and_manifest_incremental_diff"
@@ -101,5 +102,3 @@ Open issue pressure by component signal:
 - `982db4a` (2026-04-05): "Add_trace_schema_versioning_and_audit_retention_planning_helpers"
 - `8cf8915` (2026-04-05): docs: auto-update explain and changelog
 - `42bd665` (2026-04-05): "Add_actor_registry_lifecycle_and_scheduler_histogram_window"
-- `0b244e0` (2026-04-05): docs: auto-update explain and changelog
-- `2f44a9a` (2026-04-05): "Add_windowed_switch_reason_histogram_to_scheduler_snapshot"
