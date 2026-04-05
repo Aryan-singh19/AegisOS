@@ -1,0 +1,25 @@
+#ifndef AEGIS_SANDBOX_POLICY_H
+#define AEGIS_SANDBOX_POLICY_H
+
+#include <stddef.h>
+#include <stdint.h>
+
+#include "capability.h"
+
+typedef struct {
+  uint32_t process_id;
+  uint32_t capabilities;
+  uint8_t allow_fs_read;
+  uint8_t allow_fs_write;
+  uint8_t allow_net_client;
+  uint8_t allow_net_server;
+  uint8_t allow_device_io;
+} aegis_sandbox_policy_t;
+
+int aegis_sandbox_policy_validate(const aegis_sandbox_policy_t *policy,
+                                  char *reason, size_t reason_size);
+int aegis_sandbox_policy_allows(const aegis_sandbox_policy_t *policy,
+                                uint32_t capability_bit);
+
+#endif
+
