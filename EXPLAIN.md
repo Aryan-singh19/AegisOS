@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 11:11:16Z
+Last generated: 2026-04-05 11:14:05Z
 
 ## What AegisOS Is Building
 
@@ -36,6 +36,7 @@ We implement in vertical slices:
 - none
 
 ### Priority P1
+- #57 Scheduler_snapshot_schema_version_tag (priority-p1, kernel)
 - #56 Scheduler_reason_metrics_snapshot_endpoint_extension (priority-p1, kernel)
 - #55 Capability_audit_export_file_sink_and_pagination (priority-p1, security)
 - #53 Package_graph_rendering_guide (priority-p1)
@@ -72,11 +73,11 @@ We implement in vertical slices:
 Recent commit touches (higher means more active recently):
 
 - kernel: 18
-- userland: 22
-- packages: 14
+- userland: 26
+- packages: 3
 - docs: 49
 - workflows: 3
-- tests: 14
+- tests: 16
 - tools: 0
 - platform: 0
 - scripts: 5
@@ -85,13 +86,15 @@ Recent commit touches (higher means more active recently):
 Open issue pressure by component signal:
 
 - security: 9
-- kernel: 2
+- kernel: 3
 - packages: 3
 - docs: 1
 - other: 4
 
 ## Recent Engineering Changes
 
+- `8a231e6` (2026-04-05): Add_policy_schema_versioning_and_hot_reload_revision_guard
+- `16b9f0a` (2026-04-05): docs: auto-update explain and changelog
 - `f6168cd` (2026-04-05): Add_scheduler_wait_snapshot_endpoint_and_json_serializers
 - `7ba1c60` (2026-04-05): docs: auto-update explain and changelog
 - `b3e272f` (2026-04-05): Add_capability_audit_export_and_scheduler_reason_metrics
@@ -105,5 +108,3 @@ Open issue pressure by component signal:
 - `97c06b2` (2026-04-05): Add_one_command_onboarding_bootstrap_runner
 - `0f6d8a0` (2026-04-05): docs: auto-update explain and changelog
 - `72a0881` (2026-04-05): Add_context_switch_reason_codes_for_scheduler_ticks
-- `f0a640c` (2026-04-05): docs: auto-update explain and changelog
-- `2208524` (2026-04-05): Improve_docs_heatmap_with_local_issue_fallback_and_component_signals

@@ -1,10 +1,12 @@
 # CHANGELOG
 
 Auto-updated by workflow.
-Last generated: 2026-04-05 11:11:16Z
+Last generated: 2026-04-05 11:14:05Z
 
 ## Unreleased
 
+- 2026-04-05 `8a231e6` Add_policy_schema_versioning_and_hot_reload_revision_guard
+- 2026-04-05 `16b9f0a` docs: auto-update explain and changelog
 - 2026-04-05 `f6168cd` Add_scheduler_wait_snapshot_endpoint_and_json_serializers
 - 2026-04-05 `7ba1c60` docs: auto-update explain and changelog
 - 2026-04-05 `b3e272f` Add_capability_audit_export_and_scheduler_reason_metrics
@@ -18,5 +20,3 @@ Last generated: 2026-04-05 11:11:16Z
 - 2026-04-05 `97c06b2` Add_one_command_onboarding_bootstrap_runner
 - 2026-04-05 `0f6d8a0` docs: auto-update explain and changelog
 - 2026-04-05 `72a0881` Add_context_switch_reason_codes_for_scheduler_ticks
-- 2026-04-05 `f0a640c` docs: auto-update explain and changelog
-- 2026-04-05 `2208524` Improve_docs_heatmap_with_local_issue_fallback_and_component_signals
