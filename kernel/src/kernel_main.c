@@ -235,3 +235,18 @@ int aegis_scheduler_on_tick(aegis_scheduler_t *scheduler, uint32_t *running_pid,
   *running_pid = scheduler->current_pid;
   return 0;
 }
+
+int aegis_scheduler_metrics_snapshot(const aegis_scheduler_t *scheduler,
+                                     aegis_scheduler_metrics_snapshot_t *snapshot) {
+  if (scheduler == 0 || snapshot == 0) {
+    return -1;
+  }
+  snapshot->queue_depth = scheduler->count;
+  snapshot->high_watermark = scheduler->high_watermark;
+  snapshot->total_dispatches = scheduler->total_dispatches;
+  snapshot->scheduler_ticks = scheduler->scheduler_ticks;
+  snapshot->current_pid = scheduler->current_pid;
+  snapshot->quantum_ticks = scheduler->quantum_ticks;
+  snapshot->quantum_remaining = scheduler->quantum_remaining;
+  return 0;
+}

@@ -19,6 +19,16 @@ typedef struct {
   size_t head;
 } aegis_scheduler_t;
 
+typedef struct {
+  size_t queue_depth;
+  size_t high_watermark;
+  uint64_t total_dispatches;
+  uint64_t scheduler_ticks;
+  uint32_t current_pid;
+  uint32_t quantum_ticks;
+  uint32_t quantum_remaining;
+} aegis_scheduler_metrics_snapshot_t;
+
 typedef enum {
   AEGIS_PRIORITY_LOW = 1,
   AEGIS_PRIORITY_NORMAL = 2,
@@ -42,5 +52,7 @@ void aegis_scheduler_reset_metrics(aegis_scheduler_t *scheduler);
 void aegis_scheduler_set_quantum(aegis_scheduler_t *scheduler, uint32_t quantum_ticks);
 int aegis_scheduler_on_tick(aegis_scheduler_t *scheduler, uint32_t *running_pid,
                             uint8_t *context_switch);
+int aegis_scheduler_metrics_snapshot(const aegis_scheduler_t *scheduler,
+                                     aegis_scheduler_metrics_snapshot_t *snapshot);
 
 #endif

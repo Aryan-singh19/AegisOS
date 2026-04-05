@@ -181,6 +181,36 @@ static int test_scheduler_preemption_tick(void) {
   return 0;
 }
 
+static int test_scheduler_metrics_snapshot_endpoint(void) {
+  aegis_scheduler_t scheduler;
+  aegis_scheduler_metrics_snapshot_t snap;
+  uint32_t pid = 0;
+  uint8_t switched = 0;
+  aegis_scheduler_init(&scheduler);
+  aegis_scheduler_set_quantum(&scheduler, 4u);
+  if (aegis_scheduler_add(&scheduler, 8101u) != 0 || aegis_scheduler_add(&scheduler, 8102u) != 0) {
+    fprintf(stderr, "snapshot add failed\n");
+    return 1;
+  }
+  if (aegis_scheduler_on_tick(&scheduler, &pid, &switched) != 0) {
+    fprintf(stderr, "snapshot tick failed\n");
+    return 1;
+  }
+  if (aegis_scheduler_metrics_snapshot(&scheduler, &snap) != 0) {
+    fprintf(stderr, "snapshot endpoint failed\n");
+    return 1;
+  }
+  if (snap.queue_depth != 2u || snap.high_watermark < 2u) {
+    fprintf(stderr, "snapshot queue fields invalid\n");
+    return 1;
+  }
+  if (snap.current_pid == 0u || snap.quantum_ticks != 4u) {
+    fprintf(stderr, "snapshot running fields invalid\n");
+    return 1;
+  }
+  return 0;
+}
+
 int main(void) {
   if (test_kernel_boot() != 0) {
     return 1;
@@ -198,6 +228,9 @@ int main(void) {
     return 1;
   }
   if (test_scheduler_preemption_tick() != 0) {
+    return 1;
+  }
+  if (test_scheduler_metrics_snapshot_endpoint() != 0) {
     return 1;
   }
   puts("kernel simulation check passed");
