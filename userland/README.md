@@ -32,5 +32,6 @@ Core userspace services, shell tools, and runtime components live here.
   - supports strict dual-stack mode requiring both IPv4 and IPv6 resolutions when both are pinned.
   - network trace JSON includes DNS dual-stack evidence (`ipv4/ipv6 presence`, `pin families`, strict gate pass/block).
   - includes symlink mapping resolution before filesystem scope checks.
+  - supports pluggable filesystem resolver backend hook for real metadata/symlink lookup integration.
   - supports policy hot reload with validation and safe replacement semantics.
   - hot reload enforces monotonic `policy_revision` to block stale policy rollback.

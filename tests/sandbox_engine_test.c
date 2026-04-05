@@ -737,6 +737,79 @@ static int test_symlink_scope_resolution(void) {
   return 0;
 }
 
+typedef struct {
+  uint8_t fail;
+} fake_fs_backend_t;
+
+static int fake_fs_resolver(const char *path, char *resolved_path, size_t resolved_path_size, void *context) {
+  fake_fs_backend_t *backend = (fake_fs_backend_t *)context;
+  if (path == 0 || resolved_path == 0 || resolved_path_size == 0u || backend == 0) {
+    return -1;
+  }
+  if (backend->fail != 0u) {
+    return -1;
+  }
+  if (strcmp(path, "/safe/link/data.txt") == 0) {
+    snprintf(resolved_path, resolved_path_size, "%s", "/secret/data.txt");
+    return 1;
+  }
+  snprintf(resolved_path, resolved_path_size, "%s", path);
+  return 1;
+}
+
+static int test_symlink_resolution_filesystem_backend(void) {
+  aegis_capability_store_t cap_store;
+  aegis_policy_engine_t engine;
+  aegis_sandbox_policy_t policy = {
+      5002u, AEGIS_CAP_FS_READ, 1u, 0u, 0u, 0u, 0u};
+  aegis_policy_decision_t decision;
+  fake_fs_backend_t backend = {0u};
+
+  aegis_capability_store_init(&cap_store);
+  aegis_policy_engine_init(&engine);
+
+  if (aegis_capability_issue(&cap_store, 5002u, AEGIS_CAP_FS_READ) != 0) {
+    fprintf(stderr, "backend capability issue failed\n");
+    return 1;
+  }
+  if (aegis_policy_engine_set_policy(&engine, &policy) != 0) {
+    fprintf(stderr, "backend set policy failed\n");
+    return 1;
+  }
+  if (aegis_policy_engine_set_fs_resolver(&engine, fake_fs_resolver, &backend) != 0) {
+    fprintf(stderr, "backend resolver set failed\n");
+    return 1;
+  }
+  if (aegis_policy_engine_add_fs_rule(&engine, 5002u, "/safe", AEGIS_FS_SCOPE_READ_WRITE) != 0) {
+    fprintf(stderr, "backend add safe fs scope failed\n");
+    return 1;
+  }
+  if (aegis_policy_engine_add_fs_rule(&engine, 5002u, "/secret", AEGIS_FS_SCOPE_DENY) != 0) {
+    fprintf(stderr, "backend add secret deny scope failed\n");
+    return 1;
+  }
+  if (aegis_policy_engine_check_path(
+          &engine, &cap_store, 5002u, AEGIS_ACTION_FS_READ, "/safe/link/data.txt", &decision) != 0) {
+    fprintf(stderr, "expected backend-resolved path to be denied\n");
+    return 1;
+  }
+  if (strcmp(decision.reason, "denied by filesystem scope rule") != 0) {
+    fprintf(stderr, "unexpected backend deny reason: %s\n", decision.reason);
+    return 1;
+  }
+  backend.fail = 1u;
+  if (aegis_policy_engine_check_path(
+          &engine, &cap_store, 5002u, AEGIS_ACTION_FS_READ, "/safe/link/data.txt", &decision) != 0) {
+    fprintf(stderr, "expected backend resolver failure to deny\n");
+    return 1;
+  }
+  if (strcmp(decision.reason, "filesystem backend resolution failed") != 0) {
+    fprintf(stderr, "unexpected backend failure reason: %s\n", decision.reason);
+    return 1;
+  }
+  return 0;
+}
+
 static int test_filesystem_wildcard_scope(void) {
   aegis_capability_store_t cap_store;
   aegis_policy_engine_t engine;
@@ -1212,6 +1285,9 @@ int main(void) {
     return 1;
   }
   if (test_symlink_scope_resolution() != 0) {
+    return 1;
+  }
+  if (test_symlink_resolution_filesystem_backend() != 0) {
     return 1;
   }
   if (test_filesystem_wildcard_scope() != 0) {

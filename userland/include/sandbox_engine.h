@@ -80,6 +80,11 @@ typedef struct {
   uint8_t active;
 } aegis_symlink_rule_t;
 
+typedef int (*aegis_fs_resolve_path_fn)(const char *path,
+                                        char *resolved_path,
+                                        size_t resolved_path_size,
+                                        void *context);
+
 typedef struct {
   aegis_sandbox_policy_t policies[128];
   uint8_t active[128];
@@ -88,6 +93,8 @@ typedef struct {
   aegis_net_scope_rule_t net_rules[256];
   aegis_symlink_rule_t symlink_rules[128];
   aegis_dns_pin_rule_t dns_pin_rules[128];
+  aegis_fs_resolve_path_fn fs_resolver;
+  void *fs_resolver_context;
 } aegis_policy_engine_t;
 
 void aegis_policy_engine_init(aegis_policy_engine_t *engine);
@@ -124,6 +131,9 @@ int aegis_policy_engine_add_symlink_rule(aegis_policy_engine_t *engine,
                                          const char *link_prefix,
                                          const char *target_prefix);
 int aegis_policy_engine_clear_symlink_rules(aegis_policy_engine_t *engine, uint32_t process_id);
+int aegis_policy_engine_set_fs_resolver(aegis_policy_engine_t *engine,
+                                        aegis_fs_resolve_path_fn resolver,
+                                        void *context);
 int aegis_policy_engine_add_net_rule(aegis_policy_engine_t *engine,
                                      uint32_t process_id,
                                      const char *host_pattern,
