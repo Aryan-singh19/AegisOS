@@ -211,6 +211,48 @@ static int test_scheduler_metrics_snapshot_endpoint(void) {
   return 0;
 }
 
+static int test_scheduler_wait_latency_metrics(void) {
+  aegis_scheduler_t scheduler;
+  uint32_t pid = 0;
+  uint8_t switched = 0;
+  uint64_t wait_a = 0;
+  uint64_t wait_b = 0;
+  uint64_t lat_a = 0;
+  uint64_t lat_b = 0;
+  int i;
+  aegis_scheduler_init(&scheduler);
+  aegis_scheduler_set_quantum(&scheduler, 1u);
+  if (aegis_scheduler_add(&scheduler, 9001u) != 0 || aegis_scheduler_add(&scheduler, 9002u) != 0) {
+    fprintf(stderr, "wait metric add failed\n");
+    return 1;
+  }
+  for (i = 0; i < 6; ++i) {
+    if (aegis_scheduler_on_tick(&scheduler, &pid, &switched) != 0) {
+      fprintf(stderr, "wait metric tick failed\n");
+      return 1;
+    }
+  }
+  if (aegis_scheduler_wait_ticks_for(&scheduler, 9001u, &wait_a) != 0 ||
+      aegis_scheduler_wait_ticks_for(&scheduler, 9002u, &wait_b) != 0) {
+    fprintf(stderr, "wait metric query failed\n");
+    return 1;
+  }
+  if (aegis_scheduler_last_latency_for(&scheduler, 9001u, &lat_a) != 0 ||
+      aegis_scheduler_last_latency_for(&scheduler, 9002u, &lat_b) != 0) {
+    fprintf(stderr, "latency query failed\n");
+    return 1;
+  }
+  if (wait_a == 0u || wait_b == 0u) {
+    fprintf(stderr, "expected accumulated wait ticks to be non-zero\n");
+    return 1;
+  }
+  if (lat_a == 0u || lat_b == 0u) {
+    fprintf(stderr, "expected last wait latency to be non-zero\n");
+    return 1;
+  }
+  return 0;
+}
+
 int main(void) {
   if (test_kernel_boot() != 0) {
     return 1;
@@ -231,6 +273,9 @@ int main(void) {
     return 1;
   }
   if (test_scheduler_metrics_snapshot_endpoint() != 0) {
+    return 1;
+  }
+  if (test_scheduler_wait_latency_metrics() != 0) {
     return 1;
   }
   puts("kernel simulation check passed");

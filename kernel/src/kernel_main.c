@@ -38,6 +38,9 @@ void aegis_scheduler_init(aegis_scheduler_t *scheduler) {
     scheduler->priorities[i] = AEGIS_PRIORITY_NORMAL;
     scheduler->credits[i] = 0;
     scheduler->dispatch_counts[i] = 0;
+    scheduler->enqueued_tick[i] = 0;
+    scheduler->wait_ticks_total[i] = 0;
+    scheduler->last_wait_latency[i] = 0;
   }
 }
 
@@ -75,6 +78,9 @@ int aegis_scheduler_add_with_priority(aegis_scheduler_t *scheduler, uint32_t pro
   scheduler->priorities[scheduler->count] = normalize_priority(priority);
   scheduler->credits[scheduler->count] = scheduler->priorities[scheduler->count];
   scheduler->dispatch_counts[scheduler->count] = 0;
+  scheduler->enqueued_tick[scheduler->count] = scheduler->scheduler_ticks;
+  scheduler->wait_ticks_total[scheduler->count] = 0;
+  scheduler->last_wait_latency[scheduler->count] = 0;
   scheduler->count += 1;
   if (scheduler->count > scheduler->high_watermark) {
     scheduler->high_watermark = scheduler->count;
@@ -97,6 +103,9 @@ int aegis_scheduler_remove(aegis_scheduler_t *scheduler, uint32_t process_id) {
     scheduler->priorities[i - 1] = scheduler->priorities[i];
     scheduler->credits[i - 1] = scheduler->credits[i];
     scheduler->dispatch_counts[i - 1] = scheduler->dispatch_counts[i];
+    scheduler->enqueued_tick[i - 1] = scheduler->enqueued_tick[i];
+    scheduler->wait_ticks_total[i - 1] = scheduler->wait_ticks_total[i];
+    scheduler->last_wait_latency[i - 1] = scheduler->last_wait_latency[i];
   }
   scheduler->count -= 1;
   if (scheduler->count == 0) {
@@ -143,10 +152,13 @@ int aegis_scheduler_next(aegis_scheduler_t *scheduler, uint32_t *process_id) {
       continue;
     }
     scheduler->credits[idx] -= 1;
+    scheduler->last_wait_latency[idx] = scheduler->scheduler_ticks - scheduler->enqueued_tick[idx];
+    scheduler->wait_ticks_total[idx] += scheduler->last_wait_latency[idx];
     scheduler->dispatch_counts[idx] += 1;
     scheduler->total_dispatches += 1;
     *process_id = scheduler->process_ids[idx];
     scheduler->head = (idx + 1) % scheduler->count;
+    scheduler->enqueued_tick[idx] = scheduler->scheduler_ticks;
     return 0;
   }
   return -1;
@@ -192,6 +204,9 @@ void aegis_scheduler_reset_metrics(aegis_scheduler_t *scheduler) {
   scheduler->scheduler_ticks = 0;
   for (i = 0; i < scheduler->count; ++i) {
     scheduler->dispatch_counts[i] = 0;
+    scheduler->wait_ticks_total[i] = 0;
+    scheduler->last_wait_latency[i] = 0;
+    scheduler->enqueued_tick[i] = scheduler->scheduler_ticks;
   }
 }
 
@@ -248,5 +263,25 @@ int aegis_scheduler_metrics_snapshot(const aegis_scheduler_t *scheduler,
   snapshot->current_pid = scheduler->current_pid;
   snapshot->quantum_ticks = scheduler->quantum_ticks;
   snapshot->quantum_remaining = scheduler->quantum_remaining;
+  return 0;
+}
+
+int aegis_scheduler_wait_ticks_for(const aegis_scheduler_t *scheduler, uint32_t process_id,
+                                   uint64_t *wait_ticks) {
+  size_t idx = 0;
+  if (wait_ticks == 0 || scheduler == 0 || !find_index(scheduler, process_id, &idx)) {
+    return -1;
+  }
+  *wait_ticks = scheduler->wait_ticks_total[idx];
+  return 0;
+}
+
+int aegis_scheduler_last_latency_for(const aegis_scheduler_t *scheduler, uint32_t process_id,
+                                     uint64_t *latency_ticks) {
+  size_t idx = 0;
+  if (latency_ticks == 0 || scheduler == 0 || !find_index(scheduler, process_id, &idx)) {
+    return -1;
+  }
+  *latency_ticks = scheduler->last_wait_latency[idx];
   return 0;
 }

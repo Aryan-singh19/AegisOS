@@ -9,6 +9,9 @@ typedef struct {
   uint8_t priorities[64];
   uint8_t credits[64];
   uint32_t dispatch_counts[64];
+  uint64_t enqueued_tick[64];
+  uint64_t wait_ticks_total[64];
+  uint64_t last_wait_latency[64];
   uint64_t total_dispatches;
   uint64_t scheduler_ticks;
   size_t high_watermark;
@@ -54,5 +57,9 @@ int aegis_scheduler_on_tick(aegis_scheduler_t *scheduler, uint32_t *running_pid,
                             uint8_t *context_switch);
 int aegis_scheduler_metrics_snapshot(const aegis_scheduler_t *scheduler,
                                      aegis_scheduler_metrics_snapshot_t *snapshot);
+int aegis_scheduler_wait_ticks_for(const aegis_scheduler_t *scheduler, uint32_t process_id,
+                                   uint64_t *wait_ticks);
+int aegis_scheduler_last_latency_for(const aegis_scheduler_t *scheduler, uint32_t process_id,
+                                     uint64_t *latency_ticks);
 
 #endif
