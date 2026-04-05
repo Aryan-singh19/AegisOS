@@ -4,7 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define AEGIS_SCHEDULER_SNAPSHOT_SCHEMA_VERSION 1u
+#define AEGIS_SCHEDULER_SNAPSHOT_SCHEMA_VERSION 2u
+#define AEGIS_SCHEDULER_REASON_HISTOGRAM_WINDOW 32u
 
 typedef struct {
   uint32_t process_ids[64];
@@ -20,6 +21,9 @@ typedef struct {
   uint32_t current_pid;
   uint8_t pending_switch_reason;
   uint64_t reason_switch_counts[5];
+  uint8_t reason_switch_window[AEGIS_SCHEDULER_REASON_HISTOGRAM_WINDOW];
+  uint32_t reason_switch_window_head;
+  uint32_t reason_switch_window_count;
   uint32_t quantum_ticks;
   uint32_t quantum_remaining;
   size_t count;
@@ -39,6 +43,12 @@ typedef struct {
   uint64_t switch_quantum_expired_count;
   uint64_t switch_process_exit_count;
   uint64_t switch_manual_yield_count;
+  uint32_t switch_reason_window_capacity;
+  uint32_t switch_reason_window_samples;
+  uint64_t recent_switch_process_start_count;
+  uint64_t recent_switch_quantum_expired_count;
+  uint64_t recent_switch_process_exit_count;
+  uint64_t recent_switch_manual_yield_count;
 } aegis_scheduler_metrics_snapshot_t;
 
 typedef struct {

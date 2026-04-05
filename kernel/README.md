@@ -11,6 +11,7 @@ Kernel direction, interfaces, and implementation notes live here.
   - includes per-reason context-switch counters for metrics breakdowns and alerting.
   - includes structured metrics snapshot API for observability integration.
   - metrics snapshot now includes reason-count breakdown and a schema version tag.
+  - metrics snapshot includes a rolling reason-histogram window (`last 32 switches`) for anomaly detection.
   - includes JSON serializers for metrics snapshots and wait-report snapshots.
   - includes tick-based wait-time and last-latency counters per process.
   - includes aggregate wait report (`mean`, `p95`, `max`) for tuning and diagnostics.

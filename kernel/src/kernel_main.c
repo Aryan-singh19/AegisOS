@@ -36,6 +36,21 @@ static void refill_credits(aegis_scheduler_t *scheduler) {
   }
 }
 
+static void record_switch_reason(aegis_scheduler_t *scheduler, uint8_t reason) {
+  uint32_t idx;
+  if (scheduler == 0 || reason > AEGIS_SWITCH_MANUAL_YIELD) {
+    return;
+  }
+  scheduler->reason_switch_counts[reason] += 1;
+  idx = scheduler->reason_switch_window_head % AEGIS_SCHEDULER_REASON_HISTOGRAM_WINDOW;
+  scheduler->reason_switch_window[idx] = reason;
+  scheduler->reason_switch_window_head =
+      (scheduler->reason_switch_window_head + 1u) % AEGIS_SCHEDULER_REASON_HISTOGRAM_WINDOW;
+  if (scheduler->reason_switch_window_count < AEGIS_SCHEDULER_REASON_HISTOGRAM_WINDOW) {
+    scheduler->reason_switch_window_count += 1u;
+  }
+}
+
 void aegis_scheduler_init(aegis_scheduler_t *scheduler) {
   size_t i;
   if (scheduler == 0) {
@@ -50,6 +65,8 @@ void aegis_scheduler_init(aegis_scheduler_t *scheduler) {
   scheduler->pending_switch_reason = AEGIS_SWITCH_PROCESS_START;
   scheduler->quantum_ticks = 3;
   scheduler->quantum_remaining = 0;
+  scheduler->reason_switch_window_head = 0;
+  scheduler->reason_switch_window_count = 0;
   for (i = 0; i < AEGIS_SCHEDULER_CAPACITY; ++i) {
     scheduler->process_ids[i] = 0;
     scheduler->priorities[i] = AEGIS_PRIORITY_NORMAL;
@@ -61,6 +78,9 @@ void aegis_scheduler_init(aegis_scheduler_t *scheduler) {
   }
   for (i = 0; i < 5u; ++i) {
     scheduler->reason_switch_counts[i] = 0;
+  }
+  for (i = 0; i < AEGIS_SCHEDULER_REASON_HISTOGRAM_WINDOW; ++i) {
+    scheduler->reason_switch_window[i] = AEGIS_SWITCH_NONE;
   }
 }
 
@@ -232,6 +252,11 @@ void aegis_scheduler_reset_metrics(aegis_scheduler_t *scheduler) {
   for (i = 0; i < 5u; ++i) {
     scheduler->reason_switch_counts[i] = 0;
   }
+  scheduler->reason_switch_window_head = 0;
+  scheduler->reason_switch_window_count = 0;
+  for (i = 0; i < AEGIS_SCHEDULER_REASON_HISTOGRAM_WINDOW; ++i) {
+    scheduler->reason_switch_window[i] = AEGIS_SWITCH_NONE;
+  }
 }
 
 void aegis_scheduler_set_quantum(aegis_scheduler_t *scheduler, uint32_t quantum_ticks) {
@@ -278,9 +303,7 @@ int aegis_scheduler_on_tick_ex(aegis_scheduler_t *scheduler, uint32_t *running_p
     }
     *context_switch = 1;
     *switch_reason = reason;
-    if (reason <= AEGIS_SWITCH_MANUAL_YIELD) {
-      scheduler->reason_switch_counts[reason] += 1;
-    }
+    record_switch_reason(scheduler, reason);
     scheduler->current_pid = next_pid;
     scheduler->quantum_remaining = scheduler->quantum_ticks;
     scheduler->pending_switch_reason = AEGIS_SWITCH_NONE;
@@ -306,6 +329,9 @@ int aegis_scheduler_manual_yield(aegis_scheduler_t *scheduler) {
 
 int aegis_scheduler_metrics_snapshot(const aegis_scheduler_t *scheduler,
                                      aegis_scheduler_metrics_snapshot_t *snapshot) {
+  uint64_t recent_counts[5] = {0, 0, 0, 0, 0};
+  uint32_t samples;
+  uint32_t i;
   if (scheduler == 0 || snapshot == 0) {
     return -1;
   }
@@ -322,6 +348,22 @@ int aegis_scheduler_metrics_snapshot(const aegis_scheduler_t *scheduler,
       scheduler->reason_switch_counts[AEGIS_SWITCH_QUANTUM_EXPIRED];
   snapshot->switch_process_exit_count = scheduler->reason_switch_counts[AEGIS_SWITCH_PROCESS_EXIT];
   snapshot->switch_manual_yield_count = scheduler->reason_switch_counts[AEGIS_SWITCH_MANUAL_YIELD];
+  snapshot->switch_reason_window_capacity = AEGIS_SCHEDULER_REASON_HISTOGRAM_WINDOW;
+  samples = scheduler->reason_switch_window_count;
+  snapshot->switch_reason_window_samples = samples;
+  for (i = 0; i < samples; ++i) {
+    uint32_t idx = (scheduler->reason_switch_window_head + AEGIS_SCHEDULER_REASON_HISTOGRAM_WINDOW -
+                    samples + i) %
+                   AEGIS_SCHEDULER_REASON_HISTOGRAM_WINDOW;
+    uint8_t reason = scheduler->reason_switch_window[idx];
+    if (reason <= AEGIS_SWITCH_MANUAL_YIELD) {
+      recent_counts[reason] += 1u;
+    }
+  }
+  snapshot->recent_switch_process_start_count = recent_counts[AEGIS_SWITCH_PROCESS_START];
+  snapshot->recent_switch_quantum_expired_count = recent_counts[AEGIS_SWITCH_QUANTUM_EXPIRED];
+  snapshot->recent_switch_process_exit_count = recent_counts[AEGIS_SWITCH_PROCESS_EXIT];
+  snapshot->recent_switch_manual_yield_count = recent_counts[AEGIS_SWITCH_MANUAL_YIELD];
   return 0;
 }
 
@@ -337,7 +379,11 @@ int aegis_scheduler_metrics_snapshot_json(const aegis_scheduler_metrics_snapshot
                      "\"scheduler_ticks\":%llu,\"current_pid\":%u,\"quantum_ticks\":%u,"
                      "\"quantum_remaining\":%u,\"switch_process_start_count\":%llu,"
                      "\"switch_quantum_expired_count\":%llu,\"switch_process_exit_count\":%llu,"
-                     "\"switch_manual_yield_count\":%llu}",
+                     "\"switch_manual_yield_count\":%llu,\"switch_reason_window_capacity\":%u,"
+                     "\"switch_reason_window_samples\":%u,\"recent_switch_process_start_count\":%llu,"
+                     "\"recent_switch_quantum_expired_count\":%llu,"
+                     "\"recent_switch_process_exit_count\":%llu,"
+                     "\"recent_switch_manual_yield_count\":%llu}",
                      snapshot->schema_version, (unsigned long long)snapshot->queue_depth,
                      (unsigned long long)snapshot->high_watermark,
                      (unsigned long long)snapshot->total_dispatches,
@@ -346,7 +392,13 @@ int aegis_scheduler_metrics_snapshot_json(const aegis_scheduler_metrics_snapshot
                      (unsigned long long)snapshot->switch_process_start_count,
                      (unsigned long long)snapshot->switch_quantum_expired_count,
                      (unsigned long long)snapshot->switch_process_exit_count,
-                     (unsigned long long)snapshot->switch_manual_yield_count);
+                     (unsigned long long)snapshot->switch_manual_yield_count,
+                     snapshot->switch_reason_window_capacity,
+                     snapshot->switch_reason_window_samples,
+                     (unsigned long long)snapshot->recent_switch_process_start_count,
+                     (unsigned long long)snapshot->recent_switch_quantum_expired_count,
+                     (unsigned long long)snapshot->recent_switch_process_exit_count,
+                     (unsigned long long)snapshot->recent_switch_manual_yield_count);
   if (written < 0 || (size_t)written >= out_size) {
     return -1;
   }

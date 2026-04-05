@@ -261,6 +261,63 @@ static int test_scheduler_metrics_snapshot_endpoint(void) {
     fprintf(stderr, "expected non-zero process-start reason count\n");
     return 1;
   }
+  if (snap.switch_reason_window_capacity != AEGIS_SCHEDULER_REASON_HISTOGRAM_WINDOW ||
+      snap.switch_reason_window_samples == 0u ||
+      snap.recent_switch_process_start_count == 0u) {
+    fprintf(stderr, "snapshot windowed reason histogram fields invalid\n");
+    return 1;
+  }
+  return 0;
+}
+
+static int test_scheduler_reason_histogram_window(void) {
+  aegis_scheduler_t scheduler;
+  aegis_scheduler_metrics_snapshot_t snap;
+  uint32_t pid = 0;
+  uint8_t switched = 0;
+  uint64_t total_switches;
+  uint64_t recent_switches;
+  int i;
+  aegis_scheduler_init(&scheduler);
+  aegis_scheduler_set_quantum(&scheduler, 1u);
+  if (aegis_scheduler_add(&scheduler, 9301u) != 0 || aegis_scheduler_add(&scheduler, 9302u) != 0) {
+    fprintf(stderr, "histogram window add failed\n");
+    return 1;
+  }
+  for (i = 0; i < 64; ++i) {
+    if (aegis_scheduler_on_tick(&scheduler, &pid, &switched) != 0) {
+      fprintf(stderr, "histogram window tick failed\n");
+      return 1;
+    }
+  }
+  if (aegis_scheduler_metrics_snapshot(&scheduler, &snap) != 0) {
+    fprintf(stderr, "histogram window snapshot failed\n");
+    return 1;
+  }
+  total_switches = snap.switch_process_start_count + snap.switch_quantum_expired_count +
+                   snap.switch_process_exit_count + snap.switch_manual_yield_count;
+  recent_switches = snap.recent_switch_process_start_count + snap.recent_switch_quantum_expired_count +
+                    snap.recent_switch_process_exit_count + snap.recent_switch_manual_yield_count;
+  if (total_switches <= AEGIS_SCHEDULER_REASON_HISTOGRAM_WINDOW) {
+    fprintf(stderr, "expected more switches than histogram window\n");
+    return 1;
+  }
+  if (snap.switch_reason_window_samples != AEGIS_SCHEDULER_REASON_HISTOGRAM_WINDOW) {
+    fprintf(stderr, "expected full histogram window sample count\n");
+    return 1;
+  }
+  if (recent_switches != snap.switch_reason_window_samples) {
+    fprintf(stderr, "expected recent histogram sum to match sample count\n");
+    return 1;
+  }
+  if (recent_switches >= total_switches) {
+    fprintf(stderr, "expected recent histogram to be a windowed subset\n");
+    return 1;
+  }
+  if (snap.recent_switch_quantum_expired_count == 0u) {
+    fprintf(stderr, "expected recent histogram quantum-expired activity\n");
+    return 1;
+  }
   return 0;
 }
 
@@ -372,8 +429,9 @@ static int test_scheduler_snapshot_serialization(void) {
   }
   if (strstr(metrics_json, "\"queue_depth\":2") == 0 ||
       strstr(metrics_json, "\"scheduler_ticks\":") == 0 ||
-      strstr(metrics_json, "\"schema_version\":1") == 0 ||
-      strstr(metrics_json, "\"switch_process_start_count\":") == 0) {
+      strstr(metrics_json, "\"schema_version\":2") == 0 ||
+      strstr(metrics_json, "\"switch_process_start_count\":") == 0 ||
+      strstr(metrics_json, "\"switch_reason_window_samples\":") == 0) {
     fprintf(stderr, "metrics json missing expected fields\n");
     return 1;
   }
@@ -417,6 +475,9 @@ int main(void) {
     return 1;
   }
   if (test_scheduler_metrics_snapshot_endpoint() != 0) {
+    return 1;
+  }
+  if (test_scheduler_reason_histogram_window() != 0) {
     return 1;
   }
   if (test_scheduler_wait_latency_metrics() != 0) {
