@@ -185,6 +185,87 @@ static int test_path_scope_deny_override(void) {
   return 0;
 }
 
+static int test_network_scope_allow_and_deny(void) {
+  aegis_capability_store_t cap_store;
+  aegis_policy_engine_t engine;
+  aegis_sandbox_policy_t policy = {
+      4001u, AEGIS_CAP_NET_CLIENT | AEGIS_CAP_NET_SERVER, 0u, 0u, 1u, 1u, 0u};
+  aegis_policy_decision_t decision;
+
+  aegis_capability_store_init(&cap_store);
+  aegis_policy_engine_init(&engine);
+
+  if (aegis_capability_issue(&cap_store, 4001u, AEGIS_CAP_NET_CLIENT | AEGIS_CAP_NET_SERVER) != 0) {
+    fprintf(stderr, "capability issue failed for network test\n");
+    return 1;
+  }
+  if (aegis_policy_engine_set_policy(&engine, &policy) != 0) {
+    fprintf(stderr, "set policy failed for network test\n");
+    return 1;
+  }
+  if (aegis_policy_engine_add_net_rule(
+          &engine, 4001u, "*.trusted.local", 443, 443, AEGIS_NET_PROTO_TCP, 1u, 0u, 1u) != 0) {
+    fprintf(stderr, "failed to add trusted allow rule\n");
+    return 1;
+  }
+  if (aegis_policy_engine_add_net_rule(
+          &engine, 4001u, "*.trusted.local", 1, 65535, AEGIS_NET_PROTO_ANY, 1u, 1u, 0u) != 0) {
+    fprintf(stderr, "failed to add deny override rule\n");
+    return 1;
+  }
+  if (aegis_policy_engine_check_network(&engine,
+                                        &cap_store,
+                                        4001u,
+                                        AEGIS_ACTION_NET_CONNECT,
+                                        "api.trusted.local",
+                                        443,
+                                        AEGIS_NET_PROTO_TCP,
+                                        &decision) != 0) {
+    fprintf(stderr, "expected deny override for trusted host 443\n");
+    return 1;
+  }
+  if (strcmp(decision.reason, "denied by network scope rule") != 0) {
+    fprintf(stderr, "unexpected deny reason: %s\n", decision.reason);
+    return 1;
+  }
+  if (aegis_policy_engine_clear_net_rules(&engine, 4001u) != 0) {
+    fprintf(stderr, "failed to clear net rules\n");
+    return 1;
+  }
+  if (aegis_policy_engine_add_net_rule(
+          &engine, 4001u, "*.trusted.local", 443, 443, AEGIS_NET_PROTO_TCP, 1u, 0u, 1u) != 0) {
+    fprintf(stderr, "failed to add allow rule after clear\n");
+    return 1;
+  }
+  if (aegis_policy_engine_check_network(&engine,
+                                        &cap_store,
+                                        4001u,
+                                        AEGIS_ACTION_NET_CONNECT,
+                                        "api.trusted.local",
+                                        443,
+                                        AEGIS_NET_PROTO_TCP,
+                                        &decision) != 1) {
+    fprintf(stderr, "expected allow for trusted host 443, got: %s\n", decision.reason);
+    return 1;
+  }
+  if (aegis_policy_engine_check_network(&engine,
+                                        &cap_store,
+                                        4001u,
+                                        AEGIS_ACTION_NET_CONNECT,
+                                        "api.trusted.local",
+                                        8443,
+                                        AEGIS_NET_PROTO_TCP,
+                                        &decision) != 0) {
+    fprintf(stderr, "expected no-match deny for 8443\n");
+    return 1;
+  }
+  if (strcmp(decision.reason, "no matching network scope rule") != 0) {
+    fprintf(stderr, "unexpected no-match reason: %s\n", decision.reason);
+    return 1;
+  }
+  return 0;
+}
+
 int main(void) {
   if (test_allow_path() != 0) {
     return 1;
@@ -199,6 +280,9 @@ int main(void) {
     return 1;
   }
   if (test_path_scope_deny_override() != 0) {
+    return 1;
+  }
+  if (test_network_scope_allow_and_deny() != 0) {
     return 1;
   }
   puts("sandbox engine tests passed");

@@ -33,11 +33,30 @@ typedef struct {
   uint8_t active;
 } aegis_fs_scope_rule_t;
 
+typedef enum {
+  AEGIS_NET_PROTO_TCP = 1,
+  AEGIS_NET_PROTO_UDP = 2,
+  AEGIS_NET_PROTO_ANY = 255
+} aegis_net_protocol_t;
+
+typedef struct {
+  uint32_t process_id;
+  char host_pattern[96];
+  uint16_t port_start;
+  uint16_t port_end;
+  aegis_net_protocol_t protocol;
+  uint8_t allow_connect;
+  uint8_t allow_bind;
+  uint8_t allow;
+  uint8_t active;
+} aegis_net_scope_rule_t;
+
 typedef struct {
   aegis_sandbox_policy_t policies[128];
   uint8_t active[128];
   size_t count;
   aegis_fs_scope_rule_t fs_rules[256];
+  aegis_net_scope_rule_t net_rules[256];
 } aegis_policy_engine_t;
 
 void aegis_policy_engine_init(aegis_policy_engine_t *engine);
@@ -60,5 +79,23 @@ int aegis_policy_engine_check_path(const aegis_policy_engine_t *engine,
                                    aegis_action_t action,
                                    const char *path,
                                    aegis_policy_decision_t *decision);
+int aegis_policy_engine_add_net_rule(aegis_policy_engine_t *engine,
+                                     uint32_t process_id,
+                                     const char *host_pattern,
+                                     uint16_t port_start,
+                                     uint16_t port_end,
+                                     aegis_net_protocol_t protocol,
+                                     uint8_t allow_connect,
+                                     uint8_t allow_bind,
+                                     uint8_t allow);
+int aegis_policy_engine_clear_net_rules(aegis_policy_engine_t *engine, uint32_t process_id);
+int aegis_policy_engine_check_network(const aegis_policy_engine_t *engine,
+                                      const aegis_capability_store_t *store,
+                                      uint32_t process_id,
+                                      aegis_action_t action,
+                                      const char *host,
+                                      uint16_t port,
+                                      aegis_net_protocol_t protocol,
+                                      aegis_policy_decision_t *decision);
 
 #endif

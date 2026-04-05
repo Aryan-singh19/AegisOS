@@ -41,6 +41,26 @@ static int prefix_matches(const char *path, const char *prefix) {
   return strncmp(path, prefix, prefix_len) == 0;
 }
 
+static int host_matches(const char *host, const char *pattern) {
+  size_t host_len;
+  if (host == 0 || pattern == 0 || host[0] == '\0' || pattern[0] == '\0') {
+    return 0;
+  }
+  if (strcmp(pattern, "*") == 0) {
+    return 1;
+  }
+  if (strncmp(pattern, "*.", 2) == 0) {
+    const char *suffix = pattern + 1;
+    size_t suffix_len = strlen(suffix);
+    host_len = strlen(host);
+    if (host_len < suffix_len) {
+      return 0;
+    }
+    return strcmp(host + host_len - suffix_len, suffix) == 0;
+  }
+  return strcmp(host, pattern) == 0;
+}
+
 static uint32_t action_to_capability(aegis_action_t action, const aegis_sandbox_policy_t *policy,
                                      uint8_t *policy_gate) {
   if (policy_gate != 0) {
@@ -91,6 +111,17 @@ void aegis_policy_engine_init(aegis_policy_engine_t *engine) {
     engine->fs_rules[i].process_id = 0;
     engine->fs_rules[i].path_prefix[0] = '\0';
     engine->fs_rules[i].mode = AEGIS_FS_SCOPE_DENY;
+  }
+  for (i = 0; i < 256; ++i) {
+    engine->net_rules[i].active = 0;
+    engine->net_rules[i].process_id = 0;
+    engine->net_rules[i].host_pattern[0] = '\0';
+    engine->net_rules[i].port_start = 0;
+    engine->net_rules[i].port_end = 0;
+    engine->net_rules[i].protocol = AEGIS_NET_PROTO_ANY;
+    engine->net_rules[i].allow_connect = 0;
+    engine->net_rules[i].allow_bind = 0;
+    engine->net_rules[i].allow = 0;
   }
 }
 
@@ -271,5 +302,151 @@ int aegis_policy_engine_check_path(const aegis_policy_engine_t *engine,
     return 0;
   }
   set_reason(decision, "allowed by filesystem scope", 1);
+  return 1;
+}
+
+int aegis_policy_engine_add_net_rule(aegis_policy_engine_t *engine,
+                                     uint32_t process_id,
+                                     const char *host_pattern,
+                                     uint16_t port_start,
+                                     uint16_t port_end,
+                                     aegis_net_protocol_t protocol,
+                                     uint8_t allow_connect,
+                                     uint8_t allow_bind,
+                                     uint8_t allow) {
+  size_t i;
+  size_t free_index = 256;
+  if (engine == 0 || process_id == 0 || host_pattern == 0 || host_pattern[0] == '\0') {
+    return -1;
+  }
+  if (port_start == 0 || port_end == 0 || port_start > port_end) {
+    return -1;
+  }
+  if (protocol != AEGIS_NET_PROTO_TCP && protocol != AEGIS_NET_PROTO_UDP &&
+      protocol != AEGIS_NET_PROTO_ANY) {
+    return -1;
+  }
+  if (allow_connect == 0 && allow_bind == 0) {
+    return -1;
+  }
+  for (i = 0; i < 256; ++i) {
+    if (engine->net_rules[i].active != 0 &&
+        engine->net_rules[i].process_id == process_id &&
+        strcmp(engine->net_rules[i].host_pattern, host_pattern) == 0 &&
+        engine->net_rules[i].port_start == port_start &&
+        engine->net_rules[i].port_end == port_end &&
+        engine->net_rules[i].protocol == protocol &&
+        engine->net_rules[i].allow_connect == allow_connect &&
+        engine->net_rules[i].allow_bind == allow_bind) {
+      engine->net_rules[i].allow = allow != 0 ? 1 : 0;
+      return 0;
+    }
+    if (free_index == 256 && engine->net_rules[i].active == 0) {
+      free_index = i;
+    }
+  }
+  if (free_index == 256) {
+    return -1;
+  }
+  engine->net_rules[free_index].active = 1;
+  engine->net_rules[free_index].process_id = process_id;
+  snprintf(engine->net_rules[free_index].host_pattern,
+           sizeof(engine->net_rules[free_index].host_pattern),
+           "%s",
+           host_pattern);
+  engine->net_rules[free_index].port_start = port_start;
+  engine->net_rules[free_index].port_end = port_end;
+  engine->net_rules[free_index].protocol = protocol;
+  engine->net_rules[free_index].allow_connect = allow_connect != 0 ? 1 : 0;
+  engine->net_rules[free_index].allow_bind = allow_bind != 0 ? 1 : 0;
+  engine->net_rules[free_index].allow = allow != 0 ? 1 : 0;
+  return 0;
+}
+
+int aegis_policy_engine_clear_net_rules(aegis_policy_engine_t *engine, uint32_t process_id) {
+  size_t i;
+  int removed = 0;
+  if (engine == 0 || process_id == 0) {
+    return -1;
+  }
+  for (i = 0; i < 256; ++i) {
+    if (engine->net_rules[i].active != 0 && engine->net_rules[i].process_id == process_id) {
+      engine->net_rules[i].active = 0;
+      engine->net_rules[i].process_id = 0;
+      engine->net_rules[i].host_pattern[0] = '\0';
+      engine->net_rules[i].port_start = 0;
+      engine->net_rules[i].port_end = 0;
+      engine->net_rules[i].protocol = AEGIS_NET_PROTO_ANY;
+      engine->net_rules[i].allow_connect = 0;
+      engine->net_rules[i].allow_bind = 0;
+      engine->net_rules[i].allow = 0;
+      removed = 1;
+    }
+  }
+  return removed ? 0 : -1;
+}
+
+int aegis_policy_engine_check_network(const aegis_policy_engine_t *engine,
+                                      const aegis_capability_store_t *store,
+                                      uint32_t process_id,
+                                      aegis_action_t action,
+                                      const char *host,
+                                      uint16_t port,
+                                      aegis_net_protocol_t protocol,
+                                      aegis_policy_decision_t *decision) {
+  int base_rc;
+  size_t i;
+  int matched_allow = 0;
+  if (action != AEGIS_ACTION_NET_CONNECT && action != AEGIS_ACTION_NET_BIND) {
+    set_reason(decision, "network check requires net action", 0);
+    return 0;
+  }
+  base_rc = aegis_policy_engine_check(engine, store, process_id, action, decision);
+  if (base_rc != 1) {
+    return base_rc;
+  }
+  if (host == 0 || host[0] == '\0' || port == 0) {
+    set_reason(decision, "network host/port required", 0);
+    return 0;
+  }
+  if (protocol != AEGIS_NET_PROTO_TCP && protocol != AEGIS_NET_PROTO_UDP) {
+    set_reason(decision, "unsupported network protocol", 0);
+    return 0;
+  }
+  for (i = 0; i < 256; ++i) {
+    const aegis_net_scope_rule_t *rule = &engine->net_rules[i];
+    uint8_t action_match = 0;
+    if (rule->active == 0 || rule->process_id != process_id) {
+      continue;
+    }
+    if (!host_matches(host, rule->host_pattern)) {
+      continue;
+    }
+    if (port < rule->port_start || port > rule->port_end) {
+      continue;
+    }
+    if (rule->protocol != AEGIS_NET_PROTO_ANY && rule->protocol != protocol) {
+      continue;
+    }
+    if (action == AEGIS_ACTION_NET_CONNECT && rule->allow_connect != 0) {
+      action_match = 1;
+    }
+    if (action == AEGIS_ACTION_NET_BIND && rule->allow_bind != 0) {
+      action_match = 1;
+    }
+    if (action_match == 0) {
+      continue;
+    }
+    if (rule->allow == 0) {
+      set_reason(decision, "denied by network scope rule", 0);
+      return 0;
+    }
+    matched_allow = 1;
+  }
+  if (!matched_allow) {
+    set_reason(decision, "no matching network scope rule", 0);
+    return 0;
+  }
+  set_reason(decision, "allowed by network scope", 1);
   return 1;
 }
