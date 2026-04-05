@@ -1,0 +1,25 @@
+name: Package Validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/**"
+      - "scripts/validate_packages.py"
+      - ".github/workflows/packages.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "packages/**"
+      - "scripts/validate_packages.py"
+      - ".github/workflows/packages.yml"
+
+jobs:
+  validate-manifests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate package manifests
+        run: python3 scripts/validate_packages.py
