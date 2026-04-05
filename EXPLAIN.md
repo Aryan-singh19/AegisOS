@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 11:46:16Z
+Last generated: 2026-04-05 12:32:50Z
 
 ## What AegisOS Is Building
 
@@ -36,11 +36,10 @@ We implement in vertical slices:
 - none
 
 ### Priority P1
+- #72 Policy_migration_batch_dry_run_and_diff_preview (priority-p1, security)
 - #71 Audit_sink_retention_manifest_generator (priority-p1, security)
 - #70 Actor_registry_persistent_backing_store (priority-p1, security)
 - #69 Scheduler_reason_histogram_custom_window_query (priority-p1, kernel)
-- #68 Trace_JSON_string_escaping_hardening (priority-p1, security)
-- #65 Sandbox_policy_migration_batch_tool (priority-p1, security)
 - #53 Package_graph_rendering_guide (priority-p1)
 - #48 Docs_heatmap_trend_window (priority-p1)
 - #40 Apply_branch_protection_profile_on_main (priority-p1)
@@ -69,7 +68,7 @@ We implement in vertical slices:
 Recent commit touches (higher means more active recently):
 
 - kernel: 15
-- userland: 47
+- userland: 46
 - packages: 3
 - docs: 40
 - workflows: 0
@@ -81,7 +80,7 @@ Recent commit touches (higher means more active recently):
 
 Open issue pressure by component signal:
 
-- security: 6
+- security: 5
 - kernel: 2
 - packages: 3
 - docs: 1
@@ -89,6 +88,8 @@ Open issue pressure by component signal:
 
 ## Recent Engineering Changes
 
+- `1acc1f2` (2026-04-05): "Harden_network_trace_json_string_escaping"
+- `aec6f73` (2026-04-05): docs: auto-update explain and changelog
 - `1bd30e4` (2026-04-05): "Add_batch_sandbox_policy_migration_cli_with_summary_and_exit_codes"
 - `7dd0f88` (2026-04-05): docs: auto-update explain and changelog
 - `982db4a` (2026-04-05): "Add_trace_schema_versioning_and_audit_retention_planning_helpers"
@@ -102,5 +103,3 @@ Open issue pressure by component signal:
 - `206412e` (2026-04-05): Add_machine_readable_json_network_trace_api
 - `cc19e78` (2026-04-05): docs: auto-update explain and changelog
 - `c29ca17` (2026-04-05): Add_dns_dual_stack_strict_mode_enforcement
-- `afeccb8` (2026-04-05): docs: auto-update explain and changelog
-- `fcf7371` (2026-04-05): Add_sandbox_policy_legacy_migration_adapter_and_report

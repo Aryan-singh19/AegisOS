@@ -1,10 +1,12 @@
 # CHANGELOG
 
 Auto-updated by workflow.
-Last generated: 2026-04-05 11:46:16Z
+Last generated: 2026-04-05 12:32:50Z
 
 ## Unreleased
 
+- 2026-04-05 `1acc1f2` "Harden_network_trace_json_string_escaping"
+- 2026-04-05 `aec6f73` docs: auto-update explain and changelog
 - 2026-04-05 `1bd30e4` "Add_batch_sandbox_policy_migration_cli_with_summary_and_exit_codes"
 - 2026-04-05 `7dd0f88` docs: auto-update explain and changelog
 - 2026-04-05 `982db4a` "Add_trace_schema_versioning_and_audit_retention_planning_helpers"
@@ -18,5 +20,3 @@ Last generated: 2026-04-05 11:46:16Z
 - 2026-04-05 `206412e` Add_machine_readable_json_network_trace_api
 - 2026-04-05 `cc19e78` docs: auto-update explain and changelog
 - 2026-04-05 `c29ca17` Add_dns_dual_stack_strict_mode_enforcement
-- 2026-04-05 `afeccb8` docs: auto-update explain and changelog
-- 2026-04-05 `fcf7371` Add_sandbox_policy_legacy_migration_adapter_and_report
