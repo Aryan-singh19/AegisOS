@@ -1,10 +1,12 @@
 # CHANGELOG
 
 Auto-updated by workflow.
-Last generated: 2026-04-05 10:42:30Z
+Last generated: 2026-04-05 10:44:05Z
 
 ## Unreleased
 
+- 2026-04-05 `40c23d8` Add_filesystem_wildcard_scope_matching_and_tests
+- 2026-04-05 `cc8fe1d` docs: auto-update explain and changelog
 - 2026-04-05 `1ffc333` Fix_project_automation_workflow_syntax_and_token_fallback
 - 2026-04-05 `4a6bd9b` docs: auto-update explain and changelog
 - 2026-04-05 `9ebe78b` Fix_project_automation_with_PAT_secret_and_github_script_v8
@@ -18,5 +20,3 @@ Last generated: 2026-04-05 10:42:30Z
 - 2026-04-05 `8d1da52` Add_expanded_core_packages_and_install_profiles
 - 2026-04-05 `c454d23` docs: auto-update explain and changelog
 - 2026-04-05 `fa8d88a` Add_package_dependency_cycle_detection_to_validator
-- 2026-04-05 `309e75f` docs: auto-update explain and changelog
-- 2026-04-05 `a728fcd` Add_package_manifest_schema_version_1_validation

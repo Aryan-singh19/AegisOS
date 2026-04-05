@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 10:42:30Z
+Last generated: 2026-04-05 10:44:05Z
 
 ## What AegisOS Is Building
 
@@ -70,6 +70,8 @@ We implement in vertical slices:
 
 ## Recent Engineering Changes
 
+- `40c23d8` (2026-04-05): Add_filesystem_wildcard_scope_matching_and_tests
+- `cc8fe1d` (2026-04-05): docs: auto-update explain and changelog
 - `1ffc333` (2026-04-05): Fix_project_automation_workflow_syntax_and_token_fallback
 - `4a6bd9b` (2026-04-05): docs: auto-update explain and changelog
 - `9ebe78b` (2026-04-05): Fix_project_automation_with_PAT_secret_and_github_script_v8
@@ -83,5 +85,3 @@ We implement in vertical slices:
 - `8d1da52` (2026-04-05): Add_expanded_core_packages_and_install_profiles
 - `c454d23` (2026-04-05): docs: auto-update explain and changelog
 - `fa8d88a` (2026-04-05): Add_package_dependency_cycle_detection_to_validator
-- `309e75f` (2026-04-05): docs: auto-update explain and changelog
-- `a728fcd` (2026-04-05): Add_package_manifest_schema_version_1_validation
