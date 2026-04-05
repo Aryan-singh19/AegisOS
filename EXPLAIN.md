@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 10:10:31Z
+Last generated: 2026-04-05 10:14:43Z
 
 ## What AegisOS Is Building
 
@@ -32,6 +32,8 @@ We implement in vertical slices:
 
 ## Live Backlog Snapshot
 
+- #20 Package_dependency_cycle_detection (priority-p1)
+- #19 Package_manifest_schema_versioning (priority-p1)
 - #18 Auto_docs_issue_enrichment (priority-p1)
 - #17 Sandbox_engine_network_scopes (priority-p1, security)
 - #16 Sandbox_engine_path_scopes (priority-p0, security)
@@ -45,10 +47,11 @@ We implement in vertical slices:
 - #7 Scheduler_preemption_tick_simulation (priority-p1, kernel)
 - #6 Scheduler_priority_policy_v1 (priority-p1, kernel)
 - #5 Contributor_onboarding_checklist (good-first-task)
-- #4 Package_manager_manifest_validator (priority-p1)
 
 ## Recent Engineering Changes
 
+- `abdd8fa` (2026-04-05): Add_path_scoped_filesystem_enforcement_with_deny_override
+- `7b72999` (2026-04-05): docs: auto-update explain and changelog
 - `7ce10dc` (2026-04-05): Add_package_manifest_validator_and_ci_workflow
 - `e3d506e` (2026-04-05): docs: auto-update explain and changelog
 - `613b123` (2026-04-05): Add_auto_docs_workflow_and_sandbox_policy_engine_mvp
