@@ -507,6 +507,42 @@ int aegis_capability_audit_file_sink_name(const char *prefix, uint32_t chunk_id,
   return 0;
 }
 
+int aegis_capability_audit_retention_plan(uint32_t latest_chunk_id,
+                                          uint32_t retention_window_chunks,
+                                          aegis_capability_audit_retention_plan_t *plan) {
+  uint32_t keep_from = 0u;
+  if (plan == 0 || retention_window_chunks == 0u) {
+    return -1;
+  }
+  if (retention_window_chunks <= latest_chunk_id + 1u) {
+    keep_from = latest_chunk_id - retention_window_chunks + 1u;
+  }
+  plan->latest_chunk_id = latest_chunk_id;
+  plan->retention_window_chunks = retention_window_chunks;
+  plan->keep_from_chunk_id = keep_from;
+  plan->keep_to_chunk_id = latest_chunk_id;
+  plan->prune_chunk_count = keep_from;
+  return 0;
+}
+
+int aegis_capability_audit_prune_candidate_name(const char *prefix,
+                                                uint32_t latest_chunk_id,
+                                                uint32_t retention_window_chunks,
+                                                uint32_t prune_index,
+                                                char *out,
+                                                size_t out_size) {
+  aegis_capability_audit_retention_plan_t plan;
+  uint32_t chunk_id;
+  if (aegis_capability_audit_retention_plan(latest_chunk_id, retention_window_chunks, &plan) != 0) {
+    return -1;
+  }
+  if (prune_index >= plan.prune_chunk_count) {
+    return -1;
+  }
+  chunk_id = prune_index;
+  return aegis_capability_audit_file_sink_name(prefix, chunk_id, out, out_size);
+}
+
 void aegis_actor_registry_reset(void) {
   size_t i;
   for (i = 0; i < 256u; ++i) {

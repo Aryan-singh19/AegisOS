@@ -1206,13 +1206,16 @@ int aegis_policy_engine_check_network_with_ip_trace_json(const aegis_policy_engi
   rc = check_network_with_ip_internal(engine, store, process_id, action, host, port, protocol,
                                       resolved_ipv4, resolved_ipv6, 0, 0u, &stats, decision);
   written = snprintf(json_trace, json_trace_size,
-                     "{\"process_id\":%u,\"host\":\"%s\",\"port\":%u,\"protocol\":%u,"
+                     "{\"trace_schema_version\":%u,\"trace_format_version\":%u,"
+                     "\"process_id\":%u,\"host\":\"%s\",\"port\":%u,\"protocol\":%u,"
                      "\"matched_rules\":%d,\"winner_rule_index\":%d,\"winner_score\":%d,"
                      "\"tie_break_deny\":%u,\"dns_resolved_ipv4_present\":%u,"
                      "\"dns_resolved_ipv6_present\":%u,\"dns_pin_match\":%u,"
                      "\"dns_pin_has_ipv4\":%u,\"dns_pin_has_ipv6\":%u,\"dns_strict_mode\":%u,"
                      "\"dns_strict_gate_blocked\":%u,\"dns_strict_gate_passed\":%u,"
                      "\"decision_allowed\":%u,\"decision_reason\":\"%s\"}",
+                     (unsigned int)AEGIS_NETWORK_TRACE_SCHEMA_VERSION,
+                     (unsigned int)AEGIS_NETWORK_TRACE_FORMAT_VERSION,
                      process_id, host != 0 ? host : "", (unsigned int)port, (unsigned int)protocol,
                      stats.matched_rules, stats.winner_rule_index, stats.winner_score,
                      (unsigned int)stats.tie_break_deny,

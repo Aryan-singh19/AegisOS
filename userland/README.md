@@ -11,6 +11,7 @@ Core userspace services, shell tools, and runtime components live here.
   - includes actor registry (`register`, `lookup`, `revoke`) and identity lifecycle enforcement hooks.
   - rotate/revoke identity paths now require active non-revoked actor registry entries.
   - includes audit export API for JSON/CSV snapshots (latest ring window), pagination cursors, and sink chunk naming.
+  - includes audit sink retention planning helpers for chunk rotation/pruning guidance.
 - `sandbox_policy`: policy schema validation for filesystem/network/device permissions.
   - includes JSON serialization/deserialization helpers for distribution and storage.
   - includes `schema_version` and `policy_revision` fields for versioned policy rollouts.
@@ -24,6 +25,7 @@ Core userspace services, shell tools, and runtime components live here.
   - network rule precedence is deterministic: most specific match wins; tie -> deny.
   - includes optional network precedence debug trace output for diagnostics.
   - includes machine-readable JSON network trace output for tooling integrations.
+  - JSON trace includes `trace_schema_version` and `trace_format_version` for consumer stability.
   - includes optional DNS pinning guard (`host -> pinned IPv4`) for rebinding defense.
   - DNS pinning guard now supports pinned IPv6 literals for dual-stack protection.
   - supports strict dual-stack mode requiring both IPv4 and IPv6 resolutions when both are pinned.

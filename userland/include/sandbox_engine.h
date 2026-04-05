@@ -7,6 +7,9 @@
 #include "capability.h"
 #include "sandbox_policy.h"
 
+#define AEGIS_NETWORK_TRACE_SCHEMA_VERSION 1u
+#define AEGIS_NETWORK_TRACE_FORMAT_VERSION 1u
+
 typedef enum {
   AEGIS_ACTION_FS_READ = 1,
   AEGIS_ACTION_FS_WRITE = 2,

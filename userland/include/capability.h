@@ -61,6 +61,14 @@ typedef struct {
 } aegis_capability_audit_page_t;
 
 typedef struct {
+  uint32_t latest_chunk_id;
+  uint32_t retention_window_chunks;
+  uint32_t keep_from_chunk_id;
+  uint32_t keep_to_chunk_id;
+  uint32_t prune_chunk_count;
+} aegis_capability_audit_retention_plan_t;
+
+typedef struct {
   uint32_t actor_id;
   uint8_t actor_source;
   char actor_label[32];
@@ -110,6 +118,15 @@ int aegis_capability_audit_export_csv_page(size_t cursor, size_t limit,
                                            aegis_capability_audit_page_t *page);
 int aegis_capability_audit_file_sink_name(const char *prefix, uint32_t chunk_id,
                                           char *out, size_t out_size);
+int aegis_capability_audit_retention_plan(uint32_t latest_chunk_id,
+                                          uint32_t retention_window_chunks,
+                                          aegis_capability_audit_retention_plan_t *plan);
+int aegis_capability_audit_prune_candidate_name(const char *prefix,
+                                                uint32_t latest_chunk_id,
+                                                uint32_t retention_window_chunks,
+                                                uint32_t prune_index,
+                                                char *out,
+                                                size_t out_size);
 void aegis_actor_registry_reset(void);
 int aegis_actor_registry_register(uint32_t actor_id, uint8_t actor_source, const char *actor_label);
 int aegis_actor_registry_lookup(uint32_t actor_id, uint8_t actor_source,

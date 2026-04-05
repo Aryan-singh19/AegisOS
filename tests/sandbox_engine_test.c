@@ -405,6 +405,8 @@ static int test_network_scope_debug_trace_json(void) {
     return 1;
   }
   if (strstr(json_trace, "\"matched_rules\":2") == 0 ||
+      strstr(json_trace, "\"trace_schema_version\":1") == 0 ||
+      strstr(json_trace, "\"trace_format_version\":1") == 0 ||
       strstr(json_trace, "\"tie_break_deny\":1") == 0 ||
       strstr(json_trace, "\"decision_allowed\":0") == 0 ||
       strstr(json_trace, "\"winner_rule_index\":") == 0) {

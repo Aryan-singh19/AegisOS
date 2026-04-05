@@ -401,6 +401,38 @@ static int test_capability_audit_pagination_and_sink(void) {
   return 0;
 }
 
+static int test_capability_audit_retention_plan_helpers(void) {
+  aegis_capability_audit_retention_plan_t plan;
+  char prune_name[64];
+  if (aegis_capability_audit_retention_plan(17u, 5u, &plan) != 0) {
+    fprintf(stderr, "retention plan helper failed\n");
+    return 1;
+  }
+  if (plan.keep_from_chunk_id != 13u || plan.keep_to_chunk_id != 17u || plan.prune_chunk_count != 13u) {
+    fprintf(stderr, "retention plan values unexpected\n");
+    return 1;
+  }
+  if (aegis_capability_audit_prune_candidate_name("cap_audit", 17u, 5u, 12u, prune_name,
+                                                  sizeof(prune_name)) != 0) {
+    fprintf(stderr, "prune candidate naming helper failed\n");
+    return 1;
+  }
+  if (strcmp(prune_name, "cap_audit-0012.log") != 0) {
+    fprintf(stderr, "unexpected prune candidate name: %s\n", prune_name);
+    return 1;
+  }
+  if (aegis_capability_audit_prune_candidate_name("cap_audit", 17u, 5u, 13u, prune_name,
+                                                  sizeof(prune_name)) == 0) {
+    fprintf(stderr, "expected out-of-range prune candidate request to fail\n");
+    return 1;
+  }
+  if (aegis_capability_audit_retention_plan(17u, 0u, &plan) == 0) {
+    fprintf(stderr, "expected zero retention window to fail\n");
+    return 1;
+  }
+  return 0;
+}
+
 int main(void) {
   if (test_capability_validate() != 0) {
     return 1;
@@ -427,6 +459,9 @@ int main(void) {
     return 1;
   }
   if (test_capability_audit_pagination_and_sink() != 0) {
+    return 1;
+  }
+  if (test_capability_audit_retention_plan_helpers() != 0) {
     return 1;
   }
   puts("capability tests passed");
