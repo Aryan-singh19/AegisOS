@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 11:01:31Z
+Last generated: 2026-04-05 11:03:40Z
 
 ## What AegisOS Is Building
 
@@ -36,6 +36,7 @@ We implement in vertical slices:
 - none
 
 ### Priority P1
+- #52 Sandbox_policy_hot_reload_version_guard (priority-p1, security)
 - #51 Sandbox_policy_versioned_json_schema (priority-p1, security)
 - #49 Scheduler_reason_code_metrics_breakdown (priority-p1, kernel)
 - #48 Docs_heatmap_trend_window (priority-p1)
@@ -54,7 +55,6 @@ We implement in vertical slices:
 - #34 Sanitizer_suppressions_baseline (priority-p1)
 - #29 Scheduler_aging_policy_for_fairness (priority-p1, kernel)
 - #27 Symlink_resolution_filesystem_backend (priority-p1, security)
-- #14 Sandbox_policy_hot_reload (priority-p1, security)
 
 ### Security
 - none
@@ -72,15 +72,15 @@ We implement in vertical slices:
 
 Recent commit touches (higher means more active recently):
 
-- kernel: 9
+- kernel: 12
 - userland: 19
-- packages: 15
-- docs: 50
-- workflows: 4
-- tests: 10
+- packages: 18
+- docs: 49
+- workflows: 3
+- tests: 11
 - tools: 0
 - platform: 0
-- scripts: 6
+- scripts: 7
 - other: 0
 
 Open issue pressure by component signal:
@@ -93,6 +93,8 @@ Open issue pressure by component signal:
 
 ## Recent Engineering Changes
 
+- `0533870` (2026-04-05): Add_package_dependency_graph_exports_and_scheduler_wait_report
+- `2079757` (2026-04-05): docs: auto-update explain and changelog
 - `f860e26` (2026-04-05): Add_sandbox_policy_hot_reload_with_safe_validation
 - `4c84428` (2026-04-05): docs: auto-update explain and changelog
 - `c9cfff6` (2026-04-05): Add_sandbox_policy_json_serialization_and_parsing_support
@@ -106,5 +108,3 @@ Open issue pressure by component signal:
 - `3895338` (2026-04-05): Add_tick_based_wait_latency_metrics_for_scheduler
 - `b9c15ac` (2026-04-05): docs: auto-update explain and changelog
 - `1cd4bc7` (2026-04-05): Add_scheduler_metrics_snapshot_endpoint_and_tests
-- `81fda8b` (2026-04-05): docs: auto-update explain and changelog
-- `67fc1c3` (2026-04-05): Add_rotation_actor_reason_metadata_to_capability_audit
