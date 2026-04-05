@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 10:32:05Z
+Last generated: 2026-04-05 10:38:54Z
 
 ## What AegisOS Is Building
 
@@ -36,6 +36,8 @@ We implement in vertical slices:
 - none
 
 ### Priority P1
+- #38 Package_signature_metadata_fields (priority-p1, security)
+- #37 Package_profile_compatibility_matrix (priority-p1)
 - #36 Package_dependency_visualizer_output (priority-p1)
 - #35 Package_schema_migration_helper (priority-p1)
 - #34 Sanitizer_suppressions_baseline (priority-p1)
@@ -62,13 +64,14 @@ We implement in vertical slices:
 
 ### Good First Task
 - #9 Toolchain_bootstrap_for_contributors (good-first-task)
-- #5 Contributor_onboarding_checklist (good-first-task)
 
 ### Other
 - none
 
 ## Recent Engineering Changes
 
+- `0b4425a` (2026-04-05): Add_project_board_automation_and_capability_audit_pipeline
+- `1ab272f` (2026-04-05): docs: auto-update explain and changelog
 - `8d1da52` (2026-04-05): Add_expanded_core_packages_and_install_profiles
 - `c454d23` (2026-04-05): docs: auto-update explain and changelog
 - `fa8d88a` (2026-04-05): Add_package_dependency_cycle_detection_to_validator
@@ -82,5 +85,3 @@ We implement in vertical slices:
 - `0e65665` (2026-04-05): Add_scheduler_metrics_tracepoints_and_tests
 - `4d87d05` (2026-04-05): docs: auto-update explain and changelog
 - `2c96784` (2026-04-05): Implement_issue_enrichment_token_ttl_rotation_and_scheduler_priority
-- `6a7a49c` (2026-04-05): docs: auto-update explain and changelog
-- `886b81c` (2026-04-05): Add_symlink_resolution_rules_for_filesystem_scope_checks

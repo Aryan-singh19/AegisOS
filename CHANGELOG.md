@@ -1,10 +1,12 @@
 # CHANGELOG
 
 Auto-updated by workflow.
-Last generated: 2026-04-05 10:32:05Z
+Last generated: 2026-04-05 10:38:54Z
 
 ## Unreleased
 
+- 2026-04-05 `0b4425a` Add_project_board_automation_and_capability_audit_pipeline
+- 2026-04-05 `1ab272f` docs: auto-update explain and changelog
 - 2026-04-05 `8d1da52` Add_expanded_core_packages_and_install_profiles
 - 2026-04-05 `c454d23` docs: auto-update explain and changelog
 - 2026-04-05 `fa8d88a` Add_package_dependency_cycle_detection_to_validator
@@ -18,5 +20,3 @@ Last generated: 2026-04-05 10:32:05Z
 - 2026-04-05 `0e65665` Add_scheduler_metrics_tracepoints_and_tests
 - 2026-04-05 `4d87d05` docs: auto-update explain and changelog
 - 2026-04-05 `2c96784` Implement_issue_enrichment_token_ttl_rotation_and_scheduler_priority
-- 2026-04-05 `6a7a49c` docs: auto-update explain and changelog
-- 2026-04-05 `886b81c` Add_symlink_resolution_rules_for_filesystem_scope_checks
