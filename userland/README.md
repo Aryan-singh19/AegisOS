@@ -7,7 +7,7 @@ Core userspace services, shell tools, and runtime components live here.
 - `capability`: capability validation plus lifecycle operations (issue, revoke, access check).
   - includes token expiry (TTL) and rotation APIs.
   - includes in-memory audit event pipeline for allow/deny/issue/rotate/revoke.
-  - rotation events persist `actor_id` and `reason` metadata for incident traceability.
+  - rotation events persist actor identity (`actor_id`, `actor_source`, `actor_label`) and `reason` metadata.
   - includes audit export API for JSON/CSV snapshots (latest ring window).
 - `sandbox_policy`: policy schema validation for filesystem/network/device permissions.
   - includes JSON serialization/deserialization helpers for distribution and storage.

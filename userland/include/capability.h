@@ -35,12 +35,21 @@ typedef enum {
   AEGIS_CAP_AUDIT_DENY = 5
 } aegis_capability_audit_event_type_t;
 
+typedef enum {
+  AEGIS_ACTOR_SYSTEM = 1,
+  AEGIS_ACTOR_USER = 2,
+  AEGIS_ACTOR_SERVICE = 3,
+  AEGIS_ACTOR_AUTOMATION = 4
+} aegis_actor_source_t;
+
 typedef struct {
   uint64_t timestamp_epoch;
   uint32_t process_id;
   uint32_t requested_permissions;
   uint32_t resulting_permissions;
   uint32_t actor_id;
+  uint8_t actor_source;
+  char actor_label[32];
   char reason[64];
   uint8_t event_type;
 } aegis_capability_audit_event_t;
@@ -58,6 +67,11 @@ int aegis_capability_rotate(aegis_capability_store_t *store, uint32_t process_id
 int aegis_capability_rotate_with_metadata(aegis_capability_store_t *store, uint32_t process_id,
                                           uint32_t permissions, uint64_t now_epoch,
                                           uint64_t ttl_seconds, uint32_t actor_id,
+                                          const char *reason);
+int aegis_capability_rotate_with_identity(aegis_capability_store_t *store, uint32_t process_id,
+                                          uint32_t permissions, uint64_t now_epoch,
+                                          uint64_t ttl_seconds, uint32_t actor_id,
+                                          uint8_t actor_source, const char *actor_label,
                                           const char *reason);
 int aegis_capability_revoke(aegis_capability_store_t *store, uint32_t process_id);
 int aegis_capability_is_allowed(const aegis_capability_store_t *store, uint32_t process_id,

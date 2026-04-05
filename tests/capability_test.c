@@ -130,8 +130,62 @@ static int test_rotation_metadata_audit(void) {
     fprintf(stderr, "expected actor metadata 9001\n");
     return 1;
   }
+  if (event.actor_source != AEGIS_ACTOR_AUTOMATION) {
+    fprintf(stderr, "expected actor source automation\n");
+    return 1;
+  }
+  if (strcmp(event.actor_label, "automation") != 0) {
+    fprintf(stderr, "expected actor label automation\n");
+    return 1;
+  }
   if (strcmp(event.reason, "incident_response") != 0) {
     fprintf(stderr, "expected reason metadata incident_response\n");
+    return 1;
+  }
+  return 0;
+}
+
+static int test_rotation_identity_validation(void) {
+  aegis_capability_store_t store;
+  aegis_capability_audit_event_t event;
+  size_t n = 0;
+  aegis_capability_store_init(&store);
+  aegis_capability_audit_reset();
+  if (aegis_capability_issue_with_ttl(&store, 121u, AEGIS_CAP_FS_READ, 200u, 20u) != 0) {
+    fprintf(stderr, "identity validation issue failed\n");
+    return 1;
+  }
+  if (aegis_capability_rotate_with_identity(&store,
+                                            121u,
+                                            AEGIS_CAP_FS_READ | AEGIS_CAP_FS_WRITE,
+                                            205u,
+                                            20u,
+                                            1001u,
+                                            AEGIS_ACTOR_USER,
+                                            "alice_admin",
+                                            "manual_grant") != 0) {
+    fprintf(stderr, "expected valid actor identity rotate to pass\n");
+    return 1;
+  }
+  n = aegis_capability_audit_count();
+  if (aegis_capability_audit_get(n - 1u, &event) != 0) {
+    fprintf(stderr, "failed to read identity rotate event\n");
+    return 1;
+  }
+  if (event.actor_source != AEGIS_ACTOR_USER || strcmp(event.actor_label, "alice_admin") != 0) {
+    fprintf(stderr, "identity fields not persisted correctly\n");
+    return 1;
+  }
+  if (aegis_capability_rotate_with_identity(&store,
+                                            121u,
+                                            AEGIS_CAP_FS_READ,
+                                            210u,
+                                            20u,
+                                            0u,
+                                            AEGIS_ACTOR_USER,
+                                            "bob",
+                                            "invalid_identity") == 0) {
+    fprintf(stderr, "expected invalid identity to fail\n");
     return 1;
   }
   return 0;
@@ -212,6 +266,9 @@ int main(void) {
     return 1;
   }
   if (test_rotation_metadata_audit() != 0) {
+    return 1;
+  }
+  if (test_rotation_identity_validation() != 0) {
     return 1;
   }
   if (test_capability_audit_pipeline() != 0) {

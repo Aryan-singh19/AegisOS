@@ -50,15 +50,52 @@ static int append_json_escaped(char *out, size_t out_size, size_t *offset, const
   return 0;
 }
 
+static int actor_label_valid(const char *label) {
+  size_t i;
+  if (label == 0 || label[0] == '\0') {
+    return 0;
+  }
+  for (i = 0; label[i] != '\0'; ++i) {
+    char c = label[i];
+    if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' ||
+        c == '-' || c == '.') {
+      continue;
+    }
+    return 0;
+  }
+  return 1;
+}
+
+static int actor_identity_valid(uint8_t actor_source, uint32_t actor_id, const char *actor_label) {
+  if (actor_source < AEGIS_ACTOR_SYSTEM || actor_source > AEGIS_ACTOR_AUTOMATION) {
+    return 0;
+  }
+  if (actor_source == AEGIS_ACTOR_SYSTEM) {
+    return actor_id == 0u;
+  }
+  if (actor_id == 0u) {
+    return 0;
+  }
+  return actor_label_valid(actor_label);
+}
+
 static void capability_audit_log(uint8_t event_type, uint64_t now_epoch, uint32_t process_id,
                                  uint32_t requested_permissions, uint32_t resulting_permissions,
-                                 uint32_t actor_id, const char *reason) {
+                                 uint32_t actor_id, uint8_t actor_source,
+                                 const char *actor_label, const char *reason) {
   size_t index = g_audit_count % 512;
   g_audit_events[index].timestamp_epoch = now_epoch;
   g_audit_events[index].process_id = process_id;
   g_audit_events[index].requested_permissions = requested_permissions;
   g_audit_events[index].resulting_permissions = resulting_permissions;
   g_audit_events[index].actor_id = actor_id;
+  g_audit_events[index].actor_source = actor_source;
+  if (actor_label != 0) {
+    snprintf(g_audit_events[index].actor_label, sizeof(g_audit_events[index].actor_label), "%s",
+             actor_label);
+  } else {
+    g_audit_events[index].actor_label[0] = '\0';
+  }
   if (reason != 0) {
     snprintf(g_audit_events[index].reason, sizeof(g_audit_events[index].reason), "%s", reason);
   } else {
@@ -137,7 +174,7 @@ int aegis_capability_issue_with_ttl(aegis_capability_store_t *store, uint32_t pr
     store->tokens[existing].issued_at_epoch = now_epoch;
     store->tokens[existing].expires_at_epoch = ttl_seconds == 0 ? 0 : now_epoch + ttl_seconds;
     capability_audit_log(AEGIS_CAP_AUDIT_ISSUE, now_epoch, process_id, permissions, permissions, 0u,
-                         "issue");
+                         AEGIS_ACTOR_SYSTEM, "system", "issue");
     return 0;
   }
   if (store->count >= 128) {
@@ -151,7 +188,7 @@ int aegis_capability_issue_with_ttl(aegis_capability_store_t *store, uint32_t pr
   store->active[store->count] = 1;
   store->count += 1;
   capability_audit_log(AEGIS_CAP_AUDIT_ISSUE, now_epoch, process_id, permissions, permissions, 0u,
-                       "issue");
+                       AEGIS_ACTOR_SYSTEM, "system", "issue");
   return 0;
 }
 
@@ -165,8 +202,24 @@ int aegis_capability_rotate_with_metadata(aegis_capability_store_t *store, uint3
                                           uint32_t permissions, uint64_t now_epoch,
                                           uint64_t ttl_seconds, uint32_t actor_id,
                                           const char *reason) {
+  if (actor_id == 0u) {
+    return aegis_capability_rotate_with_identity(store, process_id, permissions, now_epoch, ttl_seconds,
+                                                 0u, AEGIS_ACTOR_SYSTEM, "system", reason);
+  }
+  return aegis_capability_rotate_with_identity(store, process_id, permissions, now_epoch, ttl_seconds,
+                                               actor_id, AEGIS_ACTOR_AUTOMATION, "automation", reason);
+}
+
+int aegis_capability_rotate_with_identity(aegis_capability_store_t *store, uint32_t process_id,
+                                          uint32_t permissions, uint64_t now_epoch,
+                                          uint64_t ttl_seconds, uint32_t actor_id,
+                                          uint8_t actor_source, const char *actor_label,
+                                          const char *reason) {
   size_t index = 0;
   if (store == 0 || process_id == 0) {
+    return -1;
+  }
+  if (!actor_identity_valid(actor_source, actor_id, actor_label)) {
     return -1;
   }
   if (!capability_find_index(store, process_id, &index)) {
@@ -176,8 +229,8 @@ int aegis_capability_rotate_with_metadata(aegis_capability_store_t *store, uint3
   store->tokens[index].issued_at_epoch = now_epoch;
   store->tokens[index].expires_at_epoch = ttl_seconds == 0 ? 0 : now_epoch + ttl_seconds;
   store->tokens[index].rotation_counter += 1;
-  capability_audit_log(AEGIS_CAP_AUDIT_ROTATE, now_epoch, process_id, permissions, permissions,
-                       actor_id, reason != 0 ? reason : "rotate");
+  capability_audit_log(AEGIS_CAP_AUDIT_ROTATE, now_epoch, process_id, permissions, permissions, actor_id,
+                       actor_source, actor_label, reason != 0 ? reason : "rotate");
   return 0;
 }
 
@@ -191,7 +244,8 @@ int aegis_capability_revoke(aegis_capability_store_t *store, uint32_t process_id
   store->tokens[index].issued_at_epoch = 0;
   store->tokens[index].expires_at_epoch = 0;
   store->tokens[index].rotation_counter = 0;
-  capability_audit_log(AEGIS_CAP_AUDIT_REVOKE, 0, process_id, 0, 0, 0u, "revoke");
+  capability_audit_log(AEGIS_CAP_AUDIT_REVOKE, 0, process_id, 0, 0, 0u, AEGIS_ACTOR_SYSTEM, "system",
+                       "revoke");
   return 0;
 }
 
@@ -205,21 +259,22 @@ int aegis_capability_is_allowed_at(const aegis_capability_store_t *store, uint32
   size_t index = 0;
   if (!capability_find_index(store, process_id, &index)) {
     capability_audit_log(AEGIS_CAP_AUDIT_DENY, now_epoch, process_id, requested_permissions, 0, 0u,
-                         "deny:not_found");
+                         AEGIS_ACTOR_SYSTEM, "system", "deny:not_found");
     return 0;
   }
   if (now_epoch != 0 && capability_expired(&store->tokens[index], now_epoch)) {
     capability_audit_log(AEGIS_CAP_AUDIT_DENY, now_epoch, process_id, requested_permissions, 0, 0u,
-                         "deny:expired");
+                         AEGIS_ACTOR_SYSTEM, "system", "deny:expired");
     return 0;
   }
   if (aegis_capability_validate(&store->tokens[index], requested_permissions)) {
     capability_audit_log(AEGIS_CAP_AUDIT_ALLOW, now_epoch, process_id, requested_permissions,
-                         store->tokens[index].permissions, 0u, "allow");
+                         store->tokens[index].permissions, 0u, AEGIS_ACTOR_SYSTEM, "system", "allow");
     return 1;
   }
   capability_audit_log(AEGIS_CAP_AUDIT_DENY, now_epoch, process_id, requested_permissions,
-                       store->tokens[index].permissions, 0u, "deny:permission");
+                       store->tokens[index].permissions, 0u, AEGIS_ACTOR_SYSTEM, "system",
+                       "deny:permission");
   return 0;
 }
 
@@ -267,10 +322,17 @@ int aegis_capability_audit_export_json(char *out, size_t out_size) {
     }
     if (append_format(out, out_size, &offset,
                       "{\"timestamp_epoch\":%llu,\"process_id\":%u,\"requested_permissions\":%u,"
-                      "\"resulting_permissions\":%u,\"actor_id\":%u,\"event_type\":%u,\"reason\":\"",
+                      "\"resulting_permissions\":%u,\"actor_id\":%u,\"actor_source\":%u,"
+                      "\"actor_label\":\"",
                       (unsigned long long)event.timestamp_epoch, event.process_id,
                       event.requested_permissions, event.resulting_permissions, event.actor_id,
-                      event.event_type) != 0) {
+                      event.actor_source) != 0) {
+      return -1;
+    }
+    if (append_json_escaped(out, out_size, &offset, event.actor_label) != 0) {
+      return -1;
+    }
+    if (append_format(out, out_size, &offset, "\",\"event_type\":%u,\"reason\":\"", event.event_type) != 0) {
       return -1;
     }
     if (append_json_escaped(out, out_size, &offset, event.reason) != 0) {
@@ -299,7 +361,7 @@ int aegis_capability_audit_export_csv(char *out, size_t out_size) {
   out[0] = '\0';
   if (append_format(out, out_size, &offset,
                     "timestamp_epoch,process_id,requested_permissions,resulting_permissions,"
-                    "actor_id,event_type,reason\n") != 0) {
+                    "actor_id,actor_source,actor_label,event_type,reason\n") != 0) {
     return -1;
   }
   for (i = start; i < g_audit_count; ++i) {
@@ -315,10 +377,10 @@ int aegis_capability_audit_export_csv(char *out, size_t out_size) {
         safe_reason[r] = ' ';
       }
     }
-    if (append_format(out, out_size, &offset, "%llu,%u,%u,%u,%u,%u,%s\n",
+    if (append_format(out, out_size, &offset, "%llu,%u,%u,%u,%u,%u,%s,%u,%s\n",
                       (unsigned long long)event.timestamp_epoch, event.process_id,
                       event.requested_permissions, event.resulting_permissions, event.actor_id,
-                      event.event_type, safe_reason) != 0) {
+                      event.actor_source, event.actor_label, event.event_type, safe_reason) != 0) {
       return -1;
     }
   }
