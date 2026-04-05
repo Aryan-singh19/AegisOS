@@ -24,6 +24,160 @@ int aegis_kernel_boot_check(void) {
   return 0;
 }
 
+static int vm_region_valid(uint64_t base, uint64_t size) {
+  if (size == 0u) {
+    return 0;
+  }
+  if (base > UINT64_MAX - size) {
+    return 0;
+  }
+  return 1;
+}
+
+static int vm_region_overlaps(uint64_t a_base, uint64_t a_size, uint64_t b_base, uint64_t b_size) {
+  uint64_t a_end;
+  uint64_t b_end;
+  if (!vm_region_valid(a_base, a_size) || !vm_region_valid(b_base, b_size)) {
+    return 0;
+  }
+  a_end = a_base + a_size;
+  b_end = b_base + b_size;
+  if (a_end <= b_base || b_end <= a_base) {
+    return 0;
+  }
+  return 1;
+}
+
+void aegis_vm_space_init(aegis_vm_space_t *space) {
+  size_t i;
+  if (space == 0) {
+    return;
+  }
+  space->count = 0u;
+  for (i = 0; i < AEGIS_VM_REGION_CAPACITY; ++i) {
+    space->regions[i].base = 0u;
+    space->regions[i].size = 0u;
+    space->regions[i].flags = 0u;
+    space->regions[i].active = 0u;
+  }
+}
+
+int aegis_vm_map(aegis_vm_space_t *space, uint64_t base, uint64_t size, uint32_t flags) {
+  size_t i;
+  if (space == 0 || !vm_region_valid(base, size)) {
+    return -1;
+  }
+  if (space->count >= AEGIS_VM_REGION_CAPACITY) {
+    return -1;
+  }
+  for (i = 0; i < AEGIS_VM_REGION_CAPACITY; ++i) {
+    aegis_vm_region_t *region = &space->regions[i];
+    if (region->active == 0u) {
+      continue;
+    }
+    if (vm_region_overlaps(base, size, region->base, region->size)) {
+      return -1;
+    }
+  }
+  for (i = 0; i < AEGIS_VM_REGION_CAPACITY; ++i) {
+    aegis_vm_region_t *region = &space->regions[i];
+    if (region->active != 0u) {
+      continue;
+    }
+    region->base = base;
+    region->size = size;
+    region->flags = flags;
+    region->active = 1u;
+    space->count += 1u;
+    return 0;
+  }
+  return -1;
+}
+
+int aegis_vm_unmap(aegis_vm_space_t *space, uint64_t base, uint64_t size) {
+  size_t i;
+  if (space == 0 || !vm_region_valid(base, size)) {
+    return -1;
+  }
+  for (i = 0; i < AEGIS_VM_REGION_CAPACITY; ++i) {
+    aegis_vm_region_t *region = &space->regions[i];
+    if (region->active == 0u) {
+      continue;
+    }
+    if (region->base == base && region->size == size) {
+      region->active = 0u;
+      region->base = 0u;
+      region->size = 0u;
+      region->flags = 0u;
+      if (space->count > 0u) {
+        space->count -= 1u;
+      }
+      return 0;
+    }
+  }
+  return -1;
+}
+
+int aegis_vm_query(const aegis_vm_space_t *space, uint64_t address, aegis_vm_region_t *region) {
+  size_t i;
+  if (space == 0 || region == 0) {
+    return -1;
+  }
+  for (i = 0; i < AEGIS_VM_REGION_CAPACITY; ++i) {
+    const aegis_vm_region_t *entry = &space->regions[i];
+    if (entry->active == 0u) {
+      continue;
+    }
+    if (address >= entry->base && address < (entry->base + entry->size)) {
+      *region = *entry;
+      return 0;
+    }
+  }
+  return -1;
+}
+
+int aegis_vm_summary_json(const aegis_vm_space_t *space, char *out, size_t out_size) {
+  size_t offset = 0;
+  size_t i;
+  int first = 1;
+  int written;
+  if (space == 0 || out == 0 || out_size == 0u) {
+    return -1;
+  }
+  written = snprintf(out,
+                     out_size,
+                     "{\"schema_version\":1,\"region_count\":%llu,\"regions\":[",
+                     (unsigned long long)space->count);
+  if (written < 0 || (size_t)written >= out_size) {
+    return -1;
+  }
+  offset = (size_t)written;
+  for (i = 0; i < AEGIS_VM_REGION_CAPACITY; ++i) {
+    const aegis_vm_region_t *region = &space->regions[i];
+    if (region->active == 0u) {
+      continue;
+    }
+    written = snprintf(out + offset,
+                       out_size - offset,
+                       "%s{\"base\":%llu,\"size\":%llu,\"flags\":%u}",
+                       first ? "" : ",",
+                       (unsigned long long)region->base,
+                       (unsigned long long)region->size,
+                       region->flags);
+    if (written < 0 || (size_t)written >= (out_size - offset)) {
+      return -1;
+    }
+    offset += (size_t)written;
+    first = 0;
+  }
+  written = snprintf(out + offset, out_size - offset, "]}");
+  if (written < 0 || (size_t)written >= (out_size - offset)) {
+    return -1;
+  }
+  offset += (size_t)written;
+  return (int)offset;
+}
+
 static uint8_t normalize_priority(uint8_t priority) {
   if (priority < AEGIS_PRIORITY_LOW || priority > AEGIS_PRIORITY_HIGH) {
     return AEGIS_PRIORITY_NORMAL;

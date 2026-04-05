@@ -6,6 +6,19 @@
 
 #define AEGIS_SCHEDULER_SNAPSHOT_SCHEMA_VERSION 2u
 #define AEGIS_SCHEDULER_REASON_HISTOGRAM_WINDOW 32u
+#define AEGIS_VM_REGION_CAPACITY 64u
+
+typedef struct {
+  uint64_t base;
+  uint64_t size;
+  uint32_t flags;
+  uint8_t active;
+} aegis_vm_region_t;
+
+typedef struct {
+  aegis_vm_region_t regions[AEGIS_VM_REGION_CAPACITY];
+  size_t count;
+} aegis_vm_space_t;
 
 typedef struct {
   uint32_t process_ids[64];
@@ -82,6 +95,11 @@ typedef enum {
 } aegis_scheduler_switch_reason_t;
 
 int aegis_kernel_boot_check(void);
+void aegis_vm_space_init(aegis_vm_space_t *space);
+int aegis_vm_map(aegis_vm_space_t *space, uint64_t base, uint64_t size, uint32_t flags);
+int aegis_vm_unmap(aegis_vm_space_t *space, uint64_t base, uint64_t size);
+int aegis_vm_query(const aegis_vm_space_t *space, uint64_t address, aegis_vm_region_t *region);
+int aegis_vm_summary_json(const aegis_vm_space_t *space, char *out, size_t out_size);
 void aegis_scheduler_init(aegis_scheduler_t *scheduler);
 int aegis_scheduler_add(aegis_scheduler_t *scheduler, uint32_t process_id);
 int aegis_scheduler_add_with_priority(aegis_scheduler_t *scheduler, uint32_t process_id,

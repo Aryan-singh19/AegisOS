@@ -4,6 +4,9 @@ Kernel direction, interfaces, and implementation notes live here.
 
 ## Current Modules
 
+- `aegis_vm_space_t`: virtual memory region mapping abstraction.
+  - supports map/unmap/query with overlap/overflow guards.
+  - exposes JSON summary endpoint for VM map observability.
 - `aegis_scheduler_t`: weighted round-robin scheduler with priority-aware dispatch.
   - low-priority aging boosts add temporary credits after long waits to reduce starvation risk.
   - includes dispatch metrics: total dispatches, high-watermark queue depth, and per-process counts.

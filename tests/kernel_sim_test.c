@@ -10,6 +10,57 @@ static int test_kernel_boot(void) {
   return 0;
 }
 
+static int test_vm_region_map_abstraction(void) {
+  aegis_vm_space_t space;
+  aegis_vm_region_t region;
+  char summary[1024];
+  char tiny[24];
+  aegis_vm_space_init(&space);
+  if (aegis_vm_map(&space, 0x1000u, 0x2000u, 0x3u) != 0) {
+    fprintf(stderr, "vm map initial region failed\n");
+    return 1;
+  }
+  if (aegis_vm_map(&space, 0x2800u, 0x1000u, 0x1u) == 0) {
+    fprintf(stderr, "vm map overlap should fail\n");
+    return 1;
+  }
+  if (aegis_vm_map(&space, 0x4000u, 0x1000u, 0x1u) != 0) {
+    fprintf(stderr, "vm map adjacent region failed\n");
+    return 1;
+  }
+  if (space.count != 2u) {
+    fprintf(stderr, "vm map expected count 2\n");
+    return 1;
+  }
+  if (aegis_vm_query(&space, 0x1100u, &region) != 0 || region.base != 0x1000u || region.size != 0x2000u) {
+    fprintf(stderr, "vm query region lookup failed\n");
+    return 1;
+  }
+  if (aegis_vm_query(&space, 0x9000u, &region) == 0) {
+    fprintf(stderr, "vm query expected miss for unmapped address\n");
+    return 1;
+  }
+  if (aegis_vm_unmap(&space, 0x1000u, 0x2000u) != 0 || space.count != 1u) {
+    fprintf(stderr, "vm unmap expected success and count decrement\n");
+    return 1;
+  }
+  if (aegis_vm_summary_json(&space, summary, sizeof(summary)) <= 0) {
+    fprintf(stderr, "vm summary json generation failed\n");
+    return 1;
+  }
+  if (strstr(summary, "\"schema_version\":1") == 0 ||
+      strstr(summary, "\"region_count\":1") == 0 ||
+      strstr(summary, "\"base\":16384") == 0) {
+    fprintf(stderr, "vm summary json missing expected fields: %s\n", summary);
+    return 1;
+  }
+  if (aegis_vm_summary_json(&space, tiny, sizeof(tiny)) >= 0) {
+    fprintf(stderr, "vm summary json expected tiny buffer failure\n");
+    return 1;
+  }
+  return 0;
+}
+
 static int test_scheduler_round_robin(void) {
   aegis_scheduler_t scheduler;
   uint32_t pid = 0;
@@ -642,6 +693,9 @@ static int test_scheduler_fairness_snapshot_json_endpoint(void) {
 
 int main(void) {
   if (test_kernel_boot() != 0) {
+    return 1;
+  }
+  if (test_vm_region_map_abstraction() != 0) {
     return 1;
   }
   if (test_scheduler_round_robin() != 0) {
