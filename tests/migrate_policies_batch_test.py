@@ -157,6 +157,74 @@ class MigratePoliciesBatchTest(unittest.TestCase):
             self.assertIn("diff_preview", data["results"][0])
             self.assertIn("policy_revision", data["results"][0]["diff_preview"])
 
+    def test_batch_migration_filtering_and_sharding(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            inp = base / "in"
+            out = base / "out"
+            summary = base / "summary.json"
+            inp.mkdir()
+            for i in range(6):
+                inp.joinpath(f"policy-{i}.json").write_text(
+                    json.dumps(
+                        {
+                            "process_id": 4000 + i,
+                            "capabilities": 5,
+                            "allow_fs_read": 1,
+                            "allow_fs_write": 0,
+                            "allow_net_client": 1,
+                            "allow_net_server": 0,
+                            "allow_device_io": 0,
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+            inp.joinpath("skip.json").write_text(
+                json.dumps(
+                    {
+                        "process_id": 5000,
+                        "capabilities": 5,
+                        "allow_fs_read": 1,
+                        "allow_fs_write": 0,
+                        "allow_net_client": 1,
+                        "allow_net_server": 0,
+                        "allow_device_io": 0,
+                    }
+                ),
+                encoding="utf-8",
+            )
+            rc = subprocess.run(
+                [
+                    "python",
+                    str(SCRIPT),
+                    "--input-dir",
+                    str(inp),
+                    "--output-dir",
+                    str(out),
+                    "--summary-json",
+                    str(summary),
+                    "--include-glob",
+                    "policy-*.json",
+                    "--exclude-glob",
+                    "policy-5.json",
+                    "--shard-index",
+                    "1",
+                    "--shard-count",
+                    "2",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+                cwd=str(ROOT),
+            ).returncode
+            self.assertEqual(rc, 0)
+            data = json.loads(summary.read_text(encoding="utf-8"))
+            self.assertEqual(data["selected"], 2)
+            self.assertEqual(data["total"], 2)
+            self.assertEqual(data["migrated"], 2)
+            self.assertFalse((out / "skip.json").exists())
+            self.assertFalse((out / "policy-5.json").exists())
+
 
 if __name__ == "__main__":
     unittest.main()

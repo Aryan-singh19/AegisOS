@@ -463,6 +463,77 @@ static int test_network_scope_debug_trace_json_escaping(void) {
   return 0;
 }
 
+static int test_network_scope_debug_trace_json_fuzz_style_escaping_matrix(void) {
+  typedef struct {
+    const char *host;
+    const char *expected_escaped_fragment;
+  } host_case_t;
+  const host_case_t cases[] = {
+      {"api\\\"quote.local", "api\\\\\\\"quote.local"},
+      {"api\\\\slash.local", "api\\\\\\\\slash.local"},
+      {"api\nline.local", "api\\nline.local"},
+      {"api\tcol.local", "api\\tcol.local"},
+      {"api\x01" "ctrl.local", "api\\u0001ctrl.local"},
+      {"api-\xE2\x98\x83.local", 0},
+  };
+  aegis_capability_store_t cap_store;
+  aegis_policy_engine_t engine;
+  aegis_sandbox_policy_t policy = {
+      4006u, AEGIS_CAP_NET_CLIENT, 0u, 0u, 1u, 0u, 0u};
+  aegis_policy_decision_t decision;
+  char json_trace[1024];
+  size_t i;
+
+  aegis_capability_store_init(&cap_store);
+  aegis_policy_engine_init(&engine);
+  if (aegis_capability_issue(&cap_store, 4006u, AEGIS_CAP_NET_CLIENT) != 0) {
+    fprintf(stderr, "json fuzz escaping capability issue failed\n");
+    return 1;
+  }
+  if (aegis_policy_engine_set_policy(&engine, &policy) != 0) {
+    fprintf(stderr, "json fuzz escaping set policy failed\n");
+    return 1;
+  }
+  for (i = 0; i < (sizeof(cases) / sizeof(cases[0])); ++i) {
+    if (aegis_policy_engine_clear_net_rules(&engine, 4006u) != 0 && i > 0u) {
+      fprintf(stderr, "json fuzz escaping clear net rules failed\n");
+      return 1;
+    }
+    if (aegis_policy_engine_add_net_rule(
+            &engine, 4006u, cases[i].host, 443, 443, AEGIS_NET_PROTO_TCP, 1u, 0u, 1u) != 0) {
+      fprintf(stderr, "json fuzz escaping add allow rule failed at case %u\n", (unsigned int)i);
+      return 1;
+    }
+    if (aegis_policy_engine_check_network_with_ip_trace_json(&engine,
+                                                             &cap_store,
+                                                             4006u,
+                                                             AEGIS_ACTION_NET_CONNECT,
+                                                             cases[i].host,
+                                                             443,
+                                                             AEGIS_NET_PROTO_TCP,
+                                                             0u,
+                                                             0,
+                                                             json_trace,
+                                                             sizeof(json_trace),
+                                                             &decision) != 1) {
+      fprintf(stderr, "json fuzz escaping expected allow at case %u\n", (unsigned int)i);
+      return 1;
+    }
+    if (strstr(json_trace, "\"decision_allowed\":1") == 0 || strstr(json_trace, "\"host\":\"") == 0) {
+      fprintf(stderr, "json fuzz escaping missing base fields at case %u: %s\n", (unsigned int)i,
+              json_trace);
+      return 1;
+    }
+    if (cases[i].expected_escaped_fragment != 0 &&
+        strstr(json_trace, cases[i].expected_escaped_fragment) == 0) {
+      fprintf(stderr, "json fuzz escaping missing escaped host fragment at case %u: %s\n",
+              (unsigned int)i, json_trace);
+      return 1;
+    }
+  }
+  return 0;
+}
+
 static int test_symlink_scope_resolution(void) {
   aegis_capability_store_t cap_store;
   aegis_policy_engine_t engine;
@@ -971,6 +1042,9 @@ int main(void) {
     return 1;
   }
   if (test_network_scope_debug_trace_json_escaping() != 0) {
+    return 1;
+  }
+  if (test_network_scope_debug_trace_json_fuzz_style_escaping_matrix() != 0) {
     return 1;
   }
   if (test_symlink_scope_resolution() != 0) {

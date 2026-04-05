@@ -134,9 +134,68 @@ def main():
         action="store_true",
         help="Include per-file unified diff preview in summary results",
     )
+    parser.add_argument(
+        "--include-glob",
+        action="append",
+        default=[],
+        help="Optional glob filter(s) to include matching file names (repeatable)",
+    )
+    parser.add_argument(
+        "--exclude-glob",
+        action="append",
+        default=[],
+        help="Optional glob filter(s) to exclude matching file names (repeatable)",
+    )
+    parser.add_argument("--shard-index", type=int, help="0-based shard index")
+    parser.add_argument("--shard-count", type=int, help="Total number of shards")
     args = parser.parse_args()
 
-    summary = run_batch(args.input_dir, args.output_dir, dry_run=args.dry_run, diff_preview=args.diff_preview)
+    if (args.shard_index is None) != (args.shard_count is None):
+        print("error: --shard-index and --shard-count must be provided together", file=sys.stderr)
+        return 2
+    if args.shard_count is not None:
+        if args.shard_count <= 0 or args.shard_index < 0 or args.shard_index >= args.shard_count:
+            print("error: invalid shard configuration", file=sys.stderr)
+            return 2
+
+    # Build filtered + sharded working input directory view.
+    input_dir = Path(args.input_dir)
+    staged_input_dir = input_dir
+    all_files = sorted(input_dir.glob("*.json"))
+    selected = []
+    for path in all_files:
+        name = path.name
+        if args.include_glob and not any(path.match(p) or name == p for p in args.include_glob):
+            continue
+        if args.exclude_glob and any(path.match(p) or name == p for p in args.exclude_glob):
+            continue
+        selected.append(path)
+    if args.shard_count is not None:
+        selected = [p for i, p in enumerate(selected) if (i % args.shard_count) == args.shard_index]
+
+    # Mirror selected files into a deterministic temp-like staging folder under output dir.
+    # This keeps run_batch unchanged while enforcing filtering/sharding.
+    mirror_dir = Path(args.output_dir) / ".batch_selection"
+    if mirror_dir.exists():
+        for old in mirror_dir.glob("*.json"):
+            old.unlink()
+    mirror_dir.mkdir(parents=True, exist_ok=True)
+    for path in selected:
+        mirror_dir.joinpath(path.name).write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+    staged_input_dir = mirror_dir
+
+    summary = run_batch(
+        staged_input_dir,
+        args.output_dir,
+        dry_run=args.dry_run,
+        diff_preview=args.diff_preview,
+    )
+    summary["selected"] = len(selected)
+    summary["include_glob"] = args.include_glob
+    summary["exclude_glob"] = args.exclude_glob
+    if args.shard_count is not None:
+        summary["shard_index"] = args.shard_index
+        summary["shard_count"] = args.shard_count
     print(
         f"total={summary['total']} migrated={summary['migrated']} "
         f"already_current={summary['already_current']} failed={summary['failed']}"
