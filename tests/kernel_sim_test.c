@@ -156,26 +156,49 @@ static int test_scheduler_preemption_tick(void) {
   aegis_scheduler_t scheduler;
   uint32_t pid = 0;
   uint8_t switched = 0;
+  uint8_t reason = AEGIS_SWITCH_NONE;
   aegis_scheduler_init(&scheduler);
   aegis_scheduler_set_quantum(&scheduler, 2u);
   if (aegis_scheduler_add(&scheduler, 7001u) != 0 || aegis_scheduler_add(&scheduler, 7002u) != 0) {
     fprintf(stderr, "preemption add failed\n");
     return 1;
   }
-  if (aegis_scheduler_on_tick(&scheduler, &pid, &switched) != 0 || switched == 0 || pid != 7001u) {
+  if (aegis_scheduler_on_tick_ex(&scheduler, &pid, &switched, &reason) != 0 || switched == 0 ||
+      pid != 7001u || reason != AEGIS_SWITCH_PROCESS_START) {
     fprintf(stderr, "tick1 expected switch to pid 7001\n");
     return 1;
   }
-  if (aegis_scheduler_on_tick(&scheduler, &pid, &switched) != 0 || switched != 0 || pid != 7001u) {
+  if (aegis_scheduler_on_tick_ex(&scheduler, &pid, &switched, &reason) != 0 || switched != 0 ||
+      pid != 7001u || reason != AEGIS_SWITCH_NONE) {
     fprintf(stderr, "tick2 expected same pid 7001 without switch\n");
     return 1;
   }
-  if (aegis_scheduler_on_tick(&scheduler, &pid, &switched) != 0 || switched == 0 || pid != 7002u) {
+  if (aegis_scheduler_on_tick_ex(&scheduler, &pid, &switched, &reason) != 0 || switched == 0 ||
+      pid != 7002u || reason != AEGIS_SWITCH_QUANTUM_EXPIRED) {
     fprintf(stderr, "tick3 expected switch to pid 7002\n");
     return 1;
   }
-  if (aegis_scheduler_on_tick(&scheduler, &pid, &switched) != 0 || switched != 0 || pid != 7002u) {
+  if (aegis_scheduler_on_tick_ex(&scheduler, &pid, &switched, &reason) != 0 || switched != 0 ||
+      pid != 7002u || reason != AEGIS_SWITCH_NONE) {
     fprintf(stderr, "tick4 expected same pid 7002 without switch\n");
+    return 1;
+  }
+  if (aegis_scheduler_manual_yield(&scheduler) != 0) {
+    fprintf(stderr, "manual yield failed\n");
+    return 1;
+  }
+  if (aegis_scheduler_on_tick_ex(&scheduler, &pid, &switched, &reason) != 0 || switched == 0 ||
+      reason != AEGIS_SWITCH_MANUAL_YIELD) {
+    fprintf(stderr, "tick5 expected manual yield context switch reason\n");
+    return 1;
+  }
+  if (aegis_scheduler_remove(&scheduler, pid) != 0) {
+    fprintf(stderr, "remove running process failed\n");
+    return 1;
+  }
+  if (aegis_scheduler_on_tick_ex(&scheduler, &pid, &switched, &reason) != 0 || switched == 0 ||
+      reason != AEGIS_SWITCH_PROCESS_EXIT) {
+    fprintf(stderr, "tick6 expected process exit context switch reason\n");
     return 1;
   }
   return 0;

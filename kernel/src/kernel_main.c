@@ -31,6 +31,7 @@ void aegis_scheduler_init(aegis_scheduler_t *scheduler) {
   scheduler->scheduler_ticks = 0;
   scheduler->high_watermark = 0;
   scheduler->current_pid = 0;
+  scheduler->pending_switch_reason = AEGIS_SWITCH_PROCESS_START;
   scheduler->quantum_ticks = 3;
   scheduler->quantum_remaining = 0;
   for (i = 0; i < AEGIS_SCHEDULER_CAPACITY; ++i) {
@@ -97,6 +98,7 @@ int aegis_scheduler_remove(aegis_scheduler_t *scheduler, uint32_t process_id) {
   if (scheduler->current_pid == process_id) {
     scheduler->current_pid = 0;
     scheduler->quantum_remaining = 0;
+    scheduler->pending_switch_reason = AEGIS_SWITCH_PROCESS_EXIT;
   }
   for (i = idx + 1; i < scheduler->count; ++i) {
     scheduler->process_ids[i - 1] = scheduler->process_ids[i];
@@ -222,32 +224,58 @@ void aegis_scheduler_set_quantum(aegis_scheduler_t *scheduler, uint32_t quantum_
 
 int aegis_scheduler_on_tick(aegis_scheduler_t *scheduler, uint32_t *running_pid,
                             uint8_t *context_switch) {
+  uint8_t reason = AEGIS_SWITCH_NONE;
+  return aegis_scheduler_on_tick_ex(scheduler, running_pid, context_switch, &reason);
+}
+
+int aegis_scheduler_on_tick_ex(aegis_scheduler_t *scheduler, uint32_t *running_pid,
+                               uint8_t *context_switch, uint8_t *switch_reason) {
   uint32_t next_pid = 0;
   int rc;
-  if (scheduler == 0 || running_pid == 0 || context_switch == 0) {
+  if (scheduler == 0 || running_pid == 0 || context_switch == 0 || switch_reason == 0) {
     return -1;
   }
   *context_switch = 0;
+  *switch_reason = AEGIS_SWITCH_NONE;
   scheduler->scheduler_ticks += 1;
   if (scheduler->count == 0) {
     scheduler->current_pid = 0;
     scheduler->quantum_remaining = 0;
+    scheduler->pending_switch_reason = AEGIS_SWITCH_PROCESS_START;
     *running_pid = 0;
     return 0;
   }
   if (scheduler->current_pid == 0 || scheduler->quantum_remaining == 0) {
+    uint8_t reason = scheduler->pending_switch_reason;
+    if (reason == AEGIS_SWITCH_NONE) {
+      reason = AEGIS_SWITCH_QUANTUM_EXPIRED;
+    }
     rc = aegis_scheduler_next(scheduler, &next_pid);
     if (rc != 0) {
       return -1;
     }
     *context_switch = 1;
+    *switch_reason = reason;
     scheduler->current_pid = next_pid;
     scheduler->quantum_remaining = scheduler->quantum_ticks;
+    scheduler->pending_switch_reason = AEGIS_SWITCH_NONE;
   }
   if (scheduler->quantum_remaining > 0) {
     scheduler->quantum_remaining -= 1;
+    if (scheduler->quantum_remaining == 0 && scheduler->count > 0) {
+      scheduler->pending_switch_reason = AEGIS_SWITCH_QUANTUM_EXPIRED;
+    }
   }
   *running_pid = scheduler->current_pid;
+  return 0;
+}
+
+int aegis_scheduler_manual_yield(aegis_scheduler_t *scheduler) {
+  if (scheduler == 0 || scheduler->count == 0) {
+    return -1;
+  }
+  scheduler->quantum_remaining = 0;
+  scheduler->pending_switch_reason = AEGIS_SWITCH_MANUAL_YIELD;
   return 0;
 }
 

@@ -16,6 +16,7 @@ typedef struct {
   uint64_t scheduler_ticks;
   size_t high_watermark;
   uint32_t current_pid;
+  uint8_t pending_switch_reason;
   uint32_t quantum_ticks;
   uint32_t quantum_remaining;
   size_t count;
@@ -38,6 +39,14 @@ typedef enum {
   AEGIS_PRIORITY_HIGH = 3
 } aegis_scheduler_priority_t;
 
+typedef enum {
+  AEGIS_SWITCH_NONE = 0,
+  AEGIS_SWITCH_PROCESS_START = 1,
+  AEGIS_SWITCH_QUANTUM_EXPIRED = 2,
+  AEGIS_SWITCH_PROCESS_EXIT = 3,
+  AEGIS_SWITCH_MANUAL_YIELD = 4
+} aegis_scheduler_switch_reason_t;
+
 int aegis_kernel_boot_check(void);
 void aegis_scheduler_init(aegis_scheduler_t *scheduler);
 int aegis_scheduler_add(aegis_scheduler_t *scheduler, uint32_t process_id);
@@ -55,6 +64,9 @@ void aegis_scheduler_reset_metrics(aegis_scheduler_t *scheduler);
 void aegis_scheduler_set_quantum(aegis_scheduler_t *scheduler, uint32_t quantum_ticks);
 int aegis_scheduler_on_tick(aegis_scheduler_t *scheduler, uint32_t *running_pid,
                             uint8_t *context_switch);
+int aegis_scheduler_on_tick_ex(aegis_scheduler_t *scheduler, uint32_t *running_pid,
+                               uint8_t *context_switch, uint8_t *switch_reason);
+int aegis_scheduler_manual_yield(aegis_scheduler_t *scheduler);
 int aegis_scheduler_metrics_snapshot(const aegis_scheduler_t *scheduler,
                                      aegis_scheduler_metrics_snapshot_t *snapshot);
 int aegis_scheduler_wait_ticks_for(const aegis_scheduler_t *scheduler, uint32_t process_id,
