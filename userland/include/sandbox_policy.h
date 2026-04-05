@@ -20,6 +20,13 @@ typedef struct {
   uint64_t policy_revision;
 } aegis_sandbox_policy_t;
 
+typedef struct {
+  uint8_t migrated;
+  uint32_t from_schema_version;
+  uint32_t to_schema_version;
+  uint64_t assigned_policy_revision;
+} aegis_sandbox_policy_migration_report_t;
+
 int aegis_sandbox_policy_validate(const aegis_sandbox_policy_t *policy,
                                   char *reason, size_t reason_size);
 int aegis_sandbox_policy_allows(const aegis_sandbox_policy_t *policy,
@@ -29,5 +36,9 @@ int aegis_sandbox_policy_serialize_json(const aegis_sandbox_policy_t *policy,
 int aegis_sandbox_policy_deserialize_json(const char *input,
                                           aegis_sandbox_policy_t *policy,
                                           char *reason, size_t reason_size);
+int aegis_sandbox_policy_migrate_legacy_json(const char *legacy_input,
+                                             char *output, size_t output_size,
+                                             aegis_sandbox_policy_migration_report_t *report,
+                                             char *reason, size_t reason_size);
 
 #endif

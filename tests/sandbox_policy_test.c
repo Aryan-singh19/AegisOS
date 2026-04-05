@@ -95,6 +95,41 @@ static int test_policy_schema_version_guard(void) {
   return 0;
 }
 
+static int test_policy_legacy_migration_adapter(void) {
+  const char *legacy =
+      "{\"process_id\":123,\"capabilities\":5,\"allow_fs_read\":1,"
+      "\"allow_fs_write\":0,\"allow_net_client\":1,\"allow_net_server\":0,"
+      "\"allow_device_io\":0}";
+  char migrated_json[512];
+  char reason[64];
+  aegis_sandbox_policy_migration_report_t report;
+  aegis_sandbox_policy_t parsed = {0u};
+
+  if (aegis_sandbox_policy_migrate_legacy_json(legacy, migrated_json, sizeof(migrated_json), &report,
+                                               reason, sizeof(reason)) != 0) {
+    fprintf(stderr, "expected migration to succeed: %s\n", reason);
+    return 1;
+  }
+  if (report.migrated == 0u || report.to_schema_version != AEGIS_SANDBOX_POLICY_SCHEMA_VERSION) {
+    fprintf(stderr, "unexpected migration report\n");
+    return 1;
+  }
+  if (strstr(migrated_json, "\"schema_version\":1") == 0 ||
+      strstr(migrated_json, "\"policy_revision\":1") == 0) {
+    fprintf(stderr, "migrated json missing version metadata\n");
+    return 1;
+  }
+  if (aegis_sandbox_policy_deserialize_json(migrated_json, &parsed, reason, sizeof(reason)) != 0) {
+    fprintf(stderr, "failed to parse migrated json: %s\n", reason);
+    return 1;
+  }
+  if (parsed.process_id != 123u || parsed.schema_version != AEGIS_SANDBOX_POLICY_SCHEMA_VERSION) {
+    fprintf(stderr, "parsed migrated policy mismatch\n");
+    return 1;
+  }
+  return 0;
+}
+
 int main(void) {
   if (test_valid_policy() != 0) {
     return 1;
@@ -109,6 +144,9 @@ int main(void) {
     return 1;
   }
   if (test_policy_schema_version_guard() != 0) {
+    return 1;
+  }
+  if (test_policy_legacy_migration_adapter() != 0) {
     return 1;
   }
   puts("sandbox policy tests passed");

@@ -184,3 +184,75 @@ int aegis_sandbox_policy_deserialize_json(const char *input,
   }
   return 0;
 }
+
+int aegis_sandbox_policy_migrate_legacy_json(const char *legacy_input,
+                                             char *output, size_t output_size,
+                                             aegis_sandbox_policy_migration_report_t *report,
+                                             char *reason, size_t reason_size) {
+  aegis_sandbox_policy_t policy;
+  unsigned int process_id = 0;
+  unsigned int capabilities = 0;
+  unsigned int allow_fs_read = 0;
+  unsigned int allow_fs_write = 0;
+  unsigned int allow_net_client = 0;
+  unsigned int allow_net_server = 0;
+  unsigned int allow_device_io = 0;
+  int matched = 0;
+
+  if (reason != 0 && reason_size > 0) {
+    reason[0] = '\0';
+  }
+  if (report != 0) {
+    report->migrated = 0;
+    report->from_schema_version = 0u;
+    report->to_schema_version = AEGIS_SANDBOX_POLICY_SCHEMA_VERSION;
+    report->assigned_policy_revision = 0u;
+  }
+  if (legacy_input == 0 || output == 0 || output_size == 0u) {
+    write_reason(reason, reason_size, "legacy input or output is null");
+    return -1;
+  }
+
+  matched = sscanf(
+      legacy_input,
+      "{\"process_id\":%u,\"capabilities\":%u,\"allow_fs_read\":%u,"
+      "\"allow_fs_write\":%u,\"allow_net_client\":%u,\"allow_net_server\":%u,"
+      "\"allow_device_io\":%u}",
+      &process_id,
+      &capabilities,
+      &allow_fs_read,
+      &allow_fs_write,
+      &allow_net_client,
+      &allow_net_server,
+      &allow_device_io);
+  if (matched != 7) {
+    write_reason(reason, reason_size, "legacy JSON format not recognized");
+    return -1;
+  }
+
+  policy.process_id = process_id;
+  policy.capabilities = capabilities;
+  policy.allow_fs_read = (uint8_t)allow_fs_read;
+  policy.allow_fs_write = (uint8_t)allow_fs_write;
+  policy.allow_net_client = (uint8_t)allow_net_client;
+  policy.allow_net_server = (uint8_t)allow_net_server;
+  policy.allow_device_io = (uint8_t)allow_device_io;
+  policy.schema_version = AEGIS_SANDBOX_POLICY_SCHEMA_VERSION;
+  policy.policy_revision = 1u;
+
+  if (!aegis_sandbox_policy_validate(&policy, reason, reason_size)) {
+    return -1;
+  }
+  if (aegis_sandbox_policy_serialize_json(&policy, output, output_size) != 0) {
+    write_reason(reason, reason_size, "failed to serialize migrated policy");
+    return -1;
+  }
+  if (report != 0) {
+    report->migrated = 1u;
+    report->from_schema_version = 0u;
+    report->to_schema_version = AEGIS_SANDBOX_POLICY_SCHEMA_VERSION;
+    report->assigned_policy_revision = 1u;
+  }
+  write_reason(reason, reason_size, "migrated");
+  return 0;
+}
