@@ -31,6 +31,7 @@ def main():
 
   commands = [
       ["python", "scripts/validate_packages.py"],
+      ["python", "scripts/validate_repo_index.py"],
       ["python", "scripts/check_onboarding_ci_equivalence.py"],
       ["python", "scripts/run_clang_suite.py", "--std", "c11", "--artifact-suffix", ".exe"],
   ]

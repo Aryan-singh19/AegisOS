@@ -26,9 +26,12 @@ Profile compatibility mapping:
 Validation command:
 
 - `python scripts/validate_packages.py`
+- `python scripts/validate_repo_index.py --index-json packages/repository-index.json`
   - also exports graph files:
     - `packages/dependency-graph.json`
     - `packages/dependency-graph.dot`
+  - validates trust policy index:
+    - `packages/repository-index.json`
   - migration helper for legacy manifests:
     - `python scripts/migrate_package_manifests.py --input-dir packages/core --output-dir out/core-migrated`
 

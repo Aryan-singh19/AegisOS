@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "repository": "aegisos-main",
+  "generated_at": "2026-04-06T00:00:00Z",
+  "signing_policy": {
+    "required_signature_format": "placeholder-v1",
+    "required_key_id_prefix": "aegis-placeholder-"
+  },
+  "packages": [
+    {
+      "name": "aegis-kernel",
+      "version": "0.1.0",
+      "manifest_path": "packages/core/kernel.yaml",
+      "signature_format": "placeholder-v1",
+      "signature_key_id": "aegis-placeholder-core",
+      "signature_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "signature_value": "UNSIGNED_PLACEHOLDER"
+    },
+    {
+      "name": "aegis-scheduler",
+      "version": "0.1.0",
+      "manifest_path": "packages/core/scheduler.yaml",
+      "signature_format": "placeholder-v1",
+      "signature_key_id": "aegis-placeholder-core",
+      "signature_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "signature_value": "UNSIGNED_PLACEHOLDER"
+    },
+    {
+      "name": "aegis-userland-base",
+      "version": "0.1.0",
+      "manifest_path": "packages/core/userland-base.yaml",
+      "signature_format": "placeholder-v1",
+      "signature_key_id": "aegis-placeholder-core",
+      "signature_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "signature_value": "UNSIGNED_PLACEHOLDER"
+    },
+    {
+      "name": "aegis-security-core",
+      "version": "0.1.0",
+      "manifest_path": "packages/core/security-core.yaml",
+      "signature_format": "placeholder-v1",
+      "signature_key_id": "aegis-placeholder-core",
+      "signature_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "signature_value": "UNSIGNED_PLACEHOLDER"
+    },
+    {
+      "name": "aegis-sandbox-engine",
+      "version": "0.1.0",
+      "manifest_path": "packages/core/sandbox-engine.yaml",
+      "signature_format": "placeholder-v1",
+      "signature_key_id": "aegis-placeholder-core",
+      "signature_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "signature_value": "UNSIGNED_PLACEHOLDER"
+    },
+    {
+      "name": "aegis-update-service",
+      "version": "0.1.0",
+      "manifest_path": "packages/core/update-service.yaml",
+      "signature_format": "placeholder-v1",
+      "signature_key_id": "aegis-placeholder-core",
+      "signature_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "signature_value": "UNSIGNED_PLACEHOLDER"
+    },
+    {
+      "name": "aegis-desktop-shell",
+      "version": "0.1.0",
+      "manifest_path": "packages/core/desktop-shell.yaml",
+      "signature_format": "placeholder-v1",
+      "signature_key_id": "aegis-placeholder-core",
+      "signature_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "signature_value": "UNSIGNED_PLACEHOLDER"
+    },
+    {
+      "name": "aegis-developer-sdk",
+      "version": "0.1.0",
+      "manifest_path": "packages/core/developer-sdk.yaml",
+      "signature_format": "placeholder-v1",
+      "signature_key_id": "aegis-placeholder-core",
+      "signature_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "signature_value": "UNSIGNED_PLACEHOLDER"
+    }
+  ]
+}

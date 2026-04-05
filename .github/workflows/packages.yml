@@ -6,12 +6,14 @@ on:
     paths:
       - "packages/**"
       - "scripts/validate_packages.py"
+      - "scripts/validate_repo_index.py"
       - ".github/workflows/packages.yml"
   pull_request:
     branches: [main]
     paths:
       - "packages/**"
       - "scripts/validate_packages.py"
+      - "scripts/validate_repo_index.py"
       - ".github/workflows/packages.yml"
 
 jobs:
@@ -23,3 +25,6 @@ jobs:
 
       - name: Validate package manifests
         run: python3 scripts/validate_packages.py
+
+      - name: Validate repository index trust policy
+        run: python3 scripts/validate_repo_index.py --index-json packages/repository-index.json

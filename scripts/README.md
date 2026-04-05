@@ -11,3 +11,4 @@ Helper scripts for local development and automation live here.
 - `run_clang_suite.py`: shared compile/test runner for core C targets.
 - `run_sanitizer_suite.py`: ASAN/UBSAN test runner with suppression baseline.
 - `profile_trace_json_property.py`: seed-corpus replay and runtime profile utility for trace JSON property tests.
+- `validate_repo_index.py`: validates repository index trust policy, signature metadata, and manifest alignment.
