@@ -1,10 +1,12 @@
 # CHANGELOG
 
 Auto-updated by workflow.
-Last generated: 2026-04-05 10:58:12Z
+Last generated: 2026-04-05 11:00:11Z
 
 ## Unreleased
 
+- 2026-04-05 `c9cfff6` Add_sandbox_policy_json_serialization_and_parsing_support
+- 2026-04-05 `e14edc6` docs: auto-update explain and changelog
 - 2026-04-05 `97c06b2` Add_one_command_onboarding_bootstrap_runner
 - 2026-04-05 `0f6d8a0` docs: auto-update explain and changelog
 - 2026-04-05 `72a0881` Add_context_switch_reason_codes_for_scheduler_ticks
@@ -18,5 +20,3 @@ Last generated: 2026-04-05 10:58:12Z
 - 2026-04-05 `67fc1c3` Add_rotation_actor_reason_metadata_to_capability_audit
 - 2026-04-05 `5e0463e` docs: auto-update explain and changelog
 - 2026-04-05 `cc26bce` Add_dns_pinning_guard_for_network_rebinding_defense
-- 2026-04-05 `854afc1` docs: auto-update explain and changelog
-- 2026-04-05 `33b3b00` Add_deterministic_network_scope_precedence_with_tie_break_rules

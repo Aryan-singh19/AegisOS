@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 10:58:12Z
+Last generated: 2026-04-05 11:00:11Z
 
 ## What AegisOS Is Building
 
@@ -63,7 +63,7 @@ We implement in vertical slices:
 - none
 
 ### Good First Task
-- #41 Onboarding_bootstrap_script_runner (good-first-task)
+- #50 Onboarding_runner_ci_equivalence_check (good-first-task)
 
 ### Other
 - none
@@ -72,8 +72,8 @@ We implement in vertical slices:
 
 Recent commit touches (higher means more active recently):
 
-- kernel: 15
-- userland: 13
+- kernel: 12
+- userland: 16
 - packages: 15
 - docs: 50
 - workflows: 4
@@ -93,6 +93,8 @@ Open issue pressure by component signal:
 
 ## Recent Engineering Changes
 
+- `c9cfff6` (2026-04-05): Add_sandbox_policy_json_serialization_and_parsing_support
+- `e14edc6` (2026-04-05): docs: auto-update explain and changelog
 - `97c06b2` (2026-04-05): Add_one_command_onboarding_bootstrap_runner
 - `0f6d8a0` (2026-04-05): docs: auto-update explain and changelog
 - `72a0881` (2026-04-05): Add_context_switch_reason_codes_for_scheduler_ticks
@@ -106,5 +108,3 @@ Open issue pressure by component signal:
 - `67fc1c3` (2026-04-05): Add_rotation_actor_reason_metadata_to_capability_audit
 - `5e0463e` (2026-04-05): docs: auto-update explain and changelog
 - `cc26bce` (2026-04-05): Add_dns_pinning_guard_for_network_rebinding_defense
-- `854afc1` (2026-04-05): docs: auto-update explain and changelog
-- `33b3b00` (2026-04-05): Add_deterministic_network_scope_precedence_with_tie_break_rules
