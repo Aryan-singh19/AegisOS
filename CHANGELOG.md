@@ -1,10 +1,12 @@
 # CHANGELOG
 
 Auto-updated by workflow.
-Last generated: 2026-04-05 13:09:50Z
+Last generated: 2026-04-05 13:12:37Z
 
 ## Unreleased
 
+- 2026-04-05 `1091117` "Add_cross_platform_toolchain_bootstrap_scripts_for_contributors"
+- 2026-04-05 `5312e24` docs: auto-update explain and changelog
 - 2026-04-05 `f8fd4c7` "Add_trace_json_property_perf_baseline_and_seed_corpus_tooling"
 - 2026-04-05 `395429a` docs: auto-update explain and changelog
 - 2026-04-05 `16a0ad2` "Add_filesystem_resolver_backend_hook_for_symlink_resolution"
@@ -18,5 +20,3 @@ Last generated: 2026-04-05 13:09:50Z
 - 2026-04-05 `15c3fc8` "Add_package_signature_placeholder_fields_and_schema_validation"
 - 2026-04-05 `fe4102e` docs: auto-update explain and changelog
 - 2026-04-05 `6eb55d1` "Add_scheduler_aging_boost_policy_for_low_priority_fairness"
-- 2026-04-05 `f0b77b3` docs: auto-update explain and changelog
-- 2026-04-05 `9a56599` "Add_configurable_docs_heatmap_trend_windows"

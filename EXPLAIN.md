@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 13:09:50Z
+Last generated: 2026-04-05 13:12:37Z
 
 ## What AegisOS Is Building
 
@@ -58,12 +58,12 @@ Recent commit touches in `weekly` window (higher means more active recently):
 - kernel: 47
 - userland: 89
 - packages: 39
-- docs: 163
+- docs: 167
 - workflows: 15
 - tests: 62
 - tools: 1
 - platform: 1
-- scripts: 29
+- scripts: 33
 - other: 14
 
 Open issue pressure by component signal:
@@ -76,6 +76,8 @@ Open issue pressure by component signal:
 
 ## Recent Engineering Changes
 
+- `1091117` (2026-04-05): "Add_cross_platform_toolchain_bootstrap_scripts_for_contributors"
+- `5312e24` (2026-04-05): docs: auto-update explain and changelog
 - `f8fd4c7` (2026-04-05): "Add_trace_json_property_perf_baseline_and_seed_corpus_tooling"
 - `395429a` (2026-04-05): docs: auto-update explain and changelog
 - `16a0ad2` (2026-04-05): "Add_filesystem_resolver_backend_hook_for_symlink_resolution"
@@ -89,5 +91,3 @@ Open issue pressure by component signal:
 - `15c3fc8` (2026-04-05): "Add_package_signature_placeholder_fields_and_schema_validation"
 - `fe4102e` (2026-04-05): docs: auto-update explain and changelog
 - `6eb55d1` (2026-04-05): "Add_scheduler_aging_boost_policy_for_low_priority_fairness"
-- `f0b77b3` (2026-04-05): docs: auto-update explain and changelog
-- `9a56599` (2026-04-05): "Add_configurable_docs_heatmap_trend_windows"
