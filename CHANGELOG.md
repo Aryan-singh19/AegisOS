@@ -1,10 +1,12 @@
 # CHANGELOG
 
 Auto-updated by workflow.
-Last generated: 2026-04-05 10:41:29Z
+Last generated: 2026-04-05 10:42:30Z
 
 ## Unreleased
 
+- 2026-04-05 `1ffc333` Fix_project_automation_workflow_syntax_and_token_fallback
+- 2026-04-05 `4a6bd9b` docs: auto-update explain and changelog
 - 2026-04-05 `9ebe78b` Fix_project_automation_with_PAT_secret_and_github_script_v8
 - 2026-04-05 `6f279cc` docs: auto-update explain and changelog
 - 2026-04-05 `43de16a` Add_contributor_onboarding_checklist_and_reference
@@ -18,5 +20,3 @@ Last generated: 2026-04-05 10:41:29Z
 - 2026-04-05 `fa8d88a` Add_package_dependency_cycle_detection_to_validator
 - 2026-04-05 `309e75f` docs: auto-update explain and changelog
 - 2026-04-05 `a728fcd` Add_package_manifest_schema_version_1_validation
-- 2026-04-05 `0908d44` docs: auto-update explain and changelog
-- 2026-04-05 `887ffdd` Add_ASAN_UBSAN_sanitizer_jobs_to_clang_workflow
