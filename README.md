@@ -60,6 +60,7 @@ This repository contains:
 - [`Auto Docs workflow`](.github/workflows/auto-docs.yml) updates `EXPLAIN.md` and `CHANGELOG.md`.
 - Recursion protection is enabled: updates to these markdown files are ignored by workflow triggers.
 - [`Package Validation workflow`](.github/workflows/packages.yml) enforces package/profile manifest integrity.
+- [`Clang Matrix workflow`](.github/workflows/clang-tests.yml) compiles/tests core modules across C standard variants.
 
 ## Collaboration
 
