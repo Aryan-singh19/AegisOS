@@ -5,7 +5,12 @@ Use this checklist for first-time contributors to AegisOS.
 ## Day 0 Setup
 
 - Fork the repository and clone locally.
-- Install toolchain:
+- Run platform bootstrap script:
+  - Windows cmd: `scripts\\bootstrap.bat`
+  - Windows PowerShell: `pwsh -File scripts/bootstrap.ps1` (or `powershell -File scripts/bootstrap.ps1`)
+  - Linux/macOS: `bash scripts/bootstrap.sh`
+- Toolchain requirements (if installing manually):
+  - `git`
   - `clang`
   - `cmake`
   - `ninja` (recommended)

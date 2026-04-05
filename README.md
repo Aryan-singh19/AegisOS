@@ -41,6 +41,7 @@ Build a modern, privacy-first operating system that combines the strongest quali
 8. Follow new contributor checklist in [`docs/ONBOARDING.md`](docs/ONBOARDING.md).
 9. Run bootstrap validation: `python scripts/onboarding_check.py`.
 10. Check hardware/profile mapping in [`docs/PROFILE_COMPATIBILITY.md`](docs/PROFILE_COMPATIBILITY.md).
+11. Use platform bootstrap scripts in [`scripts/README.md`](scripts/README.md) for first-time setup.
 
 ## Current Status
 
