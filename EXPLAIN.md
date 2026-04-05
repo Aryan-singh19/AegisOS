@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 12:43:54Z
+Last generated: 2026-04-05 12:46:31Z
 
 ## What AegisOS Is Building
 
@@ -36,8 +36,6 @@ We implement in vertical slices:
 - none
 
 ### Priority P1
-- #78 Scheduler_histogram_window_query_json_endpoint (priority-p1, kernel)
-- #77 Trace_json_property_seed_replay_harness (priority-p1, security)
 - #70 Actor_registry_persistent_backing_store (priority-p1, security)
 - #53 Package_graph_rendering_guide (priority-p1)
 - #48 Docs_heatmap_trend_window (priority-p1)
@@ -67,7 +65,7 @@ We implement in vertical slices:
 Recent commit touches (higher means more active recently):
 
 - kernel: 12
-- userland: 33
+- userland: 30
 - packages: 0
 - docs: 40
 - workflows: 0
@@ -79,14 +77,16 @@ Recent commit touches (higher means more active recently):
 
 Open issue pressure by component signal:
 
-- security: 4
-- kernel: 2
+- security: 3
+- kernel: 1
 - packages: 3
 - docs: 1
 - other: 4
 
 ## Recent Engineering Changes
 
+- `4926515` (2026-04-05): "Add_seed_replay_harness_for_trace_json_property_tests"
+- `2827cf3` (2026-04-05): docs: auto-update explain and changelog
 - `469b842` (2026-04-05): "Add_json_endpoint_for_custom_window_histogram_query"
 - `bd00809` (2026-04-05): docs: auto-update explain and changelog
 - `63ab58e` (2026-04-05): "Add_custom_window_scheduler_reason_histogram_query_api"
@@ -100,5 +100,3 @@ Open issue pressure by component signal:
 - `15c20a4` (2026-04-05): "Add_audit_sink_retention_manifest_generator_and_tests"
 - `b11b997` (2026-04-05): docs: auto-update explain and changelog
 - `1acc1f2` (2026-04-05): "Harden_network_trace_json_string_escaping"
-- `aec6f73` (2026-04-05): docs: auto-update explain and changelog
-- `1bd30e4` (2026-04-05): "Add_batch_sandbox_policy_migration_cli_with_summary_and_exit_codes"

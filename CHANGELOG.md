@@ -1,10 +1,12 @@
 # CHANGELOG
 
 Auto-updated by workflow.
-Last generated: 2026-04-05 12:43:54Z
+Last generated: 2026-04-05 12:46:31Z
 
 ## Unreleased
 
+- 2026-04-05 `4926515` "Add_seed_replay_harness_for_trace_json_property_tests"
+- 2026-04-05 `2827cf3` docs: auto-update explain and changelog
 - 2026-04-05 `469b842` "Add_json_endpoint_for_custom_window_histogram_query"
 - 2026-04-05 `bd00809` docs: auto-update explain and changelog
 - 2026-04-05 `63ab58e` "Add_custom_window_scheduler_reason_histogram_query_api"
@@ -18,5 +20,3 @@ Last generated: 2026-04-05 12:43:54Z
 - 2026-04-05 `15c20a4` "Add_audit_sink_retention_manifest_generator_and_tests"
 - 2026-04-05 `b11b997` docs: auto-update explain and changelog
 - 2026-04-05 `1acc1f2` "Harden_network_trace_json_string_escaping"
-- 2026-04-05 `aec6f73` docs: auto-update explain and changelog
-- 2026-04-05 `1bd30e4` "Add_batch_sandbox_policy_migration_cli_with_summary_and_exit_codes"
