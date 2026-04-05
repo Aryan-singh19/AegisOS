@@ -36,6 +36,7 @@ Build a modern, privacy-first operating system that combines the strongest quali
 3. Read [`docs/SECURITY_MODEL.md`](docs/SECURITY_MODEL.md).
 4. Follow milestone plan in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 5. Use execution backlog in [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md).
+6. Read contributor explainer in [`EXPLAIN.md`](EXPLAIN.md).
 
 ## Current Status
 
@@ -45,6 +46,19 @@ This repository contains:
 - CI workflows and contribution templates.
 - Package metadata scaffold for core OS components.
 - Initial compilable kernel simulation target for pipeline validation.
+
+## Feature Strategy
+
+- Secure by default (inspired by iOS trust chain and app isolation).
+- Lightweight and configurable (Linux-style modularity and control).
+- Compatibility-forward (Windows-like pragmatic app strategy).
+- Polished user flow (macOS-style consistency and efficiency).
+- Hardware profile flexibility (Android-like device breadth).
+
+## Automation
+
+- [`Auto Docs workflow`](.github/workflows/auto-docs.yml) updates `EXPLAIN.md` and `CHANGELOG.md`.
+- Recursion protection is enabled: updates to these markdown files are ignored by workflow triggers.
 
 ## Collaboration
 

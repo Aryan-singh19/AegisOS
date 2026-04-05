@@ -6,3 +6,4 @@ Core userspace services, shell tools, and runtime components live here.
 
 - `capability`: capability validation plus lifecycle operations (issue, revoke, access check).
 - `sandbox_policy`: policy schema validation for filesystem/network/device permissions.
+- `sandbox_engine`: action-level enforcement using policy gates + capability tokens.

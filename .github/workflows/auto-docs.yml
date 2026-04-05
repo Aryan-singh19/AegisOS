@@ -1,0 +1,40 @@
+name: Auto Docs
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "EXPLAIN.md"
+      - "CHANGELOG.md"
+  workflow_dispatch:
+
+jobs:
+  generate-docs:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate EXPLAIN and CHANGELOG
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python3 scripts/update_project_docs.py
+
+      - name: Commit changes if needed
+        run: |
+          if git diff --quiet -- EXPLAIN.md CHANGELOG.md; then
+            echo "No docs changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add EXPLAIN.md CHANGELOG.md
+          git commit -m "docs: auto-update explain and changelog"
+          git push
