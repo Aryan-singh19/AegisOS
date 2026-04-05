@@ -40,6 +40,8 @@ typedef struct {
   uint32_t process_id;
   uint32_t requested_permissions;
   uint32_t resulting_permissions;
+  uint32_t actor_id;
+  char reason[64];
   uint8_t event_type;
 } aegis_capability_audit_event_t;
 
@@ -53,6 +55,10 @@ int aegis_capability_issue_with_ttl(aegis_capability_store_t *store, uint32_t pr
                                     uint64_t ttl_seconds);
 int aegis_capability_rotate(aegis_capability_store_t *store, uint32_t process_id,
                             uint32_t permissions, uint64_t now_epoch, uint64_t ttl_seconds);
+int aegis_capability_rotate_with_metadata(aegis_capability_store_t *store, uint32_t process_id,
+                                          uint32_t permissions, uint64_t now_epoch,
+                                          uint64_t ttl_seconds, uint32_t actor_id,
+                                          const char *reason);
 int aegis_capability_revoke(aegis_capability_store_t *store, uint32_t process_id);
 int aegis_capability_is_allowed(const aegis_capability_store_t *store, uint32_t process_id,
                                 uint32_t requested_permissions);

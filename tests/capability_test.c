@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "capability.h"
 
@@ -91,6 +92,51 @@ static int test_capability_ttl_and_rotation(void) {
   return 0;
 }
 
+static int test_rotation_metadata_audit(void) {
+  aegis_capability_store_t store;
+  aegis_capability_audit_event_t event;
+  size_t n = 0;
+  aegis_capability_store_init(&store);
+  aegis_capability_audit_reset();
+
+  if (aegis_capability_issue_with_ttl(&store, 120u, AEGIS_CAP_FS_READ, 100u, 20u) != 0) {
+    fprintf(stderr, "rotation metadata issue failed\n");
+    return 1;
+  }
+  if (aegis_capability_rotate_with_metadata(&store,
+                                            120u,
+                                            AEGIS_CAP_FS_READ | AEGIS_CAP_FS_WRITE,
+                                            110u,
+                                            20u,
+                                            9001u,
+                                            "incident_response") != 0) {
+    fprintf(stderr, "rotation metadata rotate failed\n");
+    return 1;
+  }
+  n = aegis_capability_audit_count();
+  if (n < 2u) {
+    fprintf(stderr, "expected rotation metadata audit entries\n");
+    return 1;
+  }
+  if (aegis_capability_audit_get(n - 1u, &event) != 0) {
+    fprintf(stderr, "failed to read metadata event\n");
+    return 1;
+  }
+  if (event.event_type != AEGIS_CAP_AUDIT_ROTATE) {
+    fprintf(stderr, "expected rotate event type\n");
+    return 1;
+  }
+  if (event.actor_id != 9001u) {
+    fprintf(stderr, "expected actor metadata 9001\n");
+    return 1;
+  }
+  if (strcmp(event.reason, "incident_response") != 0) {
+    fprintf(stderr, "expected reason metadata incident_response\n");
+    return 1;
+  }
+  return 0;
+}
+
 static int test_capability_audit_pipeline(void) {
   aegis_capability_store_t store;
   aegis_capability_audit_event_t event;
@@ -130,6 +176,9 @@ int main(void) {
     return 1;
   }
   if (test_capability_ttl_and_rotation() != 0) {
+    return 1;
+  }
+  if (test_rotation_metadata_audit() != 0) {
     return 1;
   }
   if (test_capability_audit_pipeline() != 0) {
