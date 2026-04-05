@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 10:54:48Z
+Last generated: 2026-04-05 10:55:01Z
 
 ## What AegisOS Is Building
 
@@ -73,14 +73,14 @@ We implement in vertical slices:
 Recent commit touches (higher means more active recently):
 
 - kernel: 15
-- userland: 22
+- userland: 19
 - packages: 15
-- docs: 48
+- docs: 50
 - workflows: 4
-- tests: 13
+- tests: 12
 - tools: 0
 - platform: 0
-- scripts: 5
+- scripts: 6
 - other: 0
 
 Open issue pressure by component signal:
@@ -93,6 +93,7 @@ Open issue pressure by component signal:
 
 ## Recent Engineering Changes
 
+- `2208524` (2026-04-05): Improve_docs_heatmap_with_local_issue_fallback_and_component_signals
 - `087521a` (2026-04-05): docs: auto-update explain and changelog
 - `3895338` (2026-04-05): Add_tick_based_wait_latency_metrics_for_scheduler
 - `b9c15ac` (2026-04-05): docs: auto-update explain and changelog
@@ -107,4 +108,3 @@ Open issue pressure by component signal:
 - `40c23d8` (2026-04-05): Add_filesystem_wildcard_scope_matching_and_tests
 - `cc8fe1d` (2026-04-05): docs: auto-update explain and changelog
 - `1ffc333` (2026-04-05): Fix_project_automation_workflow_syntax_and_token_fallback
-- `4a6bd9b` (2026-04-05): docs: auto-update explain and changelog
