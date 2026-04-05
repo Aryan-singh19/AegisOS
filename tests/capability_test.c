@@ -549,6 +549,7 @@ static int test_secret_store_skeleton(void) {
   aegis_secret_metadata_t metadata;
   const uint8_t v1[] = {1u, 2u, 3u, 4u};
   const uint8_t v2[] = {9u, 8u};
+  const uint8_t v3[] = {7u, 7u, 7u};
   uint8_t out[16];
   uint32_t out_size = 0u;
   char json[256];
@@ -558,6 +559,9 @@ static int test_secret_store_skeleton(void) {
       "schema_version=1\n"
       "key=dup,size=1,created=1,updated=1,value=aa\n"
       "key=dup,size=1,created=2,updated=2,value=bb\n";
+  const char *bad_header_snapshot =
+      "schema_version=2\n"
+      "key=dup,size=1,created=1,updated=1,value=aa\n";
   char inventory[512];
   uint64_t digest = 0u;
   aegis_secret_store_init(&store);
@@ -569,6 +573,10 @@ static int test_secret_store_skeleton(void) {
   }
   if (aegis_secret_put_at(&store, "db.master", v2, (uint32_t)sizeof(v2), 1010u) != 0) {
     fprintf(stderr, "secret put update failed\n");
+    return 1;
+  }
+  if (aegis_secret_put_at(&store, "api.alpha", v3, (uint32_t)sizeof(v3), 1020u) != 0) {
+    fprintf(stderr, "secret put second key failed\n");
     return 1;
   }
   if (aegis_secret_metadata_get(&store, "db.master", &metadata) != 0 ||
@@ -583,8 +591,9 @@ static int test_secret_store_skeleton(void) {
   }
   if (aegis_secret_list_json(&store, json, sizeof(json)) <= 0 ||
       strstr(json, "\"schema_version\":1") == 0 ||
-      strstr(json, "\"count\":1") == 0 ||
-      strstr(json, "\"db.master\"") == 0) {
+      strstr(json, "\"count\":2") == 0 ||
+      strstr(json, "\"db.master\"") == 0 ||
+      strstr(json, "\"api.alpha\"") == 0) {
     fprintf(stderr, "secret list json missing fields: %s\n", json);
     return 1;
   }
@@ -607,15 +616,20 @@ static int test_secret_store_skeleton(void) {
     fprintf(stderr, "secret snapshot digest helper failed\n");
     return 1;
   }
-  if (aegis_secret_snapshot_restore(&restored, snapshot) != 1) {
+  if (aegis_secret_snapshot_restore(&restored, snapshot) != 2) {
     fprintf(stderr, "secret snapshot restore failed\n");
     return 1;
   }
   if (aegis_secret_inventory_json(&restored, inventory, sizeof(inventory)) <= 0 ||
       strstr(inventory, "\"key\":\"db.master\"") == 0 ||
+      strstr(inventory, "\"key\":\"api.alpha\"") == 0 ||
       strstr(inventory, "\"fingerprint64\":\"") == 0 ||
       strstr(inventory, "\"value\":") != 0) {
     fprintf(stderr, "secret inventory json invalid/redaction failed: %s\n", inventory);
+    return 1;
+  }
+  if (strstr(inventory, "\"key\":\"api.alpha\"") > strstr(inventory, "\"key\":\"db.master\"")) {
+    fprintf(stderr, "secret inventory should be sorted lexicographically: %s\n", inventory);
     return 1;
   }
   if (aegis_secret_get(&restored, "db.master", out, (uint32_t)sizeof(out), &out_size) != 0 ||
@@ -645,8 +659,16 @@ static int test_secret_store_skeleton(void) {
     fprintf(stderr, "secret snapshot restore should fail on duplicate keys\n");
     return 1;
   }
-  if (aegis_secret_delete(&store, "db.master") != 0 || store.count != 0u) {
+  if (aegis_secret_snapshot_restore(&restored, bad_header_snapshot) >= 0) {
+    fprintf(stderr, "secret snapshot restore should fail on bad schema header\n");
+    return 1;
+  }
+  if (aegis_secret_delete(&store, "db.master") != 0) {
     fprintf(stderr, "secret delete failed\n");
+    return 1;
+  }
+  if (aegis_secret_delete(&store, "api.alpha") != 0 || store.count != 0u) {
+    fprintf(stderr, "secret second delete failed\n");
     return 1;
   }
   if (aegis_secret_delete(&store, "db.master") == 0) {

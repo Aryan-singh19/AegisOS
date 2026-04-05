@@ -1120,11 +1120,24 @@ int aegis_secret_snapshot_restore(aegis_secret_store_t *store, const char *snaps
   }
   aegis_secret_store_init(store);
   cursor = snapshot;
-  while (*cursor != '\0' && *cursor != '\n') {
-    cursor++;
-  }
-  if (*cursor == '\n') {
-    cursor++;
+  {
+    char header[64];
+    size_t hlen = 0u;
+    while (cursor[hlen] != '\0' && cursor[hlen] != '\n') {
+      hlen += 1u;
+    }
+    if (hlen == 0u || hlen >= sizeof(header)) {
+      return -1;
+    }
+    memcpy(header, cursor, hlen);
+    header[hlen] = '\0';
+    if (strcmp(header, "schema_version=1") != 0) {
+      return -1;
+    }
+    cursor += hlen;
+    if (*cursor == '\n') {
+      cursor++;
+    }
   }
   if (strncmp(cursor, "digest=", 7) == 0) {
     char digest_hex[32];
@@ -1226,6 +1239,9 @@ int aegis_secret_snapshot_restore(aegis_secret_store_t *store, const char *snaps
 
 int aegis_secret_inventory_json(const aegis_secret_store_t *store, char *out, size_t out_size) {
   size_t i;
+  size_t j;
+  size_t active_count = 0u;
+  size_t active_indices[128];
   size_t offset = 0u;
   int first = 1;
   if (store == 0 || out == 0 || out_size == 0u) {
@@ -1240,11 +1256,26 @@ int aegis_secret_inventory_json(const aegis_secret_store_t *store, char *out, si
     return -1;
   }
   for (i = 0; i < 128u; ++i) {
+    if (store->entries[i].active != 0u) {
+      active_indices[active_count] = i;
+      active_count += 1u;
+    }
+  }
+  for (i = 1u; i < active_count; ++i) {
+    size_t key_index = active_indices[i];
+    j = i;
+    while (j > 0u &&
+           strcmp(store->entries[active_indices[j - 1u]].key, store->entries[key_index].key) > 0) {
+      active_indices[j] = active_indices[j - 1u];
+      j -= 1u;
+    }
+    active_indices[j] = key_index;
+  }
+  for (i = 0u; i < active_count; ++i) {
+    size_t idx = active_indices[i];
     const aegis_secret_entry_t *entry = &store->entries[i];
     uint64_t fp;
-    if (entry->active == 0u) {
-      continue;
-    }
+    entry = &store->entries[idx];
     fp = secret_fingerprint64(entry->key, entry->value, entry->value_size);
     if (!first) {
       if (append_format(out, out_size, &offset, ",") != 0) {

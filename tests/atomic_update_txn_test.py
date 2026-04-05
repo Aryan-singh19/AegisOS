@@ -67,6 +67,12 @@ class AtomicUpdateTxnTest(unittest.TestCase):
             txn.load_from_json('{"schema_version":2,"state":"prepared"}')
         with self.assertRaises(ValueError):
             txn.load_from_json('{"schema_version":1,"state":"prepared","transaction_id":"","manifest_hash":"","staged_packages":[],"rollback_reason":""}')
+        with self.assertRaises(ValueError):
+            txn.load_from_json('{"schema_version":1,"state":"committed","transaction_id":"txn","manifest_hash":"sha256:x","staged_count":0,"staged_packages":[],"rollback_reason":""}')
+        with self.assertRaises(ValueError):
+            txn.load_from_json('{"schema_version":1,"state":"prepared","transaction_id":"txn","manifest_hash":"sha256:x","staged_count":2,"staged_packages":["aegis-kernel"],"rollback_reason":""}')
+        with self.assertRaises(ValueError):
+            txn.load_from_json('{"schema_version":1,"state":"idle","transaction_id":"txn","manifest_hash":"","staged_count":0,"staged_packages":[],"rollback_reason":""}')
 
 
 if __name__ == "__main__":

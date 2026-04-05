@@ -86,18 +86,29 @@ class AtomicUpdateTransaction:
     manifest_hash = data.get("manifest_hash", "")
     rollback_reason = data.get("rollback_reason", "")
     staged_packages = data.get("staged_packages", [])
+    staged_count = data.get("staged_count", len(staged_packages))
     if not isinstance(transaction_id, str) or not isinstance(manifest_hash, str):
       raise ValueError("transaction_id and manifest_hash must be strings")
     if not isinstance(rollback_reason, str):
       raise ValueError("rollback_reason must be a string")
     if not isinstance(staged_packages, list) or not all(isinstance(x, str) and x for x in staged_packages):
       raise ValueError("staged_packages must be a list of non-empty strings")
+    if not isinstance(staged_count, int) or staged_count < 0:
+      raise ValueError("staged_count must be a non-negative integer")
     deduped = []
     for pkg in staged_packages:
       if pkg not in deduped:
         deduped.append(pkg)
     if state == TxnState.PREPARED.value and (not transaction_id or not manifest_hash):
       raise ValueError("prepared transaction requires transaction_id and manifest_hash")
+    if staged_count != len(deduped):
+      raise ValueError("staged_count mismatch with staged_packages")
+    if state == TxnState.COMMITTED.value:
+      if not transaction_id or not manifest_hash or not deduped:
+        raise ValueError("committed transaction requires id/hash/staged packages")
+    if state == TxnState.IDLE.value:
+      if transaction_id or manifest_hash or deduped or rollback_reason:
+        raise ValueError("idle transaction must not contain active fields")
     self.state = TxnState(state)
     self.transaction_id = transaction_id
     self.manifest_hash = manifest_hash
