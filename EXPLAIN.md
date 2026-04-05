@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 11:29:13Z
+Last generated: 2026-04-05 11:30:54Z
 
 ## What AegisOS Is Building
 
@@ -36,6 +36,7 @@ We implement in vertical slices:
 - none
 
 ### Priority P1
+- #66 DNS_dual_stack_resolution_evidence_trace (priority-p1, security)
 - #65 Sandbox_policy_migration_batch_tool (priority-p1, security)
 - #64 Capability_audit_sink_rotation_retention_policy (priority-p1, security)
 - #63 Scheduler_snapshot_reason_histogram_window (priority-p1, kernel)
@@ -82,7 +83,7 @@ Recent commit touches (higher means more active recently):
 
 Open issue pressure by component signal:
 
-- security: 7
+- security: 8
 - kernel: 2
 - packages: 3
 - docs: 1
@@ -90,6 +91,8 @@ Open issue pressure by component signal:
 
 ## Recent Engineering Changes
 
+- `206412e` (2026-04-05): Add_machine_readable_json_network_trace_api
+- `cc19e78` (2026-04-05): docs: auto-update explain and changelog
 - `c29ca17` (2026-04-05): Add_dns_dual_stack_strict_mode_enforcement
 - `afeccb8` (2026-04-05): docs: auto-update explain and changelog
 - `fcf7371` (2026-04-05): Add_sandbox_policy_legacy_migration_adapter_and_report
@@ -103,5 +106,3 @@ Open issue pressure by component signal:
 - `2606126` (2026-04-05): Add_filesystem_wildcard_validation_rules
 - `c93539f` (2026-04-05): docs: auto-update explain and changelog
 - `2ce62d0` (2026-04-05): Add_network_scope_precedence_debug_trace_api
-- `e5bb38d` (2026-04-05): docs: auto-update explain and changelog
-- `d669e1f` (2026-04-05): Add_dns_pinning_ipv6_support_and_guard_checks
