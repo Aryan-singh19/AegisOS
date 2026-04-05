@@ -543,6 +543,54 @@ static int test_actor_registry_snapshot_restore(void) {
   return 0;
 }
 
+static int test_secret_store_skeleton(void) {
+  aegis_secret_store_t store;
+  const uint8_t v1[] = {1u, 2u, 3u, 4u};
+  const uint8_t v2[] = {9u, 8u};
+  uint8_t out[16];
+  uint32_t out_size = 0u;
+  char json[256];
+  aegis_secret_store_init(&store);
+
+  if (aegis_secret_put(&store, "db.master", v1, (uint32_t)sizeof(v1)) != 0) {
+    fprintf(stderr, "secret put v1 failed\n");
+    return 1;
+  }
+  if (aegis_secret_put(&store, "db.master", v2, (uint32_t)sizeof(v2)) != 0) {
+    fprintf(stderr, "secret put update failed\n");
+    return 1;
+  }
+  if (aegis_secret_get(&store, "db.master", out, (uint32_t)sizeof(out), &out_size) != 0 ||
+      out_size != (uint32_t)sizeof(v2) || out[0] != 9u || out[1] != 8u) {
+    fprintf(stderr, "secret get updated value mismatch\n");
+    return 1;
+  }
+  if (aegis_secret_list_json(&store, json, sizeof(json)) <= 0 ||
+      strstr(json, "\"schema_version\":1") == 0 ||
+      strstr(json, "\"count\":1") == 0 ||
+      strstr(json, "\"db.master\"") == 0) {
+    fprintf(stderr, "secret list json missing fields: %s\n", json);
+    return 1;
+  }
+  if (aegis_secret_put(&store, "bad key", v1, (uint32_t)sizeof(v1)) == 0) {
+    fprintf(stderr, "secret put should reject invalid key characters\n");
+    return 1;
+  }
+  if (aegis_secret_get(&store, "db.master", out, 1u, &out_size) == 0) {
+    fprintf(stderr, "secret get should reject undersized output buffer\n");
+    return 1;
+  }
+  if (aegis_secret_delete(&store, "db.master") != 0 || store.count != 0u) {
+    fprintf(stderr, "secret delete failed\n");
+    return 1;
+  }
+  if (aegis_secret_delete(&store, "db.master") == 0) {
+    fprintf(stderr, "secret delete should fail for missing key\n");
+    return 1;
+  }
+  return 0;
+}
+
 int main(void) {
   if (test_capability_validate() != 0) {
     return 1;
@@ -578,6 +626,9 @@ int main(void) {
     return 1;
   }
   if (test_actor_registry_snapshot_restore() != 0) {
+    return 1;
+  }
+  if (test_secret_store_skeleton() != 0) {
     return 1;
   }
   puts("capability tests passed");

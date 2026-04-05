@@ -753,3 +753,168 @@ int aegis_actor_registry_restore(const char *snapshot) {
   }
   return (int)restored;
 }
+
+static int secret_key_valid(const char *key) {
+  size_t i;
+  if (key == 0 || key[0] == '\0') {
+    return 0;
+  }
+  for (i = 0; key[i] != '\0'; ++i) {
+    char c = key[i];
+    if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
+          c == '_' || c == '-' || c == '.')) {
+      return 0;
+    }
+    if (i >= 30u) {
+      return 0;
+    }
+  }
+  return 1;
+}
+
+static int secret_find_index(const aegis_secret_store_t *store, const char *key, size_t *index) {
+  size_t i;
+  if (store == 0 || key == 0 || index == 0) {
+    return 0;
+  }
+  for (i = 0; i < 128u; ++i) {
+    if (store->entries[i].active == 0u) {
+      continue;
+    }
+    if (strcmp(store->entries[i].key, key) == 0) {
+      *index = i;
+      return 1;
+    }
+  }
+  return 0;
+}
+
+void aegis_secret_store_init(aegis_secret_store_t *store) {
+  size_t i;
+  if (store == 0) {
+    return;
+  }
+  store->count = 0u;
+  for (i = 0; i < 128u; ++i) {
+    store->entries[i].key[0] = '\0';
+    memset(store->entries[i].value, 0, sizeof(store->entries[i].value));
+    store->entries[i].value_size = 0u;
+    store->entries[i].active = 0u;
+  }
+}
+
+int aegis_secret_put(aegis_secret_store_t *store,
+                     const char *key,
+                     const uint8_t *value,
+                     uint32_t value_size) {
+  size_t i;
+  size_t index = 0u;
+  if (store == 0 || !secret_key_valid(key) || value == 0 || value_size == 0u || value_size > 64u) {
+    return -1;
+  }
+  if (secret_find_index(store, key, &index)) {
+    memcpy(store->entries[index].value, value, value_size);
+    if (value_size < 64u) {
+      memset(store->entries[index].value + value_size, 0, (size_t)(64u - value_size));
+    }
+    store->entries[index].value_size = value_size;
+    return 0;
+  }
+  if (store->count >= 128u) {
+    return -1;
+  }
+  for (i = 0; i < 128u; ++i) {
+    if (store->entries[i].active != 0u) {
+      continue;
+    }
+    snprintf(store->entries[i].key, sizeof(store->entries[i].key), "%s", key);
+    memcpy(store->entries[i].value, value, value_size);
+    if (value_size < 64u) {
+      memset(store->entries[i].value + value_size, 0, (size_t)(64u - value_size));
+    }
+    store->entries[i].value_size = value_size;
+    store->entries[i].active = 1u;
+    store->count += 1u;
+    return 0;
+  }
+  return -1;
+}
+
+int aegis_secret_get(const aegis_secret_store_t *store,
+                     const char *key,
+                     uint8_t *value_out,
+                     uint32_t value_out_size,
+                     uint32_t *value_size_out) {
+  size_t index = 0u;
+  uint32_t sz;
+  if (store == 0 || key == 0 || value_out == 0 || value_size_out == 0) {
+    return -1;
+  }
+  if (!secret_find_index(store, key, &index)) {
+    return -1;
+  }
+  sz = store->entries[index].value_size;
+  if (value_out_size < sz) {
+    return -1;
+  }
+  memcpy(value_out, store->entries[index].value, sz);
+  *value_size_out = sz;
+  return 0;
+}
+
+int aegis_secret_delete(aegis_secret_store_t *store, const char *key) {
+  size_t index = 0u;
+  if (store == 0 || key == 0) {
+    return -1;
+  }
+  if (!secret_find_index(store, key, &index)) {
+    return -1;
+  }
+  store->entries[index].active = 0u;
+  store->entries[index].key[0] = '\0';
+  memset(store->entries[index].value, 0, sizeof(store->entries[index].value));
+  store->entries[index].value_size = 0u;
+  if (store->count > 0u) {
+    store->count -= 1u;
+  }
+  return 0;
+}
+
+int aegis_secret_list_json(const aegis_secret_store_t *store, char *out, size_t out_size) {
+  size_t i;
+  size_t offset = 0u;
+  int first = 1;
+  int written;
+  if (store == 0 || out == 0 || out_size == 0u) {
+    return -1;
+  }
+  written = snprintf(out,
+                     out_size,
+                     "{\"schema_version\":1,\"count\":%llu,\"keys\":[",
+                     (unsigned long long)store->count);
+  if (written < 0 || (size_t)written >= out_size) {
+    return -1;
+  }
+  offset = (size_t)written;
+  for (i = 0; i < 128u; ++i) {
+    if (store->entries[i].active == 0u) {
+      continue;
+    }
+    written = snprintf(out + offset,
+                       out_size - offset,
+                       "%s\"%s\"",
+                       first ? "" : ",",
+                       store->entries[i].key);
+    if (written < 0 || (size_t)written >= (out_size - offset)) {
+      return -1;
+    }
+    offset += (size_t)written;
+    first = 0;
+  }
+  written = snprintf(out + offset, out_size - offset, "]}");
+  if (written < 0 || (size_t)written >= (out_size - offset)) {
+    return -1;
+  }
+  offset += (size_t)written;
+  return (int)offset;
+}

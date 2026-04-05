@@ -77,6 +77,18 @@ typedef struct {
   uint64_t revoked_at_epoch;
 } aegis_actor_registry_entry_t;
 
+typedef struct {
+  char key[32];
+  uint8_t value[64];
+  uint32_t value_size;
+  uint8_t active;
+} aegis_secret_entry_t;
+
+typedef struct {
+  aegis_secret_entry_t entries[128];
+  size_t count;
+} aegis_secret_store_t;
+
 int aegis_capability_validate(const aegis_capability_token_t *token,
                               uint32_t requested_permissions);
 void aegis_capability_store_init(aegis_capability_store_t *store);
@@ -136,5 +148,17 @@ int aegis_actor_registry_revoke(uint32_t actor_id, uint8_t actor_source,
                                 uint64_t now_epoch, const char *reason);
 int aegis_actor_registry_snapshot(char *out, size_t out_size);
 int aegis_actor_registry_restore(const char *snapshot);
+void aegis_secret_store_init(aegis_secret_store_t *store);
+int aegis_secret_put(aegis_secret_store_t *store,
+                     const char *key,
+                     const uint8_t *value,
+                     uint32_t value_size);
+int aegis_secret_get(const aegis_secret_store_t *store,
+                     const char *key,
+                     uint8_t *value_out,
+                     uint32_t value_out_size,
+                     uint32_t *value_size_out);
+int aegis_secret_delete(aegis_secret_store_t *store, const char *key);
+int aegis_secret_list_json(const aegis_secret_store_t *store, char *out, size_t out_size);
 
 #endif
