@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 12:51:28Z
+Last generated: 2026-04-05 12:54:18Z
 
 ## What AegisOS Is Building
 
@@ -38,7 +38,6 @@ We implement in vertical slices:
 ### Priority P1
 - #79 "Trace_json_property_perf_baseline_and_seed_corpus" (priority-p1, security)
 - #70 Actor_registry_persistent_backing_store (priority-p1, security)
-- #48 Docs_heatmap_trend_window (priority-p1)
 - #40 Apply_branch_protection_profile_on_main (priority-p1)
 - #38 Package_signature_metadata_fields (priority-p1, security)
 - #37 Package_profile_compatibility_matrix (priority-p1)
@@ -66,12 +65,12 @@ Recent commit touches in `weekly` window (higher means more active recently):
 - kernel: 45
 - userland: 86
 - packages: 24
-- docs: 140
-- workflows: 12
+- docs: 143
+- workflows: 13
 - tests: 54
 - tools: 1
 - platform: 1
-- scripts: 24
+- scripts: 25
 - other: 14
 
 Open issue pressure by component signal:
@@ -79,11 +78,12 @@ Open issue pressure by component signal:
 - security: 4
 - kernel: 1
 - packages: 2
-- docs: 1
+- docs: 0
 - other: 3
 
 ## Recent Engineering Changes
 
+- `9a56599` (2026-04-05): "Add_configurable_docs_heatmap_trend_windows"
 - `8c49c14` (2026-04-05): docs: auto-update explain and changelog
 - `42f5deb` (2026-04-05): "Add_graphviz_rendering_guide_for_package_dependency_graph"
 - `7b57902` (2026-04-05): docs: auto-update explain and changelog
@@ -98,4 +98,3 @@ Open issue pressure by component signal:
 - `36f49b1` (2026-04-05): "Add_property_style_network_trace_json_generator_tests"
 - `41c9387` (2026-04-05): docs: auto-update explain and changelog
 - `967570c` (2026-04-05): "Add_batch_migration_filters_shards_and_trace_json_fuzz_tests"
-- `089484e` (2026-04-05): docs: auto-update explain and changelog

@@ -1,10 +1,11 @@
 # CHANGELOG
 
 Auto-updated by workflow.
-Last generated: 2026-04-05 12:51:28Z
+Last generated: 2026-04-05 12:54:18Z
 
 ## Unreleased
 
+- 2026-04-05 `9a56599` "Add_configurable_docs_heatmap_trend_windows"
 - 2026-04-05 `8c49c14` docs: auto-update explain and changelog
 - 2026-04-05 `42f5deb` "Add_graphviz_rendering_guide_for_package_dependency_graph"
 - 2026-04-05 `7b57902` docs: auto-update explain and changelog
@@ -19,4 +20,3 @@ Last generated: 2026-04-05 12:51:28Z
 - 2026-04-05 `36f49b1` "Add_property_style_network_trace_json_generator_tests"
 - 2026-04-05 `41c9387` docs: auto-update explain and changelog
 - 2026-04-05 `967570c` "Add_batch_migration_filters_shards_and_trace_json_fuzz_tests"
-- 2026-04-05 `089484e` docs: auto-update explain and changelog
