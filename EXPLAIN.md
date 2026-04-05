@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 11:19:06Z
+Last generated: 2026-04-05 11:20:16Z
 
 ## What AegisOS Is Building
 
@@ -36,6 +36,7 @@ We implement in vertical slices:
 - none
 
 ### Priority P1
+- #60 Network_scope_trace_machine_readable_mode (priority-p1, security)
 - #59 DNS_pin_dual_stack_consistency_policy (priority-p1, security)
 - #58 Sandbox_policy_schema_migration_adapter (priority-p1, security)
 - #57 Scheduler_snapshot_schema_version_tag (priority-p1, kernel)
@@ -71,11 +72,11 @@ We implement in vertical slices:
 Recent commit touches (higher means more active recently):
 
 - kernel: 18
-- userland: 29
+- userland: 31
 - packages: 3
-- docs: 46
+- docs: 44
 - workflows: 2
-- tests: 17
+- tests: 18
 - tools: 0
 - platform: 0
 - scripts: 3
@@ -83,7 +84,7 @@ Recent commit touches (higher means more active recently):
 
 Open issue pressure by component signal:
 
-- security: 7
+- security: 8
 - kernel: 3
 - packages: 3
 - docs: 1
@@ -91,6 +92,8 @@ Open issue pressure by component signal:
 
 ## Recent Engineering Changes
 
+- `2606126` (2026-04-05): Add_filesystem_wildcard_validation_rules
+- `c93539f` (2026-04-05): docs: auto-update explain and changelog
 - `2ce62d0` (2026-04-05): Add_network_scope_precedence_debug_trace_api
 - `e5bb38d` (2026-04-05): docs: auto-update explain and changelog
 - `d669e1f` (2026-04-05): Add_dns_pinning_ipv6_support_and_guard_checks
@@ -104,5 +107,3 @@ Open issue pressure by component signal:
 - `0533870` (2026-04-05): Add_package_dependency_graph_exports_and_scheduler_wait_report
 - `2079757` (2026-04-05): docs: auto-update explain and changelog
 - `f860e26` (2026-04-05): Add_sandbox_policy_hot_reload_with_safe_validation
-- `4c84428` (2026-04-05): docs: auto-update explain and changelog
-- `c9cfff6` (2026-04-05): Add_sandbox_policy_json_serialization_and_parsing_support

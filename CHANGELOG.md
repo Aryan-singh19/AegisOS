@@ -1,10 +1,12 @@
 # CHANGELOG
 
 Auto-updated by workflow.
-Last generated: 2026-04-05 11:19:06Z
+Last generated: 2026-04-05 11:20:16Z
 
 ## Unreleased
 
+- 2026-04-05 `2606126` Add_filesystem_wildcard_validation_rules
+- 2026-04-05 `c93539f` docs: auto-update explain and changelog
 - 2026-04-05 `2ce62d0` Add_network_scope_precedence_debug_trace_api
 - 2026-04-05 `e5bb38d` docs: auto-update explain and changelog
 - 2026-04-05 `d669e1f` Add_dns_pinning_ipv6_support_and_guard_checks
@@ -18,5 +20,3 @@ Last generated: 2026-04-05 11:19:06Z
 - 2026-04-05 `0533870` Add_package_dependency_graph_exports_and_scheduler_wait_report
 - 2026-04-05 `2079757` docs: auto-update explain and changelog
 - 2026-04-05 `f860e26` Add_sandbox_policy_hot_reload_with_safe_validation
-- 2026-04-05 `4c84428` docs: auto-update explain and changelog
-- 2026-04-05 `c9cfff6` Add_sandbox_policy_json_serialization_and_parsing_support
