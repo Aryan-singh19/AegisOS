@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 10:18:45Z
+Last generated: 2026-04-05 10:20:49Z
 
 ## What AegisOS Is Building
 
@@ -32,9 +32,10 @@ We implement in vertical slices:
 
 ## Live Backlog Snapshot
 
+- #26 Network_scope_dns_rebinding_guard (priority-p1, security)
+- #25 Network_scope_priority_and_specificity (priority-p1, security)
 - #24 Workflow_branch_protection_profile (priority-p1)
 - #23 Clang_sanitizer_job_asan_ubsan (priority-p1)
-- #22 Filesystem_scope_symlink_resolution (priority-p0, security)
 - #21 Filesystem_scope_glob_patterns (priority-p1, security)
 - #20 Package_dependency_cycle_detection (priority-p1)
 - #19 Package_manifest_schema_versioning (priority-p1)
@@ -51,6 +52,8 @@ We implement in vertical slices:
 
 ## Recent Engineering Changes
 
+- `886b81c` (2026-04-05): Add_symlink_resolution_rules_for_filesystem_scope_checks
+- `4523e6b` (2026-04-05): docs: auto-update explain and changelog
 - `ef5dd0b` (2026-04-05): Add_network_scope_enforcement_host_port_protocol_rules
 - `306b2e4` (2026-04-05): docs: auto-update explain and changelog
 - `44e7fac` (2026-04-05): Add_clang_matrix_workflow_for_core_module_tests
@@ -64,4 +67,3 @@ We implement in vertical slices:
 - `cccdb53` (2026-04-05): Add_capability_token_lifecycle_issue_revoke_access_checks
 - `64be98e` (2026-04-05): Add_round_robin_scheduler_skeleton_with_tests
 - `594b792` (2026-04-05): Add_capability_security_module_and_execution_plan
-- `2c02b03` (2026-04-05): Initialize_AegisOS_scaffold
