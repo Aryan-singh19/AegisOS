@@ -40,6 +40,7 @@ Build a modern, privacy-first operating system that combines the strongest quali
 7. Read branch governance profile in [`docs/BRANCH_PROTECTION.md`](docs/BRANCH_PROTECTION.md).
 8. Follow new contributor checklist in [`docs/ONBOARDING.md`](docs/ONBOARDING.md).
 9. Run bootstrap validation: `python scripts/onboarding_check.py`.
+10. Check hardware/profile mapping in [`docs/PROFILE_COMPATIBILITY.md`](docs/PROFILE_COMPATIBILITY.md).
 
 ## Current Status
 

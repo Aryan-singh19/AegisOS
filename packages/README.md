@@ -19,6 +19,10 @@ Profile targets:
 - `developer`: desktop plus SDK bundle.
 - `server`: hardened non-desktop profile.
 
+Profile compatibility mapping:
+
+- hardware compatibility matrix: [`docs/PROFILE_COMPATIBILITY.md`](../docs/PROFILE_COMPATIBILITY.md)
+
 Validation command:
 
 - `python scripts/validate_packages.py`
