@@ -1,0 +1,15 @@
+# Build output
+out/
+dist/
+bin/
+obj/
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+*.swp
+*.tmp
+
+# Logs
+*.log
+
