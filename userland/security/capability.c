@@ -847,6 +847,20 @@ static int secret_hex_to_value(const char *hex, uint8_t *value_out, uint32_t val
   return 0;
 }
 
+static uint64_t secret_fingerprint64(const char *key, const uint8_t *value, uint32_t value_size) {
+  uint64_t hash = 1469598103934665603ull;
+  size_t i;
+  for (i = 0; key != 0 && key[i] != '\0'; ++i) {
+    hash ^= (uint64_t)(unsigned char)key[i];
+    hash *= 1099511628211ull;
+  }
+  for (i = 0; i < (size_t)value_size; ++i) {
+    hash ^= (uint64_t)value[i];
+    hash *= 1099511628211ull;
+  }
+  return hash;
+}
+
 void aegis_secret_store_init(aegis_secret_store_t *store) {
   size_t i;
   if (store == 0) {
@@ -1123,4 +1137,51 @@ int aegis_secret_snapshot_restore(aegis_secret_store_t *store, const char *snaps
     store->count += 1u;
   }
   return (int)store->count;
+}
+
+int aegis_secret_inventory_json(const aegis_secret_store_t *store, char *out, size_t out_size) {
+  size_t i;
+  size_t offset = 0u;
+  int first = 1;
+  if (store == 0 || out == 0 || out_size == 0u) {
+    return -1;
+  }
+  out[0] = '\0';
+  if (append_format(out,
+                    out_size,
+                    &offset,
+                    "{\"schema_version\":1,\"count\":%llu,\"entries\":[",
+                    (unsigned long long)store->count) != 0) {
+    return -1;
+  }
+  for (i = 0; i < 128u; ++i) {
+    const aegis_secret_entry_t *entry = &store->entries[i];
+    uint64_t fp;
+    if (entry->active == 0u) {
+      continue;
+    }
+    fp = secret_fingerprint64(entry->key, entry->value, entry->value_size);
+    if (!first) {
+      if (append_format(out, out_size, &offset, ",") != 0) {
+        return -1;
+      }
+    }
+    if (append_format(out,
+                      out_size,
+                      &offset,
+                      "{\"key\":\"%s\",\"value_size\":%u,\"created_at_epoch\":%llu,"
+                      "\"updated_at_epoch\":%llu,\"fingerprint64\":\"%016llx\"}",
+                      entry->key,
+                      entry->value_size,
+                      (unsigned long long)entry->created_at_epoch,
+                      (unsigned long long)entry->updated_at_epoch,
+                      (unsigned long long)fp) != 0) {
+      return -1;
+    }
+    first = 0;
+  }
+  if (append_format(out, out_size, &offset, "]}") != 0) {
+    return -1;
+  }
+  return (int)offset;
 }

@@ -553,6 +553,7 @@ static int test_secret_store_skeleton(void) {
   uint32_t out_size = 0u;
   char json[256];
   char snapshot[2048];
+  char inventory[512];
   aegis_secret_store_init(&store);
   aegis_secret_store_init(&restored);
 
@@ -597,6 +598,13 @@ static int test_secret_store_skeleton(void) {
   }
   if (aegis_secret_snapshot_restore(&restored, snapshot) != 1) {
     fprintf(stderr, "secret snapshot restore failed\n");
+    return 1;
+  }
+  if (aegis_secret_inventory_json(&restored, inventory, sizeof(inventory)) <= 0 ||
+      strstr(inventory, "\"key\":\"db.master\"") == 0 ||
+      strstr(inventory, "\"fingerprint64\":\"") == 0 ||
+      strstr(inventory, "\"value\":") != 0) {
+    fprintf(stderr, "secret inventory json invalid/redaction failed: %s\n", inventory);
     return 1;
   }
   if (aegis_secret_get(&restored, "db.master", out, (uint32_t)sizeof(out), &out_size) != 0 ||
