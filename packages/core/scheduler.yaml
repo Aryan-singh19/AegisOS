@@ -1,0 +1,9 @@
+schema_version: 1
+name: aegis-scheduler
+version: 0.1.0
+summary: Scheduler module and policies for AegisOS kernel simulation
+license: Apache-2.0
+source: kernel/
+dependencies:
+  - aegis-kernel
+

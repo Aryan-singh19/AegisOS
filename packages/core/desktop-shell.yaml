@@ -1,0 +1,10 @@
+schema_version: 1
+name: aegis-desktop-shell
+version: 0.1.0
+summary: Desktop shell and compositor metadata
+license: Apache-2.0
+source: userland/
+dependencies:
+  - aegis-userland-base
+  - aegis-sandbox-engine
+

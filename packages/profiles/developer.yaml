@@ -1,6 +1,6 @@
 schema_version: 1
-profile: desktop
-description: Default desktop profile for AegisOS
+profile: developer
+description: Developer workstation profile with SDK and desktop shell
 packages:
   - aegis-kernel
   - aegis-scheduler
@@ -9,3 +9,5 @@ packages:
   - aegis-sandbox-engine
   - aegis-update-service
   - aegis-desktop-shell
+  - aegis-developer-sdk
+

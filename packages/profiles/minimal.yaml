@@ -1,11 +1,10 @@
 schema_version: 1
-profile: desktop
-description: Default desktop profile for AegisOS
+profile: minimal
+description: Minimal bootable profile for constrained and old hardware
 packages:
   - aegis-kernel
   - aegis-scheduler
   - aegis-userland-base
   - aegis-security-core
-  - aegis-sandbox-engine
   - aegis-update-service
-  - aegis-desktop-shell
+

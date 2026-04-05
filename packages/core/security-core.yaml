@@ -1,0 +1,9 @@
+schema_version: 1
+name: aegis-security-core
+version: 0.1.0
+summary: Core capability and policy validation services
+license: Apache-2.0
+source: userland/
+dependencies:
+  - aegis-userland-base
+

@@ -1,0 +1,9 @@
+schema_version: 1
+name: aegis-sandbox-engine
+version: 0.1.0
+summary: Action-level sandbox enforcement engine
+license: Apache-2.0
+source: userland/
+dependencies:
+  - aegis-security-core
+

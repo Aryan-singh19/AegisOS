@@ -1,6 +1,6 @@
 schema_version: 1
-profile: desktop
-description: Default desktop profile for AegisOS
+profile: server
+description: Hardened server profile without desktop components
 packages:
   - aegis-kernel
   - aegis-scheduler
@@ -8,4 +8,4 @@ packages:
   - aegis-security-core
   - aegis-sandbox-engine
   - aegis-update-service
-  - aegis-desktop-shell
+

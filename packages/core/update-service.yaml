@@ -1,0 +1,10 @@
+schema_version: 1
+name: aegis-update-service
+version: 0.1.0
+summary: Transactional update service for package rollout
+license: Apache-2.0
+source: userland/
+dependencies:
+  - aegis-userland-base
+  - aegis-security-core
+
