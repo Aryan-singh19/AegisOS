@@ -2,6 +2,20 @@
 
 #define AEGIS_SCHEDULER_CAPACITY 64u
 
+static void sort_u64(uint64_t *arr, size_t n) {
+  size_t i;
+  size_t j;
+  for (i = 0; i < n; ++i) {
+    for (j = i + 1; j < n; ++j) {
+      if (arr[j] < arr[i]) {
+        uint64_t tmp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = tmp;
+      }
+    }
+  }
+}
+
 int aegis_kernel_boot_check(void) {
   return 0;
 }
@@ -311,5 +325,48 @@ int aegis_scheduler_last_latency_for(const aegis_scheduler_t *scheduler, uint32_
     return -1;
   }
   *latency_ticks = scheduler->last_wait_latency[idx];
+  return 0;
+}
+
+int aegis_scheduler_wait_report(const aegis_scheduler_t *scheduler,
+                                aegis_scheduler_wait_report_t *report) {
+  uint64_t waits[AEGIS_SCHEDULER_CAPACITY];
+  uint64_t lats[AEGIS_SCHEDULER_CAPACITY];
+  uint64_t sum_wait = 0;
+  uint64_t sum_lat = 0;
+  size_t i;
+  size_t n;
+  size_t p95_index;
+  if (scheduler == 0 || report == 0) {
+    return -1;
+  }
+  n = scheduler->count;
+  report->mean_wait_ticks = 0;
+  report->p95_wait_ticks = 0;
+  report->max_wait_ticks = 0;
+  report->mean_last_latency_ticks = 0;
+  report->p95_last_latency_ticks = 0;
+  report->max_last_latency_ticks = 0;
+  if (n == 0) {
+    return 0;
+  }
+  for (i = 0; i < n; ++i) {
+    waits[i] = scheduler->wait_ticks_total[i];
+    lats[i] = scheduler->last_wait_latency[i];
+    sum_wait += waits[i];
+    sum_lat += lats[i];
+  }
+  sort_u64(waits, n);
+  sort_u64(lats, n);
+  p95_index = (n * 95u) / 100u;
+  if (p95_index >= n) {
+    p95_index = n - 1;
+  }
+  report->mean_wait_ticks = sum_wait / n;
+  report->p95_wait_ticks = waits[p95_index];
+  report->max_wait_ticks = waits[n - 1];
+  report->mean_last_latency_ticks = sum_lat / n;
+  report->p95_last_latency_ticks = lats[p95_index];
+  report->max_last_latency_ticks = lats[n - 1];
   return 0;
 }

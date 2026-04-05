@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import sys
+import json
 
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -120,7 +121,26 @@ def main():
     dfs(name)
   for path in profile_files:
     validate_profile_manifest(path, known)
+  graph_dir = os.path.join(ROOT, "packages")
+  json_path = os.path.join(graph_dir, "dependency-graph.json")
+  dot_path = os.path.join(graph_dir, "dependency-graph.dot")
+  graph_json = {
+      "packages": [{"name": m["name"], "dependencies": list(m["dependencies"])} for m in manifests]
+  }
+  with open(json_path, "w", encoding="utf-8", newline="\n") as f:
+    json.dump(graph_json, f, indent=2)
+    f.write("\n")
+  with open(dot_path, "w", encoding="utf-8", newline="\n") as f:
+    f.write("digraph aegis_packages {\n")
+    for pkg, deps in dep_graph.items():
+      if not deps:
+        f.write(f"  \"{pkg}\";\n")
+      for dep in deps:
+        f.write(f"  \"{pkg}\" -> \"{dep}\";\n")
+    f.write("}\n")
   print(f"Validated {len(core_files)} core manifests and {len(profile_files)} profiles.")
+  print(f"Wrote dependency graph: {json_path}")
+  print(f"Wrote dependency graph: {dot_path}")
   return 0
 
 

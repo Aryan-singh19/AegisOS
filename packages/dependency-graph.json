@@ -1,0 +1,52 @@
+{
+  "packages": [
+    {
+      "name": "aegis-desktop-shell",
+      "dependencies": [
+        "aegis-userland-base",
+        "aegis-sandbox-engine"
+      ]
+    },
+    {
+      "name": "aegis-developer-sdk",
+      "dependencies": [
+        "aegis-userland-base"
+      ]
+    },
+    {
+      "name": "aegis-kernel",
+      "dependencies": []
+    },
+    {
+      "name": "aegis-sandbox-engine",
+      "dependencies": [
+        "aegis-security-core"
+      ]
+    },
+    {
+      "name": "aegis-scheduler",
+      "dependencies": [
+        "aegis-kernel"
+      ]
+    },
+    {
+      "name": "aegis-security-core",
+      "dependencies": [
+        "aegis-userland-base"
+      ]
+    },
+    {
+      "name": "aegis-update-service",
+      "dependencies": [
+        "aegis-userland-base",
+        "aegis-security-core"
+      ]
+    },
+    {
+      "name": "aegis-userland-base",
+      "dependencies": [
+        "aegis-kernel"
+      ]
+    }
+  ]
+}

@@ -276,6 +276,41 @@ static int test_scheduler_wait_latency_metrics(void) {
   return 0;
 }
 
+static int test_scheduler_wait_report(void) {
+  aegis_scheduler_t scheduler;
+  aegis_scheduler_wait_report_t report;
+  uint32_t pid = 0;
+  uint8_t switched = 0;
+  int i;
+  aegis_scheduler_init(&scheduler);
+  aegis_scheduler_set_quantum(&scheduler, 1u);
+  if (aegis_scheduler_add(&scheduler, 9101u) != 0 ||
+      aegis_scheduler_add(&scheduler, 9102u) != 0 ||
+      aegis_scheduler_add(&scheduler, 9103u) != 0) {
+    fprintf(stderr, "wait report add failed\n");
+    return 1;
+  }
+  for (i = 0; i < 12; ++i) {
+    if (aegis_scheduler_on_tick(&scheduler, &pid, &switched) != 0) {
+      fprintf(stderr, "wait report tick failed\n");
+      return 1;
+    }
+  }
+  if (aegis_scheduler_wait_report(&scheduler, &report) != 0) {
+    fprintf(stderr, "wait report query failed\n");
+    return 1;
+  }
+  if (report.max_wait_ticks == 0u || report.max_last_latency_ticks == 0u) {
+    fprintf(stderr, "expected non-zero max wait/latency\n");
+    return 1;
+  }
+  if (report.p95_wait_ticks < report.mean_wait_ticks) {
+    fprintf(stderr, "expected p95 wait to be >= mean wait\n");
+    return 1;
+  }
+  return 0;
+}
+
 int main(void) {
   if (test_kernel_boot() != 0) {
     return 1;
@@ -299,6 +334,9 @@ int main(void) {
     return 1;
   }
   if (test_scheduler_wait_latency_metrics() != 0) {
+    return 1;
+  }
+  if (test_scheduler_wait_report() != 0) {
     return 1;
   }
   puts("kernel simulation check passed");

@@ -33,6 +33,15 @@ typedef struct {
   uint32_t quantum_remaining;
 } aegis_scheduler_metrics_snapshot_t;
 
+typedef struct {
+  uint64_t mean_wait_ticks;
+  uint64_t p95_wait_ticks;
+  uint64_t max_wait_ticks;
+  uint64_t mean_last_latency_ticks;
+  uint64_t p95_last_latency_ticks;
+  uint64_t max_last_latency_ticks;
+} aegis_scheduler_wait_report_t;
+
 typedef enum {
   AEGIS_PRIORITY_LOW = 1,
   AEGIS_PRIORITY_NORMAL = 2,
@@ -73,5 +82,7 @@ int aegis_scheduler_wait_ticks_for(const aegis_scheduler_t *scheduler, uint32_t 
                                    uint64_t *wait_ticks);
 int aegis_scheduler_last_latency_for(const aegis_scheduler_t *scheduler, uint32_t process_id,
                                      uint64_t *latency_ticks);
+int aegis_scheduler_wait_report(const aegis_scheduler_t *scheduler,
+                                aegis_scheduler_wait_report_t *report);
 
 #endif

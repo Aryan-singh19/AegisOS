@@ -1,0 +1,12 @@
+digraph aegis_packages {
+  "aegis-desktop-shell" -> "aegis-userland-base";
+  "aegis-desktop-shell" -> "aegis-sandbox-engine";
+  "aegis-developer-sdk" -> "aegis-userland-base";
+  "aegis-kernel";
+  "aegis-sandbox-engine" -> "aegis-security-core";
+  "aegis-scheduler" -> "aegis-kernel";
+  "aegis-security-core" -> "aegis-userland-base";
+  "aegis-update-service" -> "aegis-userland-base";
+  "aegis-update-service" -> "aegis-security-core";
+  "aegis-userland-base" -> "aegis-kernel";
+}

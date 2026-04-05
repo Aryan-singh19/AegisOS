@@ -10,3 +10,4 @@ Kernel direction, interfaces, and implementation notes live here.
   - context switches expose reason codes (`process_start`, `quantum_expired`, `process_exit`, `manual_yield`).
   - includes structured metrics snapshot API for observability integration.
   - includes tick-based wait-time and last-latency counters per process.
+  - includes aggregate wait report (`mean`, `p95`, `max`) for tuning and diagnostics.

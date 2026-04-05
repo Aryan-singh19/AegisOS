@@ -22,6 +22,9 @@ Profile targets:
 Validation command:
 
 - `python scripts/validate_packages.py`
+  - also exports graph files:
+    - `packages/dependency-graph.json`
+    - `packages/dependency-graph.dot`
 
 Manifest note:
 
