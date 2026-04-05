@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 12:34:14Z
+Last generated: 2026-04-05 12:36:08Z
 
 ## What AegisOS Is Building
 
@@ -68,15 +68,15 @@ We implement in vertical slices:
 
 Recent commit touches (higher means more active recently):
 
-- kernel: 15
+- kernel: 12
 - userland: 43
-- packages: 3
+- packages: 0
 - docs: 40
 - workflows: 0
-- tests: 23
+- tests: 24
 - tools: 0
 - platform: 0
-- scripts: 5
+- scripts: 7
 - other: 0
 
 Open issue pressure by component signal:
@@ -89,6 +89,8 @@ Open issue pressure by component signal:
 
 ## Recent Engineering Changes
 
+- `2da5998` (2026-04-05): "Add_migration_dry_run_diff_preview_and_manifest_incremental_diff"
+- `046e182` (2026-04-05): docs: auto-update explain and changelog
 - `15c20a4` (2026-04-05): "Add_audit_sink_retention_manifest_generator_and_tests"
 - `b11b997` (2026-04-05): docs: auto-update explain and changelog
 - `1acc1f2` (2026-04-05): "Harden_network_trace_json_string_escaping"
@@ -102,5 +104,3 @@ Open issue pressure by component signal:
 - `2f44a9a` (2026-04-05): "Add_windowed_switch_reason_histogram_to_scheduler_snapshot"
 - `bd68b5e` (2026-04-05): docs: auto-update explain and changelog
 - `9f37adb` (2026-04-05): "Add_dns_dual_stack_trace_evidence_and_fs_wildcard_lint_compile"
-- `f56fd91` (2026-04-05): docs: auto-update explain and changelog
-- `206412e` (2026-04-05): Add_machine_readable_json_network_trace_api

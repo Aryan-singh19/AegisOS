@@ -1,10 +1,12 @@
 # CHANGELOG
 
 Auto-updated by workflow.
-Last generated: 2026-04-05 12:34:14Z
+Last generated: 2026-04-05 12:36:08Z
 
 ## Unreleased
 
+- 2026-04-05 `2da5998` "Add_migration_dry_run_diff_preview_and_manifest_incremental_diff"
+- 2026-04-05 `046e182` docs: auto-update explain and changelog
 - 2026-04-05 `15c20a4` "Add_audit_sink_retention_manifest_generator_and_tests"
 - 2026-04-05 `b11b997` docs: auto-update explain and changelog
 - 2026-04-05 `1acc1f2` "Harden_network_trace_json_string_escaping"
@@ -18,5 +20,3 @@ Last generated: 2026-04-05 12:34:14Z
 - 2026-04-05 `2f44a9a` "Add_windowed_switch_reason_histogram_to_scheduler_snapshot"
 - 2026-04-05 `bd68b5e` docs: auto-update explain and changelog
 - 2026-04-05 `9f37adb` "Add_dns_dual_stack_trace_evidence_and_fs_wildcard_lint_compile"
-- 2026-04-05 `f56fd91` docs: auto-update explain and changelog
-- 2026-04-05 `206412e` Add_machine_readable_json_network_trace_api
