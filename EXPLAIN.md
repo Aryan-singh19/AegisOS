@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 11:27:39Z
+Last generated: 2026-04-05 11:29:13Z
 
 ## What AegisOS Is Building
 
@@ -42,7 +42,6 @@ We implement in vertical slices:
 - #62 Capability_actor_registry_and_revocation_hooks (priority-p1, security)
 - #61 Filesystem_scope_wildcard_compiler_and_lint (priority-p1, security)
 - #60 Network_scope_trace_machine_readable_mode (priority-p1, security)
-- #59 DNS_pin_dual_stack_consistency_policy (priority-p1, security)
 - #53 Package_graph_rendering_guide (priority-p1)
 - #48 Docs_heatmap_trend_window (priority-p1)
 - #40 Apply_branch_protection_profile_on_main (priority-p1)
@@ -83,7 +82,7 @@ Recent commit touches (higher means more active recently):
 
 Open issue pressure by component signal:
 
-- security: 8
+- security: 7
 - kernel: 2
 - packages: 3
 - docs: 1
@@ -91,6 +90,8 @@ Open issue pressure by component signal:
 
 ## Recent Engineering Changes
 
+- `c29ca17` (2026-04-05): Add_dns_dual_stack_strict_mode_enforcement
+- `afeccb8` (2026-04-05): docs: auto-update explain and changelog
 - `fcf7371` (2026-04-05): Add_sandbox_policy_legacy_migration_adapter_and_report
 - `7d5960e` (2026-04-05): docs: auto-update explain and changelog
 - `78336af` (2026-04-05): Add_capability_audit_pagination_and_file_sink_helpers
@@ -104,5 +105,3 @@ Open issue pressure by component signal:
 - `2ce62d0` (2026-04-05): Add_network_scope_precedence_debug_trace_api
 - `e5bb38d` (2026-04-05): docs: auto-update explain and changelog
 - `d669e1f` (2026-04-05): Add_dns_pinning_ipv6_support_and_guard_checks
-- `30c8c0e` (2026-04-05): docs: auto-update explain and changelog
-- `8a231e6` (2026-04-05): Add_policy_schema_versioning_and_hot_reload_revision_guard
