@@ -1,10 +1,12 @@
 # CHANGELOG
 
 Auto-updated by workflow.
-Last generated: 2026-04-05 11:39:28Z
+Last generated: 2026-04-05 11:41:55Z
 
 ## Unreleased
 
+- 2026-04-05 `42bd665` "Add_actor_registry_lifecycle_and_scheduler_histogram_window"
+- 2026-04-05 `0b244e0` docs: auto-update explain and changelog
 - 2026-04-05 `2f44a9a` "Add_windowed_switch_reason_histogram_to_scheduler_snapshot"
 - 2026-04-05 `bd68b5e` docs: auto-update explain and changelog
 - 2026-04-05 `9f37adb` "Add_dns_dual_stack_trace_evidence_and_fs_wildcard_lint_compile"
@@ -18,5 +20,3 @@ Last generated: 2026-04-05 11:39:28Z
 - 2026-04-05 `78336af` Add_capability_audit_pagination_and_file_sink_helpers
 - 2026-04-05 `14b141d` docs: auto-update explain and changelog
 - 2026-04-05 `cfb4817` Add_scheduler_snapshot_schema_version_and_reason_breakdown
-- 2026-04-05 `9caf674` docs: auto-update explain and changelog
-- 2026-04-05 `6934178` Add_capability_actor_identity_model_and_validation

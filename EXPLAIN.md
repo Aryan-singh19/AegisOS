@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 11:39:28Z
+Last generated: 2026-04-05 11:41:55Z
 
 ## What AegisOS Is Building
 
@@ -36,11 +36,11 @@ We implement in vertical slices:
 - none
 
 ### Priority P1
+- #69 Scheduler_reason_histogram_custom_window_query (priority-p1, kernel)
 - #68 Trace_JSON_string_escaping_hardening (priority-p1, security)
 - #67 Network_trace_schema_version_field (priority-p1, security)
 - #65 Sandbox_policy_migration_batch_tool (priority-p1, security)
 - #64 Capability_audit_sink_rotation_retention_policy (priority-p1, security)
-- #63 Scheduler_snapshot_reason_histogram_window (priority-p1, kernel)
 - #62 Capability_actor_registry_and_revocation_hooks (priority-p1, security)
 - #53 Package_graph_rendering_guide (priority-p1)
 - #48 Docs_heatmap_trend_window (priority-p1)
@@ -70,14 +70,14 @@ We implement in vertical slices:
 Recent commit touches (higher means more active recently):
 
 - kernel: 18
-- userland: 39
+- userland: 42
 - packages: 3
-- docs: 44
+- docs: 42
 - workflows: 0
-- tests: 20
+- tests: 21
 - tools: 0
 - platform: 0
-- scripts: 3
+- scripts: 2
 - other: 0
 
 Open issue pressure by component signal:
@@ -90,6 +90,8 @@ Open issue pressure by component signal:
 
 ## Recent Engineering Changes
 
+- `42bd665` (2026-04-05): "Add_actor_registry_lifecycle_and_scheduler_histogram_window"
+- `0b244e0` (2026-04-05): docs: auto-update explain and changelog
 - `2f44a9a` (2026-04-05): "Add_windowed_switch_reason_histogram_to_scheduler_snapshot"
 - `bd68b5e` (2026-04-05): docs: auto-update explain and changelog
 - `9f37adb` (2026-04-05): "Add_dns_dual_stack_trace_evidence_and_fs_wildcard_lint_compile"
@@ -103,5 +105,3 @@ Open issue pressure by component signal:
 - `78336af` (2026-04-05): Add_capability_audit_pagination_and_file_sink_helpers
 - `14b141d` (2026-04-05): docs: auto-update explain and changelog
 - `cfb4817` (2026-04-05): Add_scheduler_snapshot_schema_version_and_reason_breakdown
-- `9caf674` (2026-04-05): docs: auto-update explain and changelog
-- `6934178` (2026-04-05): Add_capability_actor_identity_model_and_validation
