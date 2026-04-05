@@ -30,6 +30,9 @@ void aegis_scheduler_init(aegis_scheduler_t *scheduler) {
   scheduler->total_dispatches = 0;
   scheduler->scheduler_ticks = 0;
   scheduler->high_watermark = 0;
+  scheduler->current_pid = 0;
+  scheduler->quantum_ticks = 3;
+  scheduler->quantum_remaining = 0;
   for (i = 0; i < AEGIS_SCHEDULER_CAPACITY; ++i) {
     scheduler->process_ids[i] = 0;
     scheduler->priorities[i] = AEGIS_PRIORITY_NORMAL;
@@ -85,6 +88,10 @@ int aegis_scheduler_remove(aegis_scheduler_t *scheduler, uint32_t process_id) {
   if (!find_index(scheduler, process_id, &idx)) {
     return -1;
   }
+  if (scheduler->current_pid == process_id) {
+    scheduler->current_pid = 0;
+    scheduler->quantum_remaining = 0;
+  }
   for (i = idx + 1; i < scheduler->count; ++i) {
     scheduler->process_ids[i - 1] = scheduler->process_ids[i];
     scheduler->priorities[i - 1] = scheduler->priorities[i];
@@ -138,7 +145,6 @@ int aegis_scheduler_next(aegis_scheduler_t *scheduler, uint32_t *process_id) {
     scheduler->credits[idx] -= 1;
     scheduler->dispatch_counts[idx] += 1;
     scheduler->total_dispatches += 1;
-    scheduler->scheduler_ticks += 1;
     *process_id = scheduler->process_ids[idx];
     scheduler->head = (idx + 1) % scheduler->count;
     return 0;
@@ -187,4 +193,45 @@ void aegis_scheduler_reset_metrics(aegis_scheduler_t *scheduler) {
   for (i = 0; i < scheduler->count; ++i) {
     scheduler->dispatch_counts[i] = 0;
   }
+}
+
+void aegis_scheduler_set_quantum(aegis_scheduler_t *scheduler, uint32_t quantum_ticks) {
+  if (scheduler == 0 || quantum_ticks == 0) {
+    return;
+  }
+  scheduler->quantum_ticks = quantum_ticks;
+  if (scheduler->quantum_remaining > quantum_ticks) {
+    scheduler->quantum_remaining = quantum_ticks;
+  }
+}
+
+int aegis_scheduler_on_tick(aegis_scheduler_t *scheduler, uint32_t *running_pid,
+                            uint8_t *context_switch) {
+  uint32_t next_pid = 0;
+  int rc;
+  if (scheduler == 0 || running_pid == 0 || context_switch == 0) {
+    return -1;
+  }
+  *context_switch = 0;
+  scheduler->scheduler_ticks += 1;
+  if (scheduler->count == 0) {
+    scheduler->current_pid = 0;
+    scheduler->quantum_remaining = 0;
+    *running_pid = 0;
+    return 0;
+  }
+  if (scheduler->current_pid == 0 || scheduler->quantum_remaining == 0) {
+    rc = aegis_scheduler_next(scheduler, &next_pid);
+    if (rc != 0) {
+      return -1;
+    }
+    *context_switch = 1;
+    scheduler->current_pid = next_pid;
+    scheduler->quantum_remaining = scheduler->quantum_ticks;
+  }
+  if (scheduler->quantum_remaining > 0) {
+    scheduler->quantum_remaining -= 1;
+  }
+  *running_pid = scheduler->current_pid;
+  return 0;
 }

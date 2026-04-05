@@ -12,6 +12,9 @@ typedef struct {
   uint64_t total_dispatches;
   uint64_t scheduler_ticks;
   size_t high_watermark;
+  uint32_t current_pid;
+  uint32_t quantum_ticks;
+  uint32_t quantum_remaining;
   size_t count;
   size_t head;
 } aegis_scheduler_t;
@@ -36,5 +39,8 @@ size_t aegis_scheduler_high_watermark(const aegis_scheduler_t *scheduler);
 int aegis_scheduler_dispatch_count_for(const aegis_scheduler_t *scheduler, uint32_t process_id,
                                        uint32_t *dispatch_count);
 void aegis_scheduler_reset_metrics(aegis_scheduler_t *scheduler);
+void aegis_scheduler_set_quantum(aegis_scheduler_t *scheduler, uint32_t quantum_ticks);
+int aegis_scheduler_on_tick(aegis_scheduler_t *scheduler, uint32_t *running_pid,
+                            uint8_t *context_switch);
 
 #endif

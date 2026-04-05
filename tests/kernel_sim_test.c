@@ -152,6 +152,35 @@ static int test_scheduler_metrics(void) {
   return 0;
 }
 
+static int test_scheduler_preemption_tick(void) {
+  aegis_scheduler_t scheduler;
+  uint32_t pid = 0;
+  uint8_t switched = 0;
+  aegis_scheduler_init(&scheduler);
+  aegis_scheduler_set_quantum(&scheduler, 2u);
+  if (aegis_scheduler_add(&scheduler, 7001u) != 0 || aegis_scheduler_add(&scheduler, 7002u) != 0) {
+    fprintf(stderr, "preemption add failed\n");
+    return 1;
+  }
+  if (aegis_scheduler_on_tick(&scheduler, &pid, &switched) != 0 || switched == 0 || pid != 7001u) {
+    fprintf(stderr, "tick1 expected switch to pid 7001\n");
+    return 1;
+  }
+  if (aegis_scheduler_on_tick(&scheduler, &pid, &switched) != 0 || switched != 0 || pid != 7001u) {
+    fprintf(stderr, "tick2 expected same pid 7001 without switch\n");
+    return 1;
+  }
+  if (aegis_scheduler_on_tick(&scheduler, &pid, &switched) != 0 || switched == 0 || pid != 7002u) {
+    fprintf(stderr, "tick3 expected switch to pid 7002\n");
+    return 1;
+  }
+  if (aegis_scheduler_on_tick(&scheduler, &pid, &switched) != 0 || switched != 0 || pid != 7002u) {
+    fprintf(stderr, "tick4 expected same pid 7002 without switch\n");
+    return 1;
+  }
+  return 0;
+}
+
 int main(void) {
   if (test_kernel_boot() != 0) {
     return 1;
@@ -166,6 +195,9 @@ int main(void) {
     return 1;
   }
   if (test_scheduler_metrics() != 0) {
+    return 1;
+  }
+  if (test_scheduler_preemption_tick() != 0) {
     return 1;
   }
   puts("kernel simulation check passed");
