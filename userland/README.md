@@ -22,6 +22,7 @@ Core userspace services, shell tools, and runtime components live here.
   - includes optional network precedence debug trace output for diagnostics.
   - includes optional DNS pinning guard (`host -> pinned IPv4`) for rebinding defense.
   - DNS pinning guard now supports pinned IPv6 literals for dual-stack protection.
+  - supports strict dual-stack mode requiring both IPv4 and IPv6 resolutions when both are pinned.
   - includes symlink mapping resolution before filesystem scope checks.
   - supports policy hot reload with validation and safe replacement semantics.
   - hot reload enforces monotonic `policy_revision` to block stale policy rollback.

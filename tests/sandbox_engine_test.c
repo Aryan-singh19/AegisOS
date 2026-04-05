@@ -595,6 +595,72 @@ static int test_dns_rebinding_guard_ipv6(void) {
   return 0;
 }
 
+static int test_dns_dual_stack_strict_mode(void) {
+  aegis_capability_store_t cap_store;
+  aegis_policy_engine_t engine;
+  aegis_sandbox_policy_t policy = {
+      5202u, AEGIS_CAP_NET_CLIENT, 0u, 0u, 1u, 0u, 0u};
+  aegis_policy_decision_t decision;
+  const uint32_t pinned_v4 = 0xC0A80122; /* 192.168.1.34 */
+  const char *pinned_v6 = "2001:db8::22";
+
+  aegis_capability_store_init(&cap_store);
+  aegis_policy_engine_init(&engine);
+  if (aegis_capability_issue(&cap_store, 5202u, AEGIS_CAP_NET_CLIENT) != 0) {
+    fprintf(stderr, "dns dual-stack capability issue failed\n");
+    return 1;
+  }
+  if (aegis_policy_engine_set_policy(&engine, &policy) != 0) {
+    fprintf(stderr, "dns dual-stack set policy failed\n");
+    return 1;
+  }
+  if (aegis_policy_engine_add_net_rule(
+          &engine, 5202u, "api.dual.local", 443, 443, AEGIS_NET_PROTO_TCP, 1u, 0u, 1u) != 0) {
+    fprintf(stderr, "dns dual-stack add net rule failed\n");
+    return 1;
+  }
+  if (aegis_policy_engine_pin_dns_ipv4(&engine, 5202u, "api.dual.local", pinned_v4) != 0 ||
+      aegis_policy_engine_pin_dns_ipv6(&engine, 5202u, "api.dual.local", pinned_v6) != 0) {
+    fprintf(stderr, "dns dual-stack pin failed\n");
+    return 1;
+  }
+  if (aegis_policy_engine_set_dns_dual_stack_strict(&engine, 5202u, "api.dual.local", 1u) != 0) {
+    fprintf(stderr, "dns dual-stack strict enable failed\n");
+    return 1;
+  }
+  if (aegis_policy_engine_check_network_with_ip_ex(&engine,
+                                                   &cap_store,
+                                                   5202u,
+                                                   AEGIS_ACTION_NET_CONNECT,
+                                                   "api.dual.local",
+                                                   443,
+                                                   AEGIS_NET_PROTO_TCP,
+                                                   pinned_v4,
+                                                   0,
+                                                   &decision) != 0) {
+    fprintf(stderr, "expected strict dual-stack missing family deny\n");
+    return 1;
+  }
+  if (strcmp(decision.reason, "dns dual-stack strict mode requires both ipv4 and ipv6 resolution") != 0) {
+    fprintf(stderr, "unexpected strict dual-stack reason: %s\n", decision.reason);
+    return 1;
+  }
+  if (aegis_policy_engine_check_network_with_ip_ex(&engine,
+                                                   &cap_store,
+                                                   5202u,
+                                                   AEGIS_ACTION_NET_CONNECT,
+                                                   "api.dual.local",
+                                                   443,
+                                                   AEGIS_NET_PROTO_TCP,
+                                                   pinned_v4,
+                                                   pinned_v6,
+                                                   &decision) != 1) {
+    fprintf(stderr, "expected strict dual-stack allow when both families match\n");
+    return 1;
+  }
+  return 0;
+}
+
 static int test_policy_hot_reload(void) {
   aegis_capability_store_t cap_store;
   aegis_policy_engine_t engine;
@@ -684,6 +750,9 @@ int main(void) {
     return 1;
   }
   if (test_dns_rebinding_guard_ipv6() != 0) {
+    return 1;
+  }
+  if (test_dns_dual_stack_strict_mode() != 0) {
     return 1;
   }
   if (test_policy_hot_reload() != 0) {

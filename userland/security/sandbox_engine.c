@@ -264,6 +264,7 @@ void aegis_policy_engine_init(aegis_policy_engine_t *engine) {
     engine->dns_pin_rules[i].pinned_ipv6[0] = '\0';
     engine->dns_pin_rules[i].has_ipv4 = 0;
     engine->dns_pin_rules[i].has_ipv6 = 0;
+    engine->dns_pin_rules[i].strict_dual_stack = 0;
   }
 }
 
@@ -710,6 +711,7 @@ int aegis_policy_engine_pin_dns_ipv4(aegis_policy_engine_t *engine, uint32_t pro
   engine->dns_pin_rules[free_index].pinned_ipv4 = ipv4;
   engine->dns_pin_rules[free_index].has_ipv4 = 1;
   engine->dns_pin_rules[free_index].has_ipv6 = 0;
+  engine->dns_pin_rules[free_index].strict_dual_stack = 0;
   engine->dns_pin_rules[free_index].pinned_ipv6[0] = '\0';
   snprintf(engine->dns_pin_rules[free_index].host,
            sizeof(engine->dns_pin_rules[free_index].host),
@@ -752,11 +754,31 @@ int aegis_policy_engine_pin_dns_ipv6(aegis_policy_engine_t *engine, uint32_t pro
            "%s",
            ipv6);
   engine->dns_pin_rules[free_index].has_ipv6 = 1;
+  engine->dns_pin_rules[free_index].strict_dual_stack = 0;
   snprintf(engine->dns_pin_rules[free_index].host,
            sizeof(engine->dns_pin_rules[free_index].host),
            "%s",
            host);
   return 0;
+}
+
+int aegis_policy_engine_set_dns_dual_stack_strict(aegis_policy_engine_t *engine, uint32_t process_id,
+                                                   const char *host, uint8_t enabled) {
+  size_t i;
+  if (engine == 0 || process_id == 0 || host == 0 || host[0] == '\0') {
+    return -1;
+  }
+  for (i = 0; i < 128; ++i) {
+    if (engine->dns_pin_rules[i].active == 0 || engine->dns_pin_rules[i].process_id != process_id) {
+      continue;
+    }
+    if (strcmp(engine->dns_pin_rules[i].host, host) != 0) {
+      continue;
+    }
+    engine->dns_pin_rules[i].strict_dual_stack = enabled != 0 ? 1u : 0u;
+    return 0;
+  }
+  return -1;
 }
 
 int aegis_policy_engine_clear_dns_pins(aegis_policy_engine_t *engine, uint32_t process_id) {
@@ -774,6 +796,7 @@ int aegis_policy_engine_clear_dns_pins(aegis_policy_engine_t *engine, uint32_t p
       engine->dns_pin_rules[i].pinned_ipv6[0] = '\0';
       engine->dns_pin_rules[i].has_ipv4 = 0;
       engine->dns_pin_rules[i].has_ipv6 = 0;
+      engine->dns_pin_rules[i].strict_dual_stack = 0;
       removed = 1;
     }
   }
@@ -840,6 +863,13 @@ static int check_network_with_ip_internal(const aegis_policy_engine_t *engine,
       if (strcmp(pin->host, host) != 0) {
         continue;
       }
+      if (pin->strict_dual_stack != 0 && pin->has_ipv4 != 0 && pin->has_ipv6 != 0) {
+        if (resolved_ipv4 == 0u || resolved_ipv6 == 0 || resolved_ipv6[0] == '\0') {
+          set_reason(decision, "dns dual-stack strict mode requires both ipv4 and ipv6 resolution", 0);
+          append_trace(trace, trace_size, "dns strict dual-stack missing family host=%s", host);
+          return 0;
+        }
+      }
       if (pin->has_ipv4 != 0 && pin->pinned_ipv4 != resolved_ipv4) {
         set_reason(decision, "dns rebinding guard blocked host/ip mismatch", 0);
         append_trace(trace, trace_size, "dns pin mismatch ipv4 host=%s expected=%u got=%u", host,
@@ -863,6 +893,13 @@ static int check_network_with_ip_internal(const aegis_policy_engine_t *engine,
       }
       if (strcmp(pin->host, host) != 0) {
         continue;
+      }
+      if (pin->strict_dual_stack != 0 && pin->has_ipv4 != 0 && pin->has_ipv6 != 0) {
+        if (resolved_ipv4 == 0u || resolved_ipv6 == 0 || resolved_ipv6[0] == '\0') {
+          set_reason(decision, "dns dual-stack strict mode requires both ipv4 and ipv6 resolution", 0);
+          append_trace(trace, trace_size, "dns strict dual-stack missing family host=%s", host);
+          return 0;
+        }
       }
       if (pin->has_ipv6 != 0 && strcmp(pin->pinned_ipv6, resolved_ipv6) != 0) {
         set_reason(decision, "dns rebinding guard blocked host/ip mismatch", 0);
