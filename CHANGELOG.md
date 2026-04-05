@@ -1,10 +1,12 @@
 # CHANGELOG
 
 Auto-updated by workflow.
-Last generated: 2026-04-05 10:25:30Z
+Last generated: 2026-04-05 10:26:59Z
 
 ## Unreleased
 
+- 2026-04-05 `0e65665` Add_scheduler_metrics_tracepoints_and_tests
+- 2026-04-05 `4d87d05` docs: auto-update explain and changelog
 - 2026-04-05 `2c96784` Implement_issue_enrichment_token_ttl_rotation_and_scheduler_priority
 - 2026-04-05 `6a7a49c` docs: auto-update explain and changelog
 - 2026-04-05 `886b81c` Add_symlink_resolution_rules_for_filesystem_scope_checks
@@ -18,5 +20,3 @@ Last generated: 2026-04-05 10:25:30Z
 - 2026-04-05 `7ce10dc` Add_package_manifest_validator_and_ci_workflow
 - 2026-04-05 `e3d506e` docs: auto-update explain and changelog
 - 2026-04-05 `613b123` Add_auto_docs_workflow_and_sandbox_policy_engine_mvp
-- 2026-04-05 `242200b` Add_sandbox_policy_schema_validator_and_tests
-- 2026-04-05 `cccdb53` Add_capability_token_lifecycle_issue_revoke_access_checks
