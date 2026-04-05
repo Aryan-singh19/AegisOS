@@ -110,6 +110,53 @@ class MigratePoliciesBatchTest(unittest.TestCase):
             ).returncode
             self.assertEqual(rc, 2)
 
+    def test_batch_migration_dry_run_and_diff_preview(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            inp = base / "in"
+            out = base / "out"
+            summary = base / "summary.json"
+            inp.mkdir()
+            inp.joinpath("legacy.json").write_text(
+                json.dumps(
+                    {
+                        "process_id": 3001,
+                        "capabilities": 5,
+                        "allow_fs_read": 1,
+                        "allow_fs_write": 0,
+                        "allow_net_client": 1,
+                        "allow_net_server": 0,
+                        "allow_device_io": 0,
+                    }
+                ),
+                encoding="utf-8",
+            )
+            rc = subprocess.run(
+                [
+                    "python",
+                    str(SCRIPT),
+                    "--input-dir",
+                    str(inp),
+                    "--output-dir",
+                    str(out),
+                    "--summary-json",
+                    str(summary),
+                    "--dry-run",
+                    "--diff-preview",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+                cwd=str(ROOT),
+            ).returncode
+            self.assertEqual(rc, 0)
+            self.assertFalse((out / "legacy.json").exists())
+            data = json.loads(summary.read_text(encoding="utf-8"))
+            self.assertEqual(data["dry_run"], 1)
+            self.assertEqual(data["migrated"], 1)
+            self.assertIn("diff_preview", data["results"][0])
+            self.assertIn("policy_revision", data["results"][0]["diff_preview"])
+
 
 if __name__ == "__main__":
     unittest.main()

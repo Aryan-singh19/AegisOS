@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import difflib
 import json
 import sys
 from pathlib import Path
@@ -70,7 +71,7 @@ def migrate_doc(raw):
     )
 
 
-def run_batch(input_dir, output_dir):
+def run_batch(input_dir, output_dir, dry_run=False, diff_preview=False):
     input_dir = Path(input_dir)
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -80,6 +81,7 @@ def run_batch(input_dir, output_dir):
         "migrated": 0,
         "already_current": 0,
         "failed": 0,
+        "dry_run": 1 if dry_run else 0,
         "results": [],
     }
     for path in files:
@@ -89,17 +91,33 @@ def run_batch(input_dir, output_dir):
             raw = json.loads(path.read_text(encoding="utf-8"))
             migrated, reason, status = migrate_doc(raw)
             if status != "failed":
-                out_path = output_dir / path.name
-                out_path.write_text(
-                    json.dumps(migrated, sort_keys=True, separators=(",", ":")),
-                    encoding="utf-8",
-                )
+                if not dry_run:
+                    out_path = output_dir / path.name
+                    out_path.write_text(
+                        json.dumps(migrated, sort_keys=True, separators=(",", ":")),
+                        encoding="utf-8",
+                    )
         except Exception as exc:
             reason = f"parse_error: {exc}"
             status = "failed"
 
         summary[status] += 1
-        summary["results"].append({"file": path.name, "status": status, "reason": reason})
+        result = {"file": path.name, "status": status, "reason": reason}
+        if diff_preview and status != "failed":
+            before = json.dumps(raw, sort_keys=True, indent=2) + "\n"
+            after = json.dumps(migrated, sort_keys=True, indent=2) + "\n"
+            if before == after:
+                result["diff_preview"] = ""
+            else:
+                result["diff_preview"] = "".join(
+                    difflib.unified_diff(
+                        before.splitlines(keepends=True),
+                        after.splitlines(keepends=True),
+                        fromfile=f"{path.name}:before",
+                        tofile=f"{path.name}:after",
+                    )
+                )
+        summary["results"].append(result)
     return summary
 
 
@@ -110,9 +128,15 @@ def main():
     parser.add_argument("--input-dir", required=True, help="Directory containing input .json policies")
     parser.add_argument("--output-dir", required=True, help="Directory for migrated .json policies")
     parser.add_argument("--summary-json", help="Optional path to write migration summary JSON")
+    parser.add_argument("--dry-run", action="store_true", help="Validate and plan migration without writing outputs")
+    parser.add_argument(
+        "--diff-preview",
+        action="store_true",
+        help="Include per-file unified diff preview in summary results",
+    )
     args = parser.parse_args()
 
-    summary = run_batch(args.input_dir, args.output_dir)
+    summary = run_batch(args.input_dir, args.output_dir, dry_run=args.dry_run, diff_preview=args.diff_preview)
     print(
         f"total={summary['total']} migrated={summary['migrated']} "
         f"already_current={summary['already_current']} failed={summary['failed']}"

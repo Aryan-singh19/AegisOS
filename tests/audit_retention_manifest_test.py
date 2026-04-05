@@ -63,6 +63,50 @@ class AuditRetentionManifestTest(unittest.TestCase):
             ).returncode
             self.assertNotEqual(rc, 0)
 
+    def test_manifest_incremental_diff_mode(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            prev_manifest = base / "prev.json"
+            out_manifest = base / "manifest.json"
+            prev_manifest.write_text(
+                json.dumps(
+                    {
+                        "manifest_schema_version": 1,
+                        "prefix": "cap_audit",
+                        "keep_chunk_ids": [10, 11, 12, 13, 14],
+                        "prune_chunk_ids": list(range(0, 10)),
+                    }
+                ),
+                encoding="utf-8",
+            )
+            rc = subprocess.run(
+                [
+                    "python",
+                    str(SCRIPT),
+                    "--prefix",
+                    "cap_audit",
+                    "--latest-chunk-id",
+                    "17",
+                    "--retention-window-chunks",
+                    "5",
+                    "--prev-manifest-json",
+                    str(prev_manifest),
+                    "--manifest-json",
+                    str(out_manifest),
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+                cwd=str(ROOT),
+            ).returncode
+            self.assertEqual(rc, 0)
+            data = json.loads(out_manifest.read_text(encoding="utf-8"))
+            inc = data["incremental_diff"]
+            self.assertEqual(inc["added_keep_chunk_ids"], [15, 16, 17])
+            self.assertEqual(inc["removed_keep_chunk_ids"], [10, 11, 12])
+            self.assertEqual(inc["added_prune_chunk_ids"], [10, 11, 12])
+            self.assertEqual(inc["removed_prune_chunk_ids"], [])
+
 
 if __name__ == "__main__":
     unittest.main()

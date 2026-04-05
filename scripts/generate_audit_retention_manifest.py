@@ -33,6 +33,29 @@ def build_manifest(prefix: str, latest_chunk_id: int, retention_window_chunks: i
     }
 
 
+def build_incremental_diff(prev_manifest: dict, current_manifest: dict):
+    prev_keep = set(prev_manifest.get("keep_chunk_ids", []))
+    prev_prune = set(prev_manifest.get("prune_chunk_ids", []))
+    cur_keep = set(current_manifest.get("keep_chunk_ids", []))
+    cur_prune = set(current_manifest.get("prune_chunk_ids", []))
+    added_keep = sorted(cur_keep - prev_keep)
+    removed_keep = sorted(prev_keep - cur_keep)
+    added_prune = sorted(cur_prune - prev_prune)
+    removed_prune = sorted(prev_prune - cur_prune)
+    prefix = current_manifest.get("prefix", "")
+    return {
+        "prev_manifest_schema_version": int(prev_manifest.get("manifest_schema_version", 0)),
+        "added_keep_chunk_ids": added_keep,
+        "removed_keep_chunk_ids": removed_keep,
+        "added_prune_chunk_ids": added_prune,
+        "removed_prune_chunk_ids": removed_prune,
+        "added_keep_files": [sink_name(prefix, cid) for cid in added_keep],
+        "removed_keep_files": [sink_name(prefix, cid) for cid in removed_keep],
+        "added_prune_files": [sink_name(prefix, cid) for cid in added_prune],
+        "removed_prune_files": [sink_name(prefix, cid) for cid in removed_prune],
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Generate audit sink retention manifest with keep/prune chunk lists."
@@ -45,10 +68,17 @@ def main():
         type=int,
         help="Number of most recent chunks to retain",
     )
+    parser.add_argument(
+        "--prev-manifest-json",
+        help="Optional previous manifest json path for incremental diff output",
+    )
     parser.add_argument("--manifest-json", required=True, help="Output manifest json file path")
     args = parser.parse_args()
 
     manifest = build_manifest(args.prefix, args.latest_chunk_id, args.retention_window_chunks)
+    if args.prev_manifest_json:
+        prev_manifest = json.loads(Path(args.prev_manifest_json).read_text(encoding="utf-8"))
+        manifest["incremental_diff"] = build_incremental_diff(prev_manifest, manifest)
     out_path = Path(args.manifest_json)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
