@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 10:09:05Z
+Last generated: 2026-04-05 10:10:31Z
 
 ## What AegisOS Is Building
 
@@ -32,11 +32,13 @@ We implement in vertical slices:
 
 ## Live Backlog Snapshot
 
+- #18 Auto_docs_issue_enrichment (priority-p1)
+- #17 Sandbox_engine_network_scopes (priority-p1, security)
+- #16 Sandbox_engine_path_scopes (priority-p0, security)
 - #15 CI_add_clang_build_matrix (priority-p1)
 - #14 Sandbox_policy_hot_reload (priority-p1, security)
 - #13 Sandbox_policy_serialization_format (priority-p1, security)
 - #12 Scheduler_metrics_and_tracepoints (priority-p1, kernel)
-- #11 Sandbox_policy_engine_mvp (priority-p0, security)
 - #10 Capability_token_expiry_and_rotation (priority-p1, security)
 - #9 Toolchain_bootstrap_for_contributors (good-first-task)
 - #8 Capability_audit_log_pipeline (priority-p1, security)
@@ -47,6 +49,8 @@ We implement in vertical slices:
 
 ## Recent Engineering Changes
 
+- `7ce10dc` (2026-04-05): Add_package_manifest_validator_and_ci_workflow
+- `e3d506e` (2026-04-05): docs: auto-update explain and changelog
 - `613b123` (2026-04-05): Add_auto_docs_workflow_and_sandbox_policy_engine_mvp
 - `242200b` (2026-04-05): Add_sandbox_policy_schema_validator_and_tests
 - `cccdb53` (2026-04-05): Add_capability_token_lifecycle_issue_revoke_access_checks
