@@ -7,6 +7,7 @@
 #define AEGIS_SCHEDULER_SNAPSHOT_SCHEMA_VERSION 2u
 #define AEGIS_SCHEDULER_REASON_HISTOGRAM_WINDOW 32u
 #define AEGIS_VM_REGION_CAPACITY 64u
+#define AEGIS_IPC_ENVELOPE_SCHEMA_VERSION 1u
 
 typedef struct {
   uint64_t base;
@@ -19,6 +20,14 @@ typedef struct {
   aegis_vm_region_t regions[AEGIS_VM_REGION_CAPACITY];
   size_t count;
 } aegis_vm_space_t;
+
+typedef struct {
+  uint16_t schema_version;
+  uint16_t message_type;
+  uint32_t flags;
+  uint32_t payload_size;
+  uint32_t correlation_id;
+} aegis_ipc_envelope_t;
 
 typedef struct {
   uint32_t process_ids[64];
@@ -100,6 +109,9 @@ int aegis_vm_map(aegis_vm_space_t *space, uint64_t base, uint64_t size, uint32_t
 int aegis_vm_unmap(aegis_vm_space_t *space, uint64_t base, uint64_t size);
 int aegis_vm_query(const aegis_vm_space_t *space, uint64_t address, aegis_vm_region_t *region);
 int aegis_vm_summary_json(const aegis_vm_space_t *space, char *out, size_t out_size);
+int aegis_ipc_envelope_validate(const aegis_ipc_envelope_t *envelope, uint32_t max_payload_size);
+int aegis_ipc_envelope_encode(const aegis_ipc_envelope_t *envelope, uint8_t *out, size_t out_size);
+int aegis_ipc_envelope_decode(const uint8_t *in, size_t in_size, aegis_ipc_envelope_t *envelope);
 void aegis_scheduler_init(aegis_scheduler_t *scheduler);
 int aegis_scheduler_add(aegis_scheduler_t *scheduler, uint32_t process_id);
 int aegis_scheduler_add_with_priority(aegis_scheduler_t *scheduler, uint32_t process_id,

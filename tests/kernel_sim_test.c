@@ -61,6 +61,51 @@ static int test_vm_region_map_abstraction(void) {
   return 0;
 }
 
+static int test_ipc_envelope_format_helpers(void) {
+  aegis_ipc_envelope_t in = {AEGIS_IPC_ENVELOPE_SCHEMA_VERSION, 7u, 0xA5u, 512u, 42u};
+  aegis_ipc_envelope_t out;
+  uint8_t buf[16];
+  uint8_t tiny[8];
+  if (aegis_ipc_envelope_validate(&in, 4096u) != 0) {
+    fprintf(stderr, "ipc validate expected success\n");
+    return 1;
+  }
+  if (aegis_ipc_envelope_encode(&in, buf, sizeof(buf)) != 16) {
+    fprintf(stderr, "ipc encode expected fixed header size\n");
+    return 1;
+  }
+  if (aegis_ipc_envelope_decode(buf, sizeof(buf), &out) != 0) {
+    fprintf(stderr, "ipc decode failed\n");
+    return 1;
+  }
+  if (out.schema_version != in.schema_version || out.message_type != in.message_type ||
+      out.flags != in.flags || out.payload_size != in.payload_size ||
+      out.correlation_id != in.correlation_id) {
+    fprintf(stderr, "ipc roundtrip mismatch\n");
+    return 1;
+  }
+  out.schema_version = 99u;
+  if (aegis_ipc_envelope_validate(&out, 4096u) == 0) {
+    fprintf(stderr, "ipc validate expected schema mismatch failure\n");
+    return 1;
+  }
+  out = in;
+  out.payload_size = 9999u;
+  if (aegis_ipc_envelope_validate(&out, 4096u) == 0) {
+    fprintf(stderr, "ipc validate expected payload bound failure\n");
+    return 1;
+  }
+  if (aegis_ipc_envelope_encode(&in, tiny, sizeof(tiny)) >= 0) {
+    fprintf(stderr, "ipc encode expected tiny buffer failure\n");
+    return 1;
+  }
+  if (aegis_ipc_envelope_decode(buf, sizeof(tiny), &out) >= 0) {
+    fprintf(stderr, "ipc decode expected short buffer failure\n");
+    return 1;
+  }
+  return 0;
+}
+
 static int test_scheduler_round_robin(void) {
   aegis_scheduler_t scheduler;
   uint32_t pid = 0;
@@ -696,6 +741,9 @@ int main(void) {
     return 1;
   }
   if (test_vm_region_map_abstraction() != 0) {
+    return 1;
+  }
+  if (test_ipc_envelope_format_helpers() != 0) {
     return 1;
   }
   if (test_scheduler_round_robin() != 0) {

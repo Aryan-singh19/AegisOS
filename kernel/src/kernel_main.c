@@ -48,6 +48,60 @@ static int vm_region_overlaps(uint64_t a_base, uint64_t a_size, uint64_t b_base,
   return 1;
 }
 
+int aegis_ipc_envelope_validate(const aegis_ipc_envelope_t *envelope, uint32_t max_payload_size) {
+  if (envelope == 0) {
+    return -1;
+  }
+  if (envelope->schema_version != AEGIS_IPC_ENVELOPE_SCHEMA_VERSION) {
+    return -1;
+  }
+  if (envelope->message_type == 0u) {
+    return -1;
+  }
+  if (envelope->payload_size > max_payload_size) {
+    return -1;
+  }
+  return 0;
+}
+
+int aegis_ipc_envelope_encode(const aegis_ipc_envelope_t *envelope, uint8_t *out, size_t out_size) {
+  if (envelope == 0 || out == 0 || out_size < 16u) {
+    return -1;
+  }
+  out[0] = (uint8_t)(envelope->schema_version & 0xFFu);
+  out[1] = (uint8_t)((envelope->schema_version >> 8) & 0xFFu);
+  out[2] = (uint8_t)(envelope->message_type & 0xFFu);
+  out[3] = (uint8_t)((envelope->message_type >> 8) & 0xFFu);
+  out[4] = (uint8_t)(envelope->flags & 0xFFu);
+  out[5] = (uint8_t)((envelope->flags >> 8) & 0xFFu);
+  out[6] = (uint8_t)((envelope->flags >> 16) & 0xFFu);
+  out[7] = (uint8_t)((envelope->flags >> 24) & 0xFFu);
+  out[8] = (uint8_t)(envelope->payload_size & 0xFFu);
+  out[9] = (uint8_t)((envelope->payload_size >> 8) & 0xFFu);
+  out[10] = (uint8_t)((envelope->payload_size >> 16) & 0xFFu);
+  out[11] = (uint8_t)((envelope->payload_size >> 24) & 0xFFu);
+  out[12] = (uint8_t)(envelope->correlation_id & 0xFFu);
+  out[13] = (uint8_t)((envelope->correlation_id >> 8) & 0xFFu);
+  out[14] = (uint8_t)((envelope->correlation_id >> 16) & 0xFFu);
+  out[15] = (uint8_t)((envelope->correlation_id >> 24) & 0xFFu);
+  return 16;
+}
+
+int aegis_ipc_envelope_decode(const uint8_t *in, size_t in_size, aegis_ipc_envelope_t *envelope) {
+  if (in == 0 || envelope == 0 || in_size < 16u) {
+    return -1;
+  }
+  envelope->schema_version = (uint16_t)(in[0] | ((uint16_t)in[1] << 8));
+  envelope->message_type = (uint16_t)(in[2] | ((uint16_t)in[3] << 8));
+  envelope->flags = (uint32_t)in[4] | ((uint32_t)in[5] << 8) | ((uint32_t)in[6] << 16) |
+                    ((uint32_t)in[7] << 24);
+  envelope->payload_size = (uint32_t)in[8] | ((uint32_t)in[9] << 8) | ((uint32_t)in[10] << 16) |
+                           ((uint32_t)in[11] << 24);
+  envelope->correlation_id = (uint32_t)in[12] | ((uint32_t)in[13] << 8) |
+                             ((uint32_t)in[14] << 16) | ((uint32_t)in[15] << 24);
+  return 0;
+}
+
 void aegis_vm_space_init(aegis_vm_space_t *space) {
   size_t i;
   if (space == 0) {
