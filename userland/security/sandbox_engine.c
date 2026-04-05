@@ -1,6 +1,7 @@
 #include "sandbox_engine.h"
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <string.h>
 
 static void set_reason(aegis_policy_decision_t *decision, const char *message, uint8_t allowed) {
@@ -13,6 +14,34 @@ static void set_reason(aegis_policy_decision_t *decision, const char *message, u
     return;
   }
   snprintf(decision->reason, sizeof(decision->reason), "%s", message);
+}
+
+static void set_trace(char *trace, size_t trace_size, const char *message) {
+  if (trace == 0 || trace_size == 0u) {
+    return;
+  }
+  if (message == 0) {
+    trace[0] = '\0';
+    return;
+  }
+  snprintf(trace, trace_size, "%s", message);
+}
+
+static void append_trace(char *trace, size_t trace_size, const char *fmt, ...) {
+  va_list args;
+  size_t used = 0;
+  int written = 0;
+  if (trace == 0 || trace_size == 0u || fmt == 0) {
+    return;
+  }
+  used = strlen(trace);
+  if (used >= trace_size - 1u) {
+    return;
+  }
+  va_start(args, fmt);
+  written = vsnprintf(trace + used, trace_size - used, fmt, args);
+  va_end(args);
+  (void)written;
 }
 
 static int find_policy_index(const aegis_policy_engine_t *engine, uint32_t process_id, size_t *index) {
@@ -726,34 +755,42 @@ int aegis_policy_engine_check_network_with_ip(const aegis_policy_engine_t *engin
                                                       protocol, resolved_ipv4, 0, decision);
 }
 
-int aegis_policy_engine_check_network_with_ip_ex(const aegis_policy_engine_t *engine,
-                                                 const aegis_capability_store_t *store,
-                                                 uint32_t process_id,
-                                                 aegis_action_t action,
-                                                 const char *host,
-                                                 uint16_t port,
-                                                 aegis_net_protocol_t protocol,
-                                                 uint32_t resolved_ipv4,
-                                                 const char *resolved_ipv6,
-                                                 aegis_policy_decision_t *decision) {
+static int check_network_with_ip_internal(const aegis_policy_engine_t *engine,
+                                          const aegis_capability_store_t *store,
+                                          uint32_t process_id,
+                                          aegis_action_t action,
+                                          const char *host,
+                                          uint16_t port,
+                                          aegis_net_protocol_t protocol,
+                                          uint32_t resolved_ipv4,
+                                          const char *resolved_ipv6,
+                                          char *trace,
+                                          size_t trace_size,
+                                          aegis_policy_decision_t *decision) {
   int base_rc;
   size_t i;
   int best_score = -1;
   int best_allow = 0;
+  int best_index = -1;
+  set_trace(trace, trace_size, "");
   if (action != AEGIS_ACTION_NET_CONNECT && action != AEGIS_ACTION_NET_BIND) {
     set_reason(decision, "network check requires net action", 0);
+    set_trace(trace, trace_size, "network action invalid");
     return 0;
   }
   base_rc = aegis_policy_engine_check(engine, store, process_id, action, decision);
   if (base_rc != 1) {
+    append_trace(trace, trace_size, "base gate denied: %s", decision != 0 ? decision->reason : "");
     return base_rc;
   }
   if (host == 0 || host[0] == '\0' || port == 0) {
     set_reason(decision, "network host/port required", 0);
+    set_trace(trace, trace_size, "missing host/port");
     return 0;
   }
   if (protocol != AEGIS_NET_PROTO_TCP && protocol != AEGIS_NET_PROTO_UDP) {
     set_reason(decision, "unsupported network protocol", 0);
+    set_trace(trace, trace_size, "protocol unsupported");
     return 0;
   }
   if (resolved_ipv4 != 0u) {
@@ -767,11 +804,15 @@ int aegis_policy_engine_check_network_with_ip_ex(const aegis_policy_engine_t *en
       }
       if (pin->has_ipv4 != 0 && pin->pinned_ipv4 != resolved_ipv4) {
         set_reason(decision, "dns rebinding guard blocked host/ip mismatch", 0);
+        append_trace(trace, trace_size, "dns pin mismatch ipv4 host=%s expected=%u got=%u", host,
+                     pin->pinned_ipv4, resolved_ipv4);
         return 0;
       }
       if (pin->has_ipv6 != 0 && resolved_ipv6 != 0 &&
           strcmp(pin->pinned_ipv6, resolved_ipv6) != 0) {
         set_reason(decision, "dns rebinding guard blocked host/ip mismatch", 0);
+        append_trace(trace, trace_size, " dns pin mismatch ipv6 host=%s expected=%s got=%s", host,
+                     pin->pinned_ipv6, resolved_ipv6);
         return 0;
       }
     }
@@ -787,14 +828,20 @@ int aegis_policy_engine_check_network_with_ip_ex(const aegis_policy_engine_t *en
       }
       if (pin->has_ipv6 != 0 && strcmp(pin->pinned_ipv6, resolved_ipv6) != 0) {
         set_reason(decision, "dns rebinding guard blocked host/ip mismatch", 0);
+        append_trace(trace, trace_size, "dns pin mismatch ipv6 host=%s expected=%s got=%s", host,
+                     pin->pinned_ipv6, resolved_ipv6);
         return 0;
       }
       if (pin->has_ipv4 != 0 && resolved_ipv4 != 0u && pin->pinned_ipv4 != resolved_ipv4) {
         set_reason(decision, "dns rebinding guard blocked host/ip mismatch", 0);
+        append_trace(trace, trace_size, " dns pin mismatch ipv4 host=%s expected=%u got=%u", host,
+                     pin->pinned_ipv4, resolved_ipv4);
         return 0;
       }
     }
   }
+  append_trace(trace, trace_size, "evaluating rules host=%s port=%u proto=%u", host, port,
+               (unsigned int)protocol);
   for (i = 0; i < 256; ++i) {
     const aegis_net_scope_rule_t *rule = &engine->net_rules[i];
     uint8_t action_match = 0;
@@ -825,22 +872,61 @@ int aegis_policy_engine_check_network_with_ip_ex(const aegis_policy_engine_t *en
     score += host_specificity_score(rule->host_pattern);
     score += (rule->protocol == AEGIS_NET_PROTO_ANY) ? 0 : 100;
     score += 65535 - (int)range;
+    append_trace(trace, trace_size, " | rule[%u]=%s:%u-%u proto=%u allow=%u score=%d",
+                 (unsigned int)i, rule->host_pattern, rule->port_start, rule->port_end,
+                 (unsigned int)rule->protocol, (unsigned int)rule->allow, score);
     if (score > best_score) {
       best_score = score;
       best_allow = rule->allow != 0 ? 1 : 0;
+      best_index = (int)i;
     } else if (score == best_score && rule->allow == 0) {
       /* deterministic safety tie-break: deny wins at equal specificity */
       best_allow = 0;
+      best_index = (int)i;
+      append_trace(trace, trace_size, " tie-break=deny");
     }
   }
   if (best_score < 0) {
     set_reason(decision, "no matching network scope rule", 0);
+    append_trace(trace, trace_size, " result=no_match");
     return 0;
   }
   if (!best_allow) {
     set_reason(decision, "denied by network scope rule", 0);
+    append_trace(trace, trace_size, " winner=rule[%d] decision=deny score=%d", best_index, best_score);
     return 0;
   }
   set_reason(decision, "allowed by network scope", 1);
+  append_trace(trace, trace_size, " winner=rule[%d] decision=allow score=%d", best_index, best_score);
   return 1;
+}
+
+int aegis_policy_engine_check_network_with_ip_ex(const aegis_policy_engine_t *engine,
+                                                 const aegis_capability_store_t *store,
+                                                 uint32_t process_id,
+                                                 aegis_action_t action,
+                                                 const char *host,
+                                                 uint16_t port,
+                                                 aegis_net_protocol_t protocol,
+                                                 uint32_t resolved_ipv4,
+                                                 const char *resolved_ipv6,
+                                                 aegis_policy_decision_t *decision) {
+  return check_network_with_ip_internal(engine, store, process_id, action, host, port, protocol,
+                                        resolved_ipv4, resolved_ipv6, 0, 0u, decision);
+}
+
+int aegis_policy_engine_check_network_with_ip_trace(const aegis_policy_engine_t *engine,
+                                                    const aegis_capability_store_t *store,
+                                                    uint32_t process_id,
+                                                    aegis_action_t action,
+                                                    const char *host,
+                                                    uint16_t port,
+                                                    aegis_net_protocol_t protocol,
+                                                    uint32_t resolved_ipv4,
+                                                    const char *resolved_ipv6,
+                                                    char *trace,
+                                                    size_t trace_size,
+                                                    aegis_policy_decision_t *decision) {
+  return check_network_with_ip_internal(engine, store, process_id, action, host, port, protocol,
+                                        resolved_ipv4, resolved_ipv6, trace, trace_size, decision);
 }

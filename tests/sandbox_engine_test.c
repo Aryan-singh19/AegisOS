@@ -311,6 +311,56 @@ static int test_network_scope_tie_break_deny(void) {
   return 0;
 }
 
+static int test_network_scope_debug_trace(void) {
+  aegis_capability_store_t cap_store;
+  aegis_policy_engine_t engine;
+  aegis_sandbox_policy_t policy = {
+      4003u, AEGIS_CAP_NET_CLIENT, 0u, 0u, 1u, 0u, 0u};
+  aegis_policy_decision_t decision;
+  char trace[1024];
+
+  aegis_capability_store_init(&cap_store);
+  aegis_policy_engine_init(&engine);
+  if (aegis_capability_issue(&cap_store, 4003u, AEGIS_CAP_NET_CLIENT) != 0) {
+    fprintf(stderr, "trace capability issue failed\n");
+    return 1;
+  }
+  if (aegis_policy_engine_set_policy(&engine, &policy) != 0) {
+    fprintf(stderr, "trace set policy failed\n");
+    return 1;
+  }
+  if (aegis_policy_engine_add_net_rule(
+          &engine, 4003u, "*.trace.local", 443, 443, AEGIS_NET_PROTO_TCP, 1u, 0u, 1u) != 0) {
+    fprintf(stderr, "trace add allow rule failed\n");
+    return 1;
+  }
+  if (aegis_policy_engine_add_net_rule(
+          &engine, 4003u, "*.trace.local", 443, 443, AEGIS_NET_PROTO_TCP, 1u, 1u, 0u) != 0) {
+    fprintf(stderr, "trace add deny tie rule failed\n");
+    return 1;
+  }
+  if (aegis_policy_engine_check_network_with_ip_trace(&engine,
+                                                      &cap_store,
+                                                      4003u,
+                                                      AEGIS_ACTION_NET_CONNECT,
+                                                      "api.trace.local",
+                                                      443,
+                                                      AEGIS_NET_PROTO_TCP,
+                                                      0u,
+                                                      0,
+                                                      trace,
+                                                      sizeof(trace),
+                                                      &decision) != 0) {
+    fprintf(stderr, "expected trace path deny due to tie-break\n");
+    return 1;
+  }
+  if (strstr(trace, "winner=rule[") == 0 || strstr(trace, "tie-break=deny") == 0) {
+    fprintf(stderr, "trace missing winner or tie-break details: %s\n", trace);
+    return 1;
+  }
+  return 0;
+}
+
 static int test_symlink_scope_resolution(void) {
   aegis_capability_store_t cap_store;
   aegis_policy_engine_t engine;
@@ -590,6 +640,9 @@ int main(void) {
     return 1;
   }
   if (test_network_scope_tie_break_deny() != 0) {
+    return 1;
+  }
+  if (test_network_scope_debug_trace() != 0) {
     return 1;
   }
   if (test_symlink_scope_resolution() != 0) {
