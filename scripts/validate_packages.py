@@ -89,10 +89,35 @@ def main():
   if not core_files:
     print("No core package manifests found.")
     return 1
+  manifests = []
   known = set()
   for path in core_files:
     manifest = validate_core_manifest(path)
+    manifests.append(manifest)
     known.add(manifest["name"])
+  dep_graph = {}
+  for manifest in manifests:
+    dep_graph[manifest["name"]] = list(manifest["dependencies"])
+  for pkg, deps in dep_graph.items():
+    for dep in deps:
+      if dep not in known:
+        raise ValueError(f"{pkg}: unknown dependency {dep}")
+  visited = set()
+  active = set()
+
+  def dfs(node):
+    if node in active:
+      raise ValueError(f"dependency cycle detected at {node}")
+    if node in visited:
+      return
+    active.add(node)
+    for nxt in dep_graph.get(node, []):
+      dfs(nxt)
+    active.remove(node)
+    visited.add(node)
+
+  for name in dep_graph:
+    dfs(name)
   for path in profile_files:
     validate_profile_manifest(path, known)
   print(f"Validated {len(core_files)} core manifests and {len(profile_files)} profiles.")
