@@ -1,10 +1,12 @@
 # CHANGELOG
 
 Auto-updated by workflow.
-Last generated: 2026-04-05 12:59:48Z
+Last generated: 2026-04-05 13:01:46Z
 
 ## Unreleased
 
+- 2026-04-05 `294a3fe` "Add_package_manifest_schema_migration_helper_with_tests"
+- 2026-04-05 `fdc9706` docs: auto-update explain and changelog
 - 2026-04-05 `dfb3685` "Add_package_profile_to_hardware_compatibility_matrix_docs"
 - 2026-04-05 `de08c6f` docs: auto-update explain and changelog
 - 2026-04-05 `15c3fc8` "Add_package_signature_placeholder_fields_and_schema_validation"
@@ -18,5 +20,3 @@ Last generated: 2026-04-05 12:59:48Z
 - 2026-04-05 `02df452` "Add_onboarding_ci_command_equivalence_guardrails"
 - 2026-04-05 `4a96fa2` docs: auto-update explain and changelog
 - 2026-04-05 `4926515` "Add_seed_replay_harness_for_trace_json_property_tests"
-- 2026-04-05 `2827cf3` docs: auto-update explain and changelog
-- 2026-04-05 `469b842` "Add_json_endpoint_for_custom_window_histogram_query"
