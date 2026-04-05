@@ -16,6 +16,9 @@ typedef enum {
 typedef struct {
   uint32_t process_id;
   uint32_t permissions;
+  uint64_t issued_at_epoch;
+  uint64_t expires_at_epoch;
+  uint64_t rotation_counter;
 } aegis_capability_token_t;
 
 typedef struct {
@@ -29,8 +32,15 @@ int aegis_capability_validate(const aegis_capability_token_t *token,
 void aegis_capability_store_init(aegis_capability_store_t *store);
 int aegis_capability_issue(aegis_capability_store_t *store, uint32_t process_id,
                            uint32_t permissions);
+int aegis_capability_issue_with_ttl(aegis_capability_store_t *store, uint32_t process_id,
+                                    uint32_t permissions, uint64_t now_epoch,
+                                    uint64_t ttl_seconds);
+int aegis_capability_rotate(aegis_capability_store_t *store, uint32_t process_id,
+                            uint32_t permissions, uint64_t now_epoch, uint64_t ttl_seconds);
 int aegis_capability_revoke(aegis_capability_store_t *store, uint32_t process_id);
 int aegis_capability_is_allowed(const aegis_capability_store_t *store, uint32_t process_id,
                                 uint32_t requested_permissions);
+int aegis_capability_is_allowed_at(const aegis_capability_store_t *store, uint32_t process_id,
+                                   uint32_t requested_permissions, uint64_t now_epoch);
 
 #endif

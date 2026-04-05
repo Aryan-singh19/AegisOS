@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 10:20:49Z
+Last generated: 2026-04-05 10:24:53Z
 
 ## What AegisOS Is Building
 
@@ -32,26 +32,27 @@ We implement in vertical slices:
 
 ## Live Backlog Snapshot
 
-- #26 Network_scope_dns_rebinding_guard (priority-p1, security)
-- #25 Network_scope_priority_and_specificity (priority-p1, security)
-- #24 Workflow_branch_protection_profile (priority-p1)
-- #23 Clang_sanitizer_job_asan_ubsan (priority-p1)
-- #21 Filesystem_scope_glob_patterns (priority-p1, security)
-- #20 Package_dependency_cycle_detection (priority-p1)
-- #19 Package_manifest_schema_versioning (priority-p1)
-- #18 Auto_docs_issue_enrichment (priority-p1)
-- #14 Sandbox_policy_hot_reload (priority-p1, security)
-- #13 Sandbox_policy_serialization_format (priority-p1, security)
-- #12 Scheduler_metrics_and_tracepoints (priority-p1, kernel)
-- #10 Capability_token_expiry_and_rotation (priority-p1, security)
-- #9 Toolchain_bootstrap_for_contributors (good-first-task)
-- #8 Capability_audit_log_pipeline (priority-p1, security)
-- #7 Scheduler_preemption_tick_simulation (priority-p1, kernel)
-- #6 Scheduler_priority_policy_v1 (priority-p1, kernel)
-- #5 Contributor_onboarding_checklist (good-first-task)
+### Priority P0
+- none
+
+### Priority P1
+- none
+
+### Security
+- none
+
+### Kernel
+- none
+
+### Good First Task
+- none
+
+### Other
+- none
 
 ## Recent Engineering Changes
 
+- `6a7a49c` (2026-04-05): docs: auto-update explain and changelog
 - `886b81c` (2026-04-05): Add_symlink_resolution_rules_for_filesystem_scope_checks
 - `4523e6b` (2026-04-05): docs: auto-update explain and changelog
 - `ef5dd0b` (2026-04-05): Add_network_scope_enforcement_host_port_protocol_rules
@@ -66,4 +67,3 @@ We implement in vertical slices:
 - `242200b` (2026-04-05): Add_sandbox_policy_schema_validator_and_tests
 - `cccdb53` (2026-04-05): Add_capability_token_lifecycle_issue_revoke_access_checks
 - `64be98e` (2026-04-05): Add_round_robin_scheduler_skeleton_with_tests
-- `594b792` (2026-04-05): Add_capability_security_module_and_execution_plan

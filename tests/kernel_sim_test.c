@@ -43,6 +43,40 @@ static int test_scheduler_round_robin(void) {
   return 0;
 }
 
+static int test_scheduler_priority_weighting(void) {
+  aegis_scheduler_t scheduler;
+  uint32_t pid = 0;
+  int high_count = 0;
+  int low_count = 0;
+  int i;
+  aegis_scheduler_init(&scheduler);
+  if (aegis_scheduler_add_with_priority(&scheduler, 11u, AEGIS_PRIORITY_HIGH) != 0 ||
+      aegis_scheduler_add_with_priority(&scheduler, 22u, AEGIS_PRIORITY_LOW) != 0) {
+    fprintf(stderr, "priority scheduler add failed\n");
+    return 1;
+  }
+  for (i = 0; i < 8; ++i) {
+    if (aegis_scheduler_next(&scheduler, &pid) != 0) {
+      fprintf(stderr, "priority scheduler next failed\n");
+      return 1;
+    }
+    if (pid == 11u) {
+      high_count += 1;
+    } else if (pid == 22u) {
+      low_count += 1;
+    }
+  }
+  if (high_count <= low_count) {
+    fprintf(stderr, "expected high priority process to run more often\n");
+    return 1;
+  }
+  if (aegis_scheduler_set_priority(&scheduler, 22u, AEGIS_PRIORITY_HIGH) != 0) {
+    fprintf(stderr, "set priority failed\n");
+    return 1;
+  }
+  return 0;
+}
+
 static int test_scheduler_remove(void) {
   aegis_scheduler_t scheduler;
   uint32_t pid = 0;
@@ -84,6 +118,9 @@ int main(void) {
     return 1;
   }
   if (test_scheduler_remove() != 0) {
+    return 1;
+  }
+  if (test_scheduler_priority_weighting() != 0) {
     return 1;
   }
   puts("kernel simulation check passed");

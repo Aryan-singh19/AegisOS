@@ -1,10 +1,11 @@
 # CHANGELOG
 
 Auto-updated by workflow.
-Last generated: 2026-04-05 10:20:49Z
+Last generated: 2026-04-05 10:24:53Z
 
 ## Unreleased
 
+- 2026-04-05 `6a7a49c` docs: auto-update explain and changelog
 - 2026-04-05 `886b81c` Add_symlink_resolution_rules_for_filesystem_scope_checks
 - 2026-04-05 `4523e6b` docs: auto-update explain and changelog
 - 2026-04-05 `ef5dd0b` Add_network_scope_enforcement_host_port_protocol_rules
@@ -19,4 +20,3 @@ Last generated: 2026-04-05 10:20:49Z
 - 2026-04-05 `242200b` Add_sandbox_policy_schema_validator_and_tests
 - 2026-04-05 `cccdb53` Add_capability_token_lifecycle_issue_revoke_access_checks
 - 2026-04-05 `64be98e` Add_round_robin_scheduler_skeleton_with_tests
-- 2026-04-05 `594b792` Add_capability_security_module_and_execution_plan

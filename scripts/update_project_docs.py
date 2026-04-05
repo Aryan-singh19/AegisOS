@@ -69,16 +69,63 @@ def get_open_issues(limit=12):
   return items
 
 
-def render_explain(now_iso, commits, issues):
-  issue_lines = []
+def has_label(issue, prefix):
+  prefix = prefix.lower()
+  for lbl in issue.get("labels", []):
+    if lbl.lower().startswith(prefix):
+      return True
+  return False
+
+
+def group_issues(issues):
+  grouped = {
+      "priority_p0": [],
+      "priority_p1": [],
+      "security": [],
+      "kernel": [],
+      "good_first_task": [],
+      "other": [],
+  }
+  seen_numbers = set()
   for issue in issues:
-    labels = ", ".join([x for x in issue["labels"] if x])
-    if labels:
-      issue_lines.append(f"- #{issue['number']} {issue['title']} ({labels})")
+    if has_label(issue, "priority-p0"):
+      grouped["priority_p0"].append(issue)
+      seen_numbers.add(issue["number"])
+      continue
+    if has_label(issue, "priority-p1"):
+      grouped["priority_p1"].append(issue)
+      seen_numbers.add(issue["number"])
+      continue
+  for issue in issues:
+    if issue["number"] in seen_numbers:
+      continue
+    labels = [x.lower() for x in issue.get("labels", [])]
+    if "security" in labels:
+      grouped["security"].append(issue)
+    elif "kernel" in labels:
+      grouped["kernel"].append(issue)
+    elif "good-first-task" in labels:
+      grouped["good_first_task"].append(issue)
     else:
-      issue_lines.append(f"- #{issue['number']} {issue['title']}")
-  if not issue_lines:
-    issue_lines = ["- Open issues are tracked on GitHub and loaded during CI automation runs."]
+      grouped["other"].append(issue)
+  return grouped
+
+
+def render_issue_lines(issues):
+  lines = []
+  for issue in issues:
+    labels = ", ".join([x for x in issue.get("labels", []) if x])
+    if labels:
+      lines.append(f"- #{issue['number']} {issue['title']} ({labels})")
+    else:
+      lines.append(f"- #{issue['number']} {issue['title']}")
+  if not lines:
+    lines = ["- none"]
+  return lines
+
+
+def render_explain(now_iso, commits, issues):
+  grouped = group_issues(issues)
 
   recent_lines = [f"- `{c['hash']}` ({c['date']}): {c['subject']}" for c in commits]
   if not recent_lines:
@@ -118,7 +165,23 @@ We implement in vertical slices:
 
 ## Live Backlog Snapshot
 
-{os.linesep.join(issue_lines)}
+### Priority P0
+{os.linesep.join(render_issue_lines(grouped["priority_p0"]))}
+
+### Priority P1
+{os.linesep.join(render_issue_lines(grouped["priority_p1"]))}
+
+### Security
+{os.linesep.join(render_issue_lines(grouped["security"]))}
+
+### Kernel
+{os.linesep.join(render_issue_lines(grouped["kernel"]))}
+
+### Good First Task
+{os.linesep.join(render_issue_lines(grouped["good_first_task"]))}
+
+### Other
+{os.linesep.join(render_issue_lines(grouped["other"]))}
 
 ## Recent Engineering Changes
 

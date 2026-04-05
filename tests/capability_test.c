@@ -3,8 +3,8 @@
 #include "capability.h"
 
 static int test_capability_validate(void) {
-  aegis_capability_token_t token = {42u, AEGIS_CAP_FS_READ | AEGIS_CAP_NET_CLIENT};
-  aegis_capability_token_t invalid_pid = {0u, AEGIS_CAP_FS_READ};
+  aegis_capability_token_t token = {42u, AEGIS_CAP_FS_READ | AEGIS_CAP_NET_CLIENT, 0u, 0u, 0u};
+  aegis_capability_token_t invalid_pid = {0u, AEGIS_CAP_FS_READ, 0u, 0u, 0u};
 
   if (!aegis_capability_validate(&token, AEGIS_CAP_FS_READ)) {
     fprintf(stderr, "expected read capability to pass\n");
@@ -60,11 +60,45 @@ static int test_capability_lifecycle(void) {
   return 0;
 }
 
+static int test_capability_ttl_and_rotation(void) {
+  aegis_capability_store_t store;
+  aegis_capability_store_init(&store);
+
+  if (aegis_capability_issue_with_ttl(&store, 88u, AEGIS_CAP_NET_CLIENT, 1000u, 30u) != 0) {
+    fprintf(stderr, "expected ttl issue to pass\n");
+    return 1;
+  }
+  if (!aegis_capability_is_allowed_at(&store, 88u, AEGIS_CAP_NET_CLIENT, 1020u)) {
+    fprintf(stderr, "expected token to be valid before expiry\n");
+    return 1;
+  }
+  if (aegis_capability_is_allowed_at(&store, 88u, AEGIS_CAP_NET_CLIENT, 1030u)) {
+    fprintf(stderr, "expected token to expire at ttl boundary\n");
+    return 1;
+  }
+  if (aegis_capability_rotate(&store, 88u, AEGIS_CAP_NET_CLIENT | AEGIS_CAP_NET_SERVER, 2000u, 20u) != 0) {
+    fprintf(stderr, "expected rotate to pass\n");
+    return 1;
+  }
+  if (!aegis_capability_is_allowed_at(&store, 88u, AEGIS_CAP_NET_SERVER, 2010u)) {
+    fprintf(stderr, "expected rotated permissions to apply\n");
+    return 1;
+  }
+  if (aegis_capability_is_allowed_at(&store, 88u, AEGIS_CAP_NET_SERVER, 2021u)) {
+    fprintf(stderr, "expected rotated token to expire\n");
+    return 1;
+  }
+  return 0;
+}
+
 int main(void) {
   if (test_capability_validate() != 0) {
     return 1;
   }
   if (test_capability_lifecycle() != 0) {
+    return 1;
+  }
+  if (test_capability_ttl_and_rotation() != 0) {
     return 1;
   }
   puts("capability tests passed");
