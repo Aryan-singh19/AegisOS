@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 13:07:35Z
+Last generated: 2026-04-05 13:09:50Z
 
 ## What AegisOS Is Building
 
@@ -36,10 +36,8 @@ We implement in vertical slices:
 - none
 
 ### Priority P1
-- #79 "Trace_json_property_perf_baseline_and_seed_corpus" (priority-p1, security)
 - #70 Actor_registry_persistent_backing_store (priority-p1, security)
 - #40 Apply_branch_protection_profile_on_main (priority-p1)
-- #27 Symlink_resolution_filesystem_backend (priority-p1, security)
 
 ### Security
 - none
@@ -60,17 +58,17 @@ Recent commit touches in `weekly` window (higher means more active recently):
 - kernel: 47
 - userland: 89
 - packages: 39
-- docs: 159
-- workflows: 14
-- tests: 61
+- docs: 163
+- workflows: 15
+- tests: 62
 - tools: 1
 - platform: 1
-- scripts: 28
+- scripts: 29
 - other: 14
 
 Open issue pressure by component signal:
 
-- security: 3
+- security: 1
 - kernel: 0
 - packages: 0
 - docs: 0
@@ -78,6 +76,8 @@ Open issue pressure by component signal:
 
 ## Recent Engineering Changes
 
+- `f8fd4c7` (2026-04-05): "Add_trace_json_property_perf_baseline_and_seed_corpus_tooling"
+- `395429a` (2026-04-05): docs: auto-update explain and changelog
 - `16a0ad2` (2026-04-05): "Add_filesystem_resolver_backend_hook_for_symlink_resolution"
 - `b458e87` (2026-04-05): docs: auto-update explain and changelog
 - `3fbc4c2` (2026-04-05): "Add_sanitizer_suppressions_baseline_and_runner"
@@ -91,5 +91,3 @@ Open issue pressure by component signal:
 - `6eb55d1` (2026-04-05): "Add_scheduler_aging_boost_policy_for_low_priority_fairness"
 - `f0b77b3` (2026-04-05): docs: auto-update explain and changelog
 - `9a56599` (2026-04-05): "Add_configurable_docs_heatmap_trend_windows"
-- `8c49c14` (2026-04-05): docs: auto-update explain and changelog
-- `42f5deb` (2026-04-05): "Add_graphviz_rendering_guide_for_package_dependency_graph"
