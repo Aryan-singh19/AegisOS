@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 10:30:41Z
+Last generated: 2026-04-05 10:32:05Z
 
 ## What AegisOS Is Building
 
@@ -36,6 +36,7 @@ We implement in vertical slices:
 - none
 
 ### Priority P1
+- #36 Package_dependency_visualizer_output (priority-p1)
 - #35 Package_schema_migration_helper (priority-p1)
 - #34 Sanitizer_suppressions_baseline (priority-p1)
 - #33 Scheduler_context_switch_reason_codes (priority-p1, kernel)
@@ -49,7 +50,6 @@ We implement in vertical slices:
 - #25 Network_scope_priority_and_specificity (priority-p1, security)
 - #24 Workflow_branch_protection_profile (priority-p1)
 - #21 Filesystem_scope_glob_patterns (priority-p1, security)
-- #20 Package_dependency_cycle_detection (priority-p1)
 - #14 Sandbox_policy_hot_reload (priority-p1, security)
 - #13 Sandbox_policy_serialization_format (priority-p1, security)
 - #8 Capability_audit_log_pipeline (priority-p1, security)
@@ -69,6 +69,8 @@ We implement in vertical slices:
 
 ## Recent Engineering Changes
 
+- `8d1da52` (2026-04-05): Add_expanded_core_packages_and_install_profiles
+- `c454d23` (2026-04-05): docs: auto-update explain and changelog
 - `fa8d88a` (2026-04-05): Add_package_dependency_cycle_detection_to_validator
 - `309e75f` (2026-04-05): docs: auto-update explain and changelog
 - `a728fcd` (2026-04-05): Add_package_manifest_schema_version_1_validation
@@ -82,5 +84,3 @@ We implement in vertical slices:
 - `2c96784` (2026-04-05): Implement_issue_enrichment_token_ttl_rotation_and_scheduler_priority
 - `6a7a49c` (2026-04-05): docs: auto-update explain and changelog
 - `886b81c` (2026-04-05): Add_symlink_resolution_rules_for_filesystem_scope_checks
-- `4523e6b` (2026-04-05): docs: auto-update explain and changelog
-- `ef5dd0b` (2026-04-05): Add_network_scope_enforcement_host_port_protocol_rules
