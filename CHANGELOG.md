@@ -1,10 +1,12 @@
 # CHANGELOG
 
 Auto-updated by workflow.
-Last generated: 2026-04-05 10:29:06Z
+Last generated: 2026-04-05 10:29:59Z
 
 ## Unreleased
 
+- 2026-04-05 `a728fcd` Add_package_manifest_schema_version_1_validation
+- 2026-04-05 `0908d44` docs: auto-update explain and changelog
 - 2026-04-05 `887ffdd` Add_ASAN_UBSAN_sanitizer_jobs_to_clang_workflow
 - 2026-04-05 `6269434` docs: auto-update explain and changelog
 - 2026-04-05 `4f20083` Add_timer_tick_preemption_simulation_with_quantum_hooks
@@ -18,5 +20,3 @@ Last generated: 2026-04-05 10:29:06Z
 - 2026-04-05 `ef5dd0b` Add_network_scope_enforcement_host_port_protocol_rules
 - 2026-04-05 `306b2e4` docs: auto-update explain and changelog
 - 2026-04-05 `44e7fac` Add_clang_matrix_workflow_for_core_module_tests
-- 2026-04-05 `e0f7189` docs: auto-update explain and changelog
-- 2026-04-05 `abdd8fa` Add_path_scoped_filesystem_enforcement_with_deny_override

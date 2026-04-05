@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 10:29:06Z
+Last generated: 2026-04-05 10:29:59Z
 
 ## What AegisOS Is Building
 
@@ -69,6 +69,8 @@ We implement in vertical slices:
 
 ## Recent Engineering Changes
 
+- `a728fcd` (2026-04-05): Add_package_manifest_schema_version_1_validation
+- `0908d44` (2026-04-05): docs: auto-update explain and changelog
 - `887ffdd` (2026-04-05): Add_ASAN_UBSAN_sanitizer_jobs_to_clang_workflow
 - `6269434` (2026-04-05): docs: auto-update explain and changelog
 - `4f20083` (2026-04-05): Add_timer_tick_preemption_simulation_with_quantum_hooks
@@ -82,5 +84,3 @@ We implement in vertical slices:
 - `ef5dd0b` (2026-04-05): Add_network_scope_enforcement_host_port_protocol_rules
 - `306b2e4` (2026-04-05): docs: auto-update explain and changelog
 - `44e7fac` (2026-04-05): Add_clang_matrix_workflow_for_core_module_tests
-- `e0f7189` (2026-04-05): docs: auto-update explain and changelog
-- `abdd8fa` (2026-04-05): Add_path_scoped_filesystem_enforcement_with_deny_override
