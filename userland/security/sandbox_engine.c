@@ -99,6 +99,21 @@ static int host_matches(const char *host, const char *pattern) {
   return strcmp(host, pattern) == 0;
 }
 
+static int host_specificity_score(const char *pattern) {
+  size_t len;
+  if (pattern == 0 || pattern[0] == '\0') {
+    return 0;
+  }
+  if (strcmp(pattern, "*") == 0) {
+    return 1000;
+  }
+  len = strlen(pattern);
+  if (strncmp(pattern, "*.", 2) == 0) {
+    return 2000 + (int)len;
+  }
+  return 3000 + (int)len;
+}
+
 static uint32_t action_to_capability(aegis_action_t action, const aegis_sandbox_policy_t *policy,
                                      uint8_t *policy_gate) {
   if (policy_gate != 0) {
@@ -528,7 +543,8 @@ int aegis_policy_engine_check_network(const aegis_policy_engine_t *engine,
                                       aegis_policy_decision_t *decision) {
   int base_rc;
   size_t i;
-  int matched_allow = 0;
+  int best_score = -1;
+  int best_allow = 0;
   if (action != AEGIS_ACTION_NET_CONNECT && action != AEGIS_ACTION_NET_BIND) {
     set_reason(decision, "network check requires net action", 0);
     return 0;
@@ -548,6 +564,8 @@ int aegis_policy_engine_check_network(const aegis_policy_engine_t *engine,
   for (i = 0; i < 256; ++i) {
     const aegis_net_scope_rule_t *rule = &engine->net_rules[i];
     uint8_t action_match = 0;
+    int score = 0;
+    uint16_t range = 0;
     if (rule->active == 0 || rule->process_id != process_id) {
       continue;
     }
@@ -569,14 +587,24 @@ int aegis_policy_engine_check_network(const aegis_policy_engine_t *engine,
     if (action_match == 0) {
       continue;
     }
-    if (rule->allow == 0) {
-      set_reason(decision, "denied by network scope rule", 0);
-      return 0;
+    range = (uint16_t)(rule->port_end - rule->port_start);
+    score += host_specificity_score(rule->host_pattern);
+    score += (rule->protocol == AEGIS_NET_PROTO_ANY) ? 0 : 100;
+    score += 65535 - (int)range;
+    if (score > best_score) {
+      best_score = score;
+      best_allow = rule->allow != 0 ? 1 : 0;
+    } else if (score == best_score && rule->allow == 0) {
+      /* deterministic safety tie-break: deny wins at equal specificity */
+      best_allow = 0;
     }
-    matched_allow = 1;
   }
-  if (!matched_allow) {
+  if (best_score < 0) {
     set_reason(decision, "no matching network scope rule", 0);
+    return 0;
+  }
+  if (!best_allow) {
+    set_reason(decision, "denied by network scope rule", 0);
     return 0;
   }
   set_reason(decision, "allowed by network scope", 1);

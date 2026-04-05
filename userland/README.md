@@ -12,4 +12,5 @@ Core userspace services, shell tools, and runtime components live here.
   - includes path-level filesystem scopes (`deny`, `read-only`, `read-write`) with deny override behavior.
   - supports simple wildcard patterns (`*`) in filesystem scope rules.
   - includes network scopes (host/port/protocol rules with explicit allow/deny).
+  - network rule precedence is deterministic: most specific match wins; tie -> deny.
   - includes symlink mapping resolution before filesystem scope checks.
