@@ -17,6 +17,7 @@ Core userspace services, shell tools, and runtime components live here.
   - includes audit sink retention planning helpers for chunk rotation/pruning guidance.
 - `sandbox_policy`: policy schema validation for filesystem/network/device permissions.
   - includes JSON serialization/deserialization helpers for distribution and storage.
+  - deserializer now supports field-order-tolerant JSON parsing with numeric type/range guards.
   - includes `schema_version` and `policy_revision` fields for versioned policy rollouts.
   - includes legacy JSON migration adapter with structured migration report output.
   - includes permission-center summary JSON endpoint for settings UX visibility of allow/deny actions.

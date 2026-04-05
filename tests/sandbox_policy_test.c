@@ -130,6 +130,38 @@ static int test_policy_legacy_migration_adapter(void) {
   return 0;
 }
 
+static int test_policy_json_field_order_tolerant_parse(void) {
+  const char *payload =
+      "{\"allow_device_io\":0,\"policy_revision\":7,\"allow_net_server\":0,"
+      "\"allow_fs_write\":0,\"schema_version\":1,\"allow_fs_read\":1,"
+      "\"process_id\":77,\"capabilities\":5,\"allow_net_client\":1}";
+  aegis_sandbox_policy_t parsed = {0u};
+  char reason[64];
+  if (aegis_sandbox_policy_deserialize_json(payload, &parsed, reason, sizeof(reason)) != 0) {
+    fprintf(stderr, "expected field-order tolerant parse to pass: %s\n", reason);
+    return 1;
+  }
+  if (parsed.process_id != 77u || parsed.policy_revision != 7u || parsed.allow_net_client != 1u) {
+    fprintf(stderr, "field-order tolerant parse produced unexpected values\n");
+    return 1;
+  }
+  return 0;
+}
+
+static int test_policy_json_non_numeric_field_rejected(void) {
+  const char *payload =
+      "{\"process_id\":77,\"capabilities\":\"bad\",\"allow_fs_read\":1,"
+      "\"allow_fs_write\":0,\"allow_net_client\":1,\"allow_net_server\":0,"
+      "\"schema_version\":1,\"policy_revision\":1,\"allow_device_io\":0}";
+  aegis_sandbox_policy_t parsed = {0u};
+  char reason[64];
+  if (aegis_sandbox_policy_deserialize_json(payload, &parsed, reason, sizeof(reason)) == 0) {
+    fprintf(stderr, "expected non-numeric capabilities to fail parse\n");
+    return 1;
+  }
+  return 0;
+}
+
 static int test_permission_center_policy_summary_endpoint(void) {
   aegis_sandbox_policy_t policy = {
       210u,
@@ -229,6 +261,12 @@ int main(void) {
     return 1;
   }
   if (test_policy_json_invalid_payload() != 0) {
+    return 1;
+  }
+  if (test_policy_json_field_order_tolerant_parse() != 0) {
+    return 1;
+  }
+  if (test_policy_json_non_numeric_field_rejected() != 0) {
     return 1;
   }
   if (test_policy_schema_version_guard() != 0) {

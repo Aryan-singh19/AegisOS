@@ -24,6 +24,38 @@ static uint64_t policy_revision(const aegis_sandbox_policy_t *policy) {
   return policy->policy_revision;
 }
 
+static int extract_u64_json_field(const char *input,
+                                  const char *field_name,
+                                  int required,
+                                  uint64_t *value_out) {
+  const char *cursor;
+  char key[64];
+  uint64_t value = 0u;
+  int found_digit = 0;
+  if (input == 0 || field_name == 0 || value_out == 0) {
+    return -1;
+  }
+  snprintf(key, sizeof(key), "\"%s\":", field_name);
+  cursor = strstr(input, key);
+  if (cursor == 0) {
+    return required ? -1 : 0;
+  }
+  cursor += strlen(key);
+  while (*cursor == ' ' || *cursor == '\t' || *cursor == '\n' || *cursor == '\r') {
+    cursor++;
+  }
+  while (*cursor >= '0' && *cursor <= '9') {
+    found_digit = 1;
+    value = (value * 10u) + (uint64_t)(*cursor - '0');
+    cursor++;
+  }
+  if (!found_digit) {
+    return -1;
+  }
+  *value_out = value;
+  return 1;
+}
+
 int aegis_sandbox_policy_validate(const aegis_sandbox_policy_t *policy,
                                   char *reason, size_t reason_size) {
   const uint32_t known_mask = AEGIS_CAP_FS_READ | AEGIS_CAP_FS_WRITE | AEGIS_CAP_NET_CLIENT |
@@ -119,16 +151,16 @@ int aegis_sandbox_policy_serialize_json(const aegis_sandbox_policy_t *policy,
 int aegis_sandbox_policy_deserialize_json(const char *input,
                                           aegis_sandbox_policy_t *policy,
                                           char *reason, size_t reason_size) {
-  unsigned int process_id = 0;
-  unsigned int capabilities = 0;
-  unsigned int allow_fs_read = 0;
-  unsigned int allow_fs_write = 0;
-  unsigned int allow_net_client = 0;
-  unsigned int allow_net_server = 0;
-  unsigned int schema_version = 0;
-  unsigned long long policy_rev = 0;
-  unsigned int allow_device_io = 0;
-  int matched = 0;
+  uint64_t process_id = 0u;
+  uint64_t capabilities = 0u;
+  uint64_t allow_fs_read = 0u;
+  uint64_t allow_fs_write = 0u;
+  uint64_t allow_net_client = 0u;
+  uint64_t allow_net_server = 0u;
+  uint64_t schema_version = 0u;
+  uint64_t policy_rev = 0u;
+  uint64_t allow_device_io = 0u;
+  int rc;
   if (reason != 0 && reason_size > 0) {
     reason[0] = '\0';
   }
@@ -136,44 +168,68 @@ int aegis_sandbox_policy_deserialize_json(const char *input,
     write_reason(reason, reason_size, "input or policy is null");
     return -1;
   }
-  matched = sscanf(
-      input,
-      "{\"process_id\":%u,\"capabilities\":%u,\"allow_fs_read\":%u,"
-      "\"allow_fs_write\":%u,\"allow_net_client\":%u,\"allow_net_server\":%u,"
-      "\"schema_version\":%u,\"policy_revision\":%llu,\"allow_device_io\":%u}",
-      &process_id,
-      &capabilities,
-      &allow_fs_read,
-      &allow_fs_write,
-      &allow_net_client,
-      &allow_net_server,
-      &schema_version,
-      &policy_rev,
-      &allow_device_io);
-  if (matched != 9) {
-    matched = sscanf(
-        input,
-        "{\"process_id\":%u,\"capabilities\":%u,\"allow_fs_read\":%u,"
-        "\"allow_fs_write\":%u,\"allow_net_client\":%u,\"allow_net_server\":%u,"
-        "\"allow_device_io\":%u}",
-        &process_id,
-        &capabilities,
-        &allow_fs_read,
-        &allow_fs_write,
-        &allow_net_client,
-        &allow_net_server,
-        &allow_device_io);
-    if (matched != 7) {
-      write_reason(reason, reason_size, "invalid sandbox policy JSON format");
-      return -1;
-    }
+  rc = extract_u64_json_field(input, "process_id", 1, &process_id);
+  if (rc != 1) {
+    write_reason(reason, reason_size, "invalid sandbox policy JSON format");
+    return -1;
+  }
+  rc = extract_u64_json_field(input, "capabilities", 1, &capabilities);
+  if (rc != 1) {
+    write_reason(reason, reason_size, "invalid sandbox policy JSON format");
+    return -1;
+  }
+  rc = extract_u64_json_field(input, "allow_fs_read", 1, &allow_fs_read);
+  if (rc != 1) {
+    write_reason(reason, reason_size, "invalid sandbox policy JSON format");
+    return -1;
+  }
+  rc = extract_u64_json_field(input, "allow_fs_write", 1, &allow_fs_write);
+  if (rc != 1) {
+    write_reason(reason, reason_size, "invalid sandbox policy JSON format");
+    return -1;
+  }
+  rc = extract_u64_json_field(input, "allow_net_client", 1, &allow_net_client);
+  if (rc != 1) {
+    write_reason(reason, reason_size, "invalid sandbox policy JSON format");
+    return -1;
+  }
+  rc = extract_u64_json_field(input, "allow_net_server", 1, &allow_net_server);
+  if (rc != 1) {
+    write_reason(reason, reason_size, "invalid sandbox policy JSON format");
+    return -1;
+  }
+  rc = extract_u64_json_field(input, "allow_device_io", 1, &allow_device_io);
+  if (rc != 1) {
+    write_reason(reason, reason_size, "invalid sandbox policy JSON format");
+    return -1;
+  }
+  rc = extract_u64_json_field(input, "schema_version", 0, &schema_version);
+  if (rc < 0) {
+    write_reason(reason, reason_size, "invalid sandbox policy JSON format");
+    return -1;
+  }
+  if (rc == 0) {
     schema_version = AEGIS_SANDBOX_POLICY_SCHEMA_VERSION;
+  }
+  rc = extract_u64_json_field(input, "policy_revision", 0, &policy_rev);
+  if (rc < 0) {
+    write_reason(reason, reason_size, "invalid sandbox policy JSON format");
+    return -1;
+  }
+  if (rc == 0) {
     policy_rev = 1u;
   }
-  policy->process_id = process_id;
-  policy->capabilities = capabilities;
-  policy->schema_version = schema_version;
-  policy->policy_revision = (uint64_t)policy_rev;
+  if (process_id > 0xFFFFFFFFu || capabilities > 0xFFFFFFFFu ||
+      allow_fs_read > 0xFFu || allow_fs_write > 0xFFu ||
+      allow_net_client > 0xFFu || allow_net_server > 0xFFu ||
+      allow_device_io > 0xFFu || schema_version > 0xFFFFFFFFu) {
+    write_reason(reason, reason_size, "sandbox policy JSON numeric field out of range");
+    return -1;
+  }
+  policy->process_id = (uint32_t)process_id;
+  policy->capabilities = (uint32_t)capabilities;
+  policy->schema_version = (uint32_t)schema_version;
+  policy->policy_revision = policy_rev;
   policy->allow_fs_read = (uint8_t)allow_fs_read;
   policy->allow_fs_write = (uint8_t)allow_fs_write;
   policy->allow_net_client = (uint8_t)allow_net_client;
