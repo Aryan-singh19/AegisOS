@@ -21,6 +21,14 @@ This profile defines recommended protection rules for `main` in AegisOS.
 - `Clang Matrix / clang-build-and-test (c11)`
 - `Clang Matrix / clang-build-and-test (c17)`
 - `Clang Matrix / clang-sanitizers`
+- `Clang Matrix / trace-json-property-smoke`
+
+## Apply Script
+
+- Dry-run:
+  - `python scripts/configure_branch_protection.py shiroonigami23-ui/AegisOS`
+- Apply profile to `main`:
+  - `python scripts/configure_branch_protection.py shiroonigami23-ui/AegisOS --apply`
 
 ## Why This Matters
 
