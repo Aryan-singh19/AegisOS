@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 10:57:08Z
+Last generated: 2026-04-05 10:58:12Z
 
 ## What AegisOS Is Building
 
@@ -36,6 +36,7 @@ We implement in vertical slices:
 - none
 
 ### Priority P1
+- #49 Scheduler_reason_code_metrics_breakdown (priority-p1, kernel)
 - #48 Docs_heatmap_trend_window (priority-p1)
 - #47 Scheduler_wait_latency_aggregation_report (priority-p1, kernel)
 - #46 Scheduler_metrics_snapshot_serialization (priority-p1, kernel)
@@ -50,7 +51,6 @@ We implement in vertical slices:
 - #36 Package_dependency_visualizer_output (priority-p1)
 - #35 Package_schema_migration_helper (priority-p1)
 - #34 Sanitizer_suppressions_baseline (priority-p1)
-- #33 Scheduler_context_switch_reason_codes (priority-p1, kernel)
 - #29 Scheduler_aging_policy_for_fairness (priority-p1, kernel)
 - #27 Symlink_resolution_filesystem_backend (priority-p1, security)
 - #14 Sandbox_policy_hot_reload (priority-p1, security)
@@ -72,12 +72,12 @@ We implement in vertical slices:
 
 Recent commit touches (higher means more active recently):
 
-- kernel: 18
-- userland: 16
+- kernel: 15
+- userland: 13
 - packages: 15
 - docs: 50
 - workflows: 4
-- tests: 12
+- tests: 10
 - tools: 0
 - platform: 0
 - scripts: 6
@@ -93,6 +93,8 @@ Open issue pressure by component signal:
 
 ## Recent Engineering Changes
 
+- `97c06b2` (2026-04-05): Add_one_command_onboarding_bootstrap_runner
+- `0f6d8a0` (2026-04-05): docs: auto-update explain and changelog
 - `72a0881` (2026-04-05): Add_context_switch_reason_codes_for_scheduler_ticks
 - `f0a640c` (2026-04-05): docs: auto-update explain and changelog
 - `2208524` (2026-04-05): Improve_docs_heatmap_with_local_issue_fallback_and_component_signals
@@ -106,5 +108,3 @@ Open issue pressure by component signal:
 - `cc26bce` (2026-04-05): Add_dns_pinning_guard_for_network_rebinding_defense
 - `854afc1` (2026-04-05): docs: auto-update explain and changelog
 - `33b3b00` (2026-04-05): Add_deterministic_network_scope_precedence_with_tie_break_rules
-- `3206f06` (2026-04-05): docs: auto-update explain and changelog
-- `40c23d8` (2026-04-05): Add_filesystem_wildcard_scope_matching_and_tests
