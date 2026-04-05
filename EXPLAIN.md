@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 11:20:16Z
+Last generated: 2026-04-05 11:22:26Z
 
 ## What AegisOS Is Building
 
@@ -36,6 +36,7 @@ We implement in vertical slices:
 - none
 
 ### Priority P1
+- #61 Filesystem_scope_wildcard_compiler_and_lint (priority-p1, security)
 - #60 Network_scope_trace_machine_readable_mode (priority-p1, security)
 - #59 DNS_pin_dual_stack_consistency_policy (priority-p1, security)
 - #58 Sandbox_policy_schema_migration_adapter (priority-p1, security)
@@ -45,7 +46,6 @@ We implement in vertical slices:
 - #53 Package_graph_rendering_guide (priority-p1)
 - #48 Docs_heatmap_trend_window (priority-p1)
 - #45 Capability_audit_actor_identity_model (priority-p1, security)
-- #42 Filesystem_scope_wildcard_validation_rules (priority-p1, security)
 - #40 Apply_branch_protection_profile_on_main (priority-p1)
 - #38 Package_signature_metadata_fields (priority-p1, security)
 - #37 Package_profile_compatibility_matrix (priority-p1)
@@ -72,11 +72,11 @@ We implement in vertical slices:
 Recent commit touches (higher means more active recently):
 
 - kernel: 18
-- userland: 31
+- userland: 34
 - packages: 3
 - docs: 44
-- workflows: 2
-- tests: 18
+- workflows: 1
+- tests: 19
 - tools: 0
 - platform: 0
 - scripts: 3
@@ -92,6 +92,8 @@ Open issue pressure by component signal:
 
 ## Recent Engineering Changes
 
+- `6934178` (2026-04-05): Add_capability_actor_identity_model_and_validation
+- `bd9e491` (2026-04-05): docs: auto-update explain and changelog
 - `2606126` (2026-04-05): Add_filesystem_wildcard_validation_rules
 - `c93539f` (2026-04-05): docs: auto-update explain and changelog
 - `2ce62d0` (2026-04-05): Add_network_scope_precedence_debug_trace_api
@@ -105,5 +107,3 @@ Open issue pressure by component signal:
 - `b3e272f` (2026-04-05): Add_capability_audit_export_and_scheduler_reason_metrics
 - `faca1c9` (2026-04-05): docs: auto-update explain and changelog
 - `0533870` (2026-04-05): Add_package_dependency_graph_exports_and_scheduler_wait_report
-- `2079757` (2026-04-05): docs: auto-update explain and changelog
-- `f860e26` (2026-04-05): Add_sandbox_policy_hot_reload_with_safe_validation

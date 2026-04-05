@@ -1,10 +1,12 @@
 # CHANGELOG
 
 Auto-updated by workflow.
-Last generated: 2026-04-05 11:20:16Z
+Last generated: 2026-04-05 11:22:26Z
 
 ## Unreleased
 
+- 2026-04-05 `6934178` Add_capability_actor_identity_model_and_validation
+- 2026-04-05 `bd9e491` docs: auto-update explain and changelog
 - 2026-04-05 `2606126` Add_filesystem_wildcard_validation_rules
 - 2026-04-05 `c93539f` docs: auto-update explain and changelog
 - 2026-04-05 `2ce62d0` Add_network_scope_precedence_debug_trace_api
@@ -18,5 +20,3 @@ Last generated: 2026-04-05 11:20:16Z
 - 2026-04-05 `b3e272f` Add_capability_audit_export_and_scheduler_reason_metrics
 - 2026-04-05 `faca1c9` docs: auto-update explain and changelog
 - 2026-04-05 `0533870` Add_package_dependency_graph_exports_and_scheduler_wait_report
-- 2026-04-05 `2079757` docs: auto-update explain and changelog
-- 2026-04-05 `f860e26` Add_sandbox_policy_hot_reload_with_safe_validation
