@@ -13,4 +13,5 @@ Core userspace services, shell tools, and runtime components live here.
   - supports simple wildcard patterns (`*`) in filesystem scope rules.
   - includes network scopes (host/port/protocol rules with explicit allow/deny).
   - network rule precedence is deterministic: most specific match wins; tie -> deny.
+  - includes optional DNS pinning guard (`host -> pinned IPv4`) for rebinding defense.
   - includes symlink mapping resolution before filesystem scope checks.

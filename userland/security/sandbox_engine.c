@@ -182,6 +182,12 @@ void aegis_policy_engine_init(aegis_policy_engine_t *engine) {
     engine->symlink_rules[i].link_prefix[0] = '\0';
     engine->symlink_rules[i].target_prefix[0] = '\0';
   }
+  for (i = 0; i < 128; ++i) {
+    engine->dns_pin_rules[i].active = 0;
+    engine->dns_pin_rules[i].process_id = 0;
+    engine->dns_pin_rules[i].host[0] = '\0';
+    engine->dns_pin_rules[i].pinned_ipv4 = 0;
+  }
 }
 
 int aegis_policy_engine_set_policy(aegis_policy_engine_t *engine,
@@ -541,6 +547,68 @@ int aegis_policy_engine_check_network(const aegis_policy_engine_t *engine,
                                       uint16_t port,
                                       aegis_net_protocol_t protocol,
                                       aegis_policy_decision_t *decision) {
+  return aegis_policy_engine_check_network_with_ip(engine, store, process_id, action, host, port,
+                                                   protocol, 0u, decision);
+}
+
+int aegis_policy_engine_pin_dns_ipv4(aegis_policy_engine_t *engine, uint32_t process_id,
+                                     const char *host, uint32_t ipv4) {
+  size_t i;
+  size_t free_index = 128;
+  if (engine == 0 || process_id == 0 || host == 0 || host[0] == '\0' || ipv4 == 0u) {
+    return -1;
+  }
+  for (i = 0; i < 128; ++i) {
+    if (engine->dns_pin_rules[i].active != 0 &&
+        engine->dns_pin_rules[i].process_id == process_id &&
+        strcmp(engine->dns_pin_rules[i].host, host) == 0) {
+      engine->dns_pin_rules[i].pinned_ipv4 = ipv4;
+      return 0;
+    }
+    if (free_index == 128 && engine->dns_pin_rules[i].active == 0) {
+      free_index = i;
+    }
+  }
+  if (free_index == 128) {
+    return -1;
+  }
+  engine->dns_pin_rules[free_index].active = 1;
+  engine->dns_pin_rules[free_index].process_id = process_id;
+  engine->dns_pin_rules[free_index].pinned_ipv4 = ipv4;
+  snprintf(engine->dns_pin_rules[free_index].host,
+           sizeof(engine->dns_pin_rules[free_index].host),
+           "%s",
+           host);
+  return 0;
+}
+
+int aegis_policy_engine_clear_dns_pins(aegis_policy_engine_t *engine, uint32_t process_id) {
+  size_t i;
+  int removed = 0;
+  if (engine == 0 || process_id == 0) {
+    return -1;
+  }
+  for (i = 0; i < 128; ++i) {
+    if (engine->dns_pin_rules[i].active != 0 && engine->dns_pin_rules[i].process_id == process_id) {
+      engine->dns_pin_rules[i].active = 0;
+      engine->dns_pin_rules[i].process_id = 0;
+      engine->dns_pin_rules[i].host[0] = '\0';
+      engine->dns_pin_rules[i].pinned_ipv4 = 0;
+      removed = 1;
+    }
+  }
+  return removed ? 0 : -1;
+}
+
+int aegis_policy_engine_check_network_with_ip(const aegis_policy_engine_t *engine,
+                                              const aegis_capability_store_t *store,
+                                              uint32_t process_id,
+                                              aegis_action_t action,
+                                              const char *host,
+                                              uint16_t port,
+                                              aegis_net_protocol_t protocol,
+                                              uint32_t resolved_ipv4,
+                                              aegis_policy_decision_t *decision) {
   int base_rc;
   size_t i;
   int best_score = -1;
@@ -560,6 +628,21 @@ int aegis_policy_engine_check_network(const aegis_policy_engine_t *engine,
   if (protocol != AEGIS_NET_PROTO_TCP && protocol != AEGIS_NET_PROTO_UDP) {
     set_reason(decision, "unsupported network protocol", 0);
     return 0;
+  }
+  if (resolved_ipv4 != 0u) {
+    for (i = 0; i < 128; ++i) {
+      const aegis_dns_pin_rule_t *pin = &engine->dns_pin_rules[i];
+      if (pin->active == 0 || pin->process_id != process_id) {
+        continue;
+      }
+      if (strcmp(pin->host, host) != 0) {
+        continue;
+      }
+      if (pin->pinned_ipv4 != resolved_ipv4) {
+        set_reason(decision, "dns rebinding guard blocked host/ip mismatch", 0);
+        return 0;
+      }
+    }
   }
   for (i = 0; i < 256; ++i) {
     const aegis_net_scope_rule_t *rule = &engine->net_rules[i];

@@ -53,6 +53,13 @@ typedef struct {
 
 typedef struct {
   uint32_t process_id;
+  char host[96];
+  uint32_t pinned_ipv4;
+  uint8_t active;
+} aegis_dns_pin_rule_t;
+
+typedef struct {
+  uint32_t process_id;
   char link_prefix[128];
   char target_prefix[128];
   uint8_t active;
@@ -65,6 +72,7 @@ typedef struct {
   aegis_fs_scope_rule_t fs_rules[256];
   aegis_net_scope_rule_t net_rules[256];
   aegis_symlink_rule_t symlink_rules[128];
+  aegis_dns_pin_rule_t dns_pin_rules[128];
 } aegis_policy_engine_t;
 
 void aegis_policy_engine_init(aegis_policy_engine_t *engine);
@@ -110,5 +118,17 @@ int aegis_policy_engine_check_network(const aegis_policy_engine_t *engine,
                                       uint16_t port,
                                       aegis_net_protocol_t protocol,
                                       aegis_policy_decision_t *decision);
+int aegis_policy_engine_pin_dns_ipv4(aegis_policy_engine_t *engine, uint32_t process_id,
+                                     const char *host, uint32_t ipv4);
+int aegis_policy_engine_clear_dns_pins(aegis_policy_engine_t *engine, uint32_t process_id);
+int aegis_policy_engine_check_network_with_ip(const aegis_policy_engine_t *engine,
+                                              const aegis_capability_store_t *store,
+                                              uint32_t process_id,
+                                              aegis_action_t action,
+                                              const char *host,
+                                              uint16_t port,
+                                              aegis_net_protocol_t protocol,
+                                              uint32_t resolved_ipv4,
+                                              aegis_policy_decision_t *decision);
 
 #endif

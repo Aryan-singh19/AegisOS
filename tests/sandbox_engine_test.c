@@ -399,6 +399,65 @@ static int test_filesystem_wildcard_scope(void) {
   return 0;
 }
 
+static int test_dns_rebinding_guard(void) {
+  aegis_capability_store_t cap_store;
+  aegis_policy_engine_t engine;
+  aegis_sandbox_policy_t policy = {
+      5200u, AEGIS_CAP_NET_CLIENT, 0u, 0u, 1u, 0u, 0u};
+  aegis_policy_decision_t decision;
+  const uint32_t pinned_ip = 0xC0A8010A;   /* 192.168.1.10 */
+  const uint32_t other_ip = 0x0A000005;    /* 10.0.0.5 */
+
+  aegis_capability_store_init(&cap_store);
+  aegis_policy_engine_init(&engine);
+  if (aegis_capability_issue(&cap_store, 5200u, AEGIS_CAP_NET_CLIENT) != 0) {
+    fprintf(stderr, "dns guard capability issue failed\n");
+    return 1;
+  }
+  if (aegis_policy_engine_set_policy(&engine, &policy) != 0) {
+    fprintf(stderr, "dns guard set policy failed\n");
+    return 1;
+  }
+  if (aegis_policy_engine_add_net_rule(
+          &engine, 5200u, "api.safe.local", 443, 443, AEGIS_NET_PROTO_TCP, 1u, 0u, 1u) != 0) {
+    fprintf(stderr, "dns guard add net rule failed\n");
+    return 1;
+  }
+  if (aegis_policy_engine_pin_dns_ipv4(&engine, 5200u, "api.safe.local", pinned_ip) != 0) {
+    fprintf(stderr, "dns guard pin failed\n");
+    return 1;
+  }
+  if (aegis_policy_engine_check_network_with_ip(&engine,
+                                                &cap_store,
+                                                5200u,
+                                                AEGIS_ACTION_NET_CONNECT,
+                                                "api.safe.local",
+                                                443,
+                                                AEGIS_NET_PROTO_TCP,
+                                                pinned_ip,
+                                                &decision) != 1) {
+    fprintf(stderr, "expected pinned ip allow, got: %s\n", decision.reason);
+    return 1;
+  }
+  if (aegis_policy_engine_check_network_with_ip(&engine,
+                                                &cap_store,
+                                                5200u,
+                                                AEGIS_ACTION_NET_CONNECT,
+                                                "api.safe.local",
+                                                443,
+                                                AEGIS_NET_PROTO_TCP,
+                                                other_ip,
+                                                &decision) != 0) {
+    fprintf(stderr, "expected pinned ip mismatch deny\n");
+    return 1;
+  }
+  if (strcmp(decision.reason, "dns rebinding guard blocked host/ip mismatch") != 0) {
+    fprintf(stderr, "unexpected dns guard reason: %s\n", decision.reason);
+    return 1;
+  }
+  return 0;
+}
+
 int main(void) {
   if (test_allow_path() != 0) {
     return 1;
@@ -425,6 +484,9 @@ int main(void) {
     return 1;
   }
   if (test_filesystem_wildcard_scope() != 0) {
+    return 1;
+  }
+  if (test_dns_rebinding_guard() != 0) {
     return 1;
   }
   puts("sandbox engine tests passed");
