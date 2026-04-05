@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 10:48:11Z
+Last generated: 2026-04-05 10:50:29Z
 
 ## What AegisOS Is Building
 
@@ -36,6 +36,7 @@ We implement in vertical slices:
 - none
 
 ### Priority P1
+- #44 DNS_pin_ipv6_support (priority-p1, security)
 - #43 Network_scope_precedence_debug_trace (priority-p1, security)
 - #42 Filesystem_scope_wildcard_validation_rules (priority-p1, security)
 - #40 Apply_branch_protection_profile_on_main (priority-p1)
@@ -50,9 +51,7 @@ We implement in vertical slices:
 - #31 Scheduler_metrics_export_endpoint (priority-p1, kernel)
 - #30 Docs_enrichment_component_heatmap (priority-p1)
 - #29 Scheduler_aging_policy_for_fairness (priority-p1, kernel)
-- #28 Capability_rotation_audit_metadata (priority-p1, security)
 - #27 Symlink_resolution_filesystem_backend (priority-p1, security)
-- #26 Network_scope_dns_rebinding_guard (priority-p1, security)
 - #14 Sandbox_policy_hot_reload (priority-p1, security)
 - #13 Sandbox_policy_serialization_format (priority-p1, security)
 
@@ -64,12 +63,15 @@ We implement in vertical slices:
 
 ### Good First Task
 - #41 Onboarding_bootstrap_script_runner (good-first-task)
+- #9 Toolchain_bootstrap_for_contributors (good-first-task)
 
 ### Other
 - none
 
 ## Recent Engineering Changes
 
+- `67fc1c3` (2026-04-05): Add_rotation_actor_reason_metadata_to_capability_audit
+- `5e0463e` (2026-04-05): docs: auto-update explain and changelog
 - `cc26bce` (2026-04-05): Add_dns_pinning_guard_for_network_rebinding_defense
 - `854afc1` (2026-04-05): docs: auto-update explain and changelog
 - `33b3b00` (2026-04-05): Add_deterministic_network_scope_precedence_with_tie_break_rules
@@ -83,5 +85,3 @@ We implement in vertical slices:
 - `43de16a` (2026-04-05): Add_contributor_onboarding_checklist_and_reference
 - `d8ee84a` (2026-04-05): docs: auto-update explain and changelog
 - `65fc46c` (2026-04-05): Add_branch_protection_profile_and_configuration_helper
-- `abdd8a3` (2026-04-05): docs: auto-update explain and changelog
-- `0b4425a` (2026-04-05): Add_project_board_automation_and_capability_audit_pipeline
