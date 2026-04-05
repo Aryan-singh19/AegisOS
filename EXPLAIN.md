@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 11:23:57Z
+Last generated: 2026-04-05 11:25:59Z
 
 ## What AegisOS Is Building
 
@@ -36,13 +36,12 @@ We implement in vertical slices:
 - none
 
 ### Priority P1
+- #63 Scheduler_snapshot_reason_histogram_window (priority-p1, kernel)
 - #62 Capability_actor_registry_and_revocation_hooks (priority-p1, security)
 - #61 Filesystem_scope_wildcard_compiler_and_lint (priority-p1, security)
 - #60 Network_scope_trace_machine_readable_mode (priority-p1, security)
 - #59 DNS_pin_dual_stack_consistency_policy (priority-p1, security)
 - #58 Sandbox_policy_schema_migration_adapter (priority-p1, security)
-- #57 Scheduler_snapshot_schema_version_tag (priority-p1, kernel)
-- #56 Scheduler_reason_metrics_snapshot_endpoint_extension (priority-p1, kernel)
 - #55 Capability_audit_export_file_sink_and_pagination (priority-p1, security)
 - #53 Package_graph_rendering_guide (priority-p1)
 - #48 Docs_heatmap_trend_window (priority-p1)
@@ -72,7 +71,7 @@ We implement in vertical slices:
 Recent commit touches (higher means more active recently):
 
 - kernel: 21
-- userland: 34
+- userland: 35
 - packages: 3
 - docs: 44
 - workflows: 0
@@ -85,13 +84,15 @@ Recent commit touches (higher means more active recently):
 Open issue pressure by component signal:
 
 - security: 8
-- kernel: 3
+- kernel: 2
 - packages: 3
 - docs: 1
 - other: 4
 
 ## Recent Engineering Changes
 
+- `78336af` (2026-04-05): Add_capability_audit_pagination_and_file_sink_helpers
+- `14b141d` (2026-04-05): docs: auto-update explain and changelog
 - `cfb4817` (2026-04-05): Add_scheduler_snapshot_schema_version_and_reason_breakdown
 - `9caf674` (2026-04-05): docs: auto-update explain and changelog
 - `6934178` (2026-04-05): Add_capability_actor_identity_model_and_validation
@@ -105,5 +106,3 @@ Open issue pressure by component signal:
 - `8a231e6` (2026-04-05): Add_policy_schema_versioning_and_hot_reload_revision_guard
 - `16b9f0a` (2026-04-05): docs: auto-update explain and changelog
 - `f6168cd` (2026-04-05): Add_scheduler_wait_snapshot_endpoint_and_json_serializers
-- `7ba1c60` (2026-04-05): docs: auto-update explain and changelog
-- `b3e272f` (2026-04-05): Add_capability_audit_export_and_scheduler_reason_metrics

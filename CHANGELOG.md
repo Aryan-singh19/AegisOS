@@ -1,10 +1,12 @@
 # CHANGELOG
 
 Auto-updated by workflow.
-Last generated: 2026-04-05 11:23:57Z
+Last generated: 2026-04-05 11:25:59Z
 
 ## Unreleased
 
+- 2026-04-05 `78336af` Add_capability_audit_pagination_and_file_sink_helpers
+- 2026-04-05 `14b141d` docs: auto-update explain and changelog
 - 2026-04-05 `cfb4817` Add_scheduler_snapshot_schema_version_and_reason_breakdown
 - 2026-04-05 `9caf674` docs: auto-update explain and changelog
 - 2026-04-05 `6934178` Add_capability_actor_identity_model_and_validation
@@ -18,5 +20,3 @@ Last generated: 2026-04-05 11:23:57Z
 - 2026-04-05 `8a231e6` Add_policy_schema_versioning_and_hot_reload_revision_guard
 - 2026-04-05 `16b9f0a` docs: auto-update explain and changelog
 - 2026-04-05 `f6168cd` Add_scheduler_wait_snapshot_endpoint_and_json_serializers
-- 2026-04-05 `7ba1c60` docs: auto-update explain and changelog
-- 2026-04-05 `b3e272f` Add_capability_audit_export_and_scheduler_reason_metrics
