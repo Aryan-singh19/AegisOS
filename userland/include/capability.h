@@ -67,5 +67,7 @@ int aegis_capability_is_allowed_at(const aegis_capability_store_t *store, uint32
 void aegis_capability_audit_reset(void);
 size_t aegis_capability_audit_count(void);
 int aegis_capability_audit_get(size_t index, aegis_capability_audit_event_t *event);
+int aegis_capability_audit_export_json(char *out, size_t out_size);
+int aegis_capability_audit_export_csv(char *out, size_t out_size);
 
 #endif

@@ -17,6 +17,7 @@ typedef struct {
   size_t high_watermark;
   uint32_t current_pid;
   uint8_t pending_switch_reason;
+  uint64_t reason_switch_counts[5];
   uint32_t quantum_ticks;
   uint32_t quantum_remaining;
   size_t count;
@@ -84,5 +85,7 @@ int aegis_scheduler_last_latency_for(const aegis_scheduler_t *scheduler, uint32_
                                      uint64_t *latency_ticks);
 int aegis_scheduler_wait_report(const aegis_scheduler_t *scheduler,
                                 aegis_scheduler_wait_report_t *report);
+int aegis_scheduler_switch_reason_count(const aegis_scheduler_t *scheduler, uint8_t switch_reason,
+                                        uint64_t *count);
 
 #endif

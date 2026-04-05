@@ -168,6 +168,39 @@ static int test_capability_audit_pipeline(void) {
   return 0;
 }
 
+static int test_capability_audit_export_api(void) {
+  aegis_capability_store_t store;
+  char json[4096];
+  char csv[4096];
+  aegis_capability_store_init(&store);
+  aegis_capability_audit_reset();
+
+  if (aegis_capability_issue_with_ttl(&store, 500u, AEGIS_CAP_FS_READ, 42u, 15u) != 0) {
+    fprintf(stderr, "export api issue failed\n");
+    return 1;
+  }
+  (void)aegis_capability_is_allowed_at(&store, 500u, AEGIS_CAP_FS_READ, 45u);
+
+  if (aegis_capability_audit_export_json(json, sizeof(json)) <= 0) {
+    fprintf(stderr, "expected json export payload\n");
+    return 1;
+  }
+  if (strstr(json, "\"process_id\":500") == 0 || strstr(json, "\"event_type\":4") == 0) {
+    fprintf(stderr, "json export missing expected fields\n");
+    return 1;
+  }
+  if (aegis_capability_audit_export_csv(csv, sizeof(csv)) <= 0) {
+    fprintf(stderr, "expected csv export payload\n");
+    return 1;
+  }
+  if (strstr(csv, "timestamp_epoch,process_id,requested_permissions") == 0 ||
+      strstr(csv, "500") == 0) {
+    fprintf(stderr, "csv export missing expected fields\n");
+    return 1;
+  }
+  return 0;
+}
+
 int main(void) {
   if (test_capability_validate() != 0) {
     return 1;
@@ -182,6 +215,9 @@ int main(void) {
     return 1;
   }
   if (test_capability_audit_pipeline() != 0) {
+    return 1;
+  }
+  if (test_capability_audit_export_api() != 0) {
     return 1;
   }
   puts("capability tests passed");

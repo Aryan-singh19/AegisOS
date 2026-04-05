@@ -57,6 +57,9 @@ void aegis_scheduler_init(aegis_scheduler_t *scheduler) {
     scheduler->wait_ticks_total[i] = 0;
     scheduler->last_wait_latency[i] = 0;
   }
+  for (i = 0; i < 5u; ++i) {
+    scheduler->reason_switch_counts[i] = 0;
+  }
 }
 
 static int find_index(const aegis_scheduler_t *scheduler, uint32_t process_id, size_t *index) {
@@ -224,6 +227,9 @@ void aegis_scheduler_reset_metrics(aegis_scheduler_t *scheduler) {
     scheduler->last_wait_latency[i] = 0;
     scheduler->enqueued_tick[i] = scheduler->scheduler_ticks;
   }
+  for (i = 0; i < 5u; ++i) {
+    scheduler->reason_switch_counts[i] = 0;
+  }
 }
 
 void aegis_scheduler_set_quantum(aegis_scheduler_t *scheduler, uint32_t quantum_ticks) {
@@ -270,6 +276,9 @@ int aegis_scheduler_on_tick_ex(aegis_scheduler_t *scheduler, uint32_t *running_p
     }
     *context_switch = 1;
     *switch_reason = reason;
+    if (reason <= AEGIS_SWITCH_MANUAL_YIELD) {
+      scheduler->reason_switch_counts[reason] += 1;
+    }
     scheduler->current_pid = next_pid;
     scheduler->quantum_remaining = scheduler->quantum_ticks;
     scheduler->pending_switch_reason = AEGIS_SWITCH_NONE;
@@ -368,5 +377,14 @@ int aegis_scheduler_wait_report(const aegis_scheduler_t *scheduler,
   report->mean_last_latency_ticks = sum_lat / n;
   report->p95_last_latency_ticks = lats[p95_index];
   report->max_last_latency_ticks = lats[n - 1];
+  return 0;
+}
+
+int aegis_scheduler_switch_reason_count(const aegis_scheduler_t *scheduler, uint8_t switch_reason,
+                                        uint64_t *count) {
+  if (scheduler == 0 || count == 0 || switch_reason > AEGIS_SWITCH_MANUAL_YIELD) {
+    return -1;
+  }
+  *count = scheduler->reason_switch_counts[switch_reason];
   return 0;
 }

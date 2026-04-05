@@ -157,6 +157,10 @@ static int test_scheduler_preemption_tick(void) {
   uint32_t pid = 0;
   uint8_t switched = 0;
   uint8_t reason = AEGIS_SWITCH_NONE;
+  uint64_t process_start_count = 0;
+  uint64_t quantum_expired_count = 0;
+  uint64_t manual_yield_count = 0;
+  uint64_t process_exit_count = 0;
   aegis_scheduler_init(&scheduler);
   aegis_scheduler_set_quantum(&scheduler, 2u);
   if (aegis_scheduler_add(&scheduler, 7001u) != 0 || aegis_scheduler_add(&scheduler, 7002u) != 0) {
@@ -199,6 +203,22 @@ static int test_scheduler_preemption_tick(void) {
   if (aegis_scheduler_on_tick_ex(&scheduler, &pid, &switched, &reason) != 0 || switched == 0 ||
       reason != AEGIS_SWITCH_PROCESS_EXIT) {
     fprintf(stderr, "tick6 expected process exit context switch reason\n");
+    return 1;
+  }
+  if (aegis_scheduler_switch_reason_count(&scheduler, AEGIS_SWITCH_PROCESS_START,
+                                          &process_start_count) != 0 ||
+      aegis_scheduler_switch_reason_count(&scheduler, AEGIS_SWITCH_QUANTUM_EXPIRED,
+                                          &quantum_expired_count) != 0 ||
+      aegis_scheduler_switch_reason_count(&scheduler, AEGIS_SWITCH_MANUAL_YIELD,
+                                          &manual_yield_count) != 0 ||
+      aegis_scheduler_switch_reason_count(&scheduler, AEGIS_SWITCH_PROCESS_EXIT,
+                                          &process_exit_count) != 0) {
+    fprintf(stderr, "failed to query switch reason counters\n");
+    return 1;
+  }
+  if (process_start_count == 0u || quantum_expired_count == 0u ||
+      manual_yield_count == 0u || process_exit_count == 0u) {
+    fprintf(stderr, "expected non-zero switch reason counters\n");
     return 1;
   }
   return 0;

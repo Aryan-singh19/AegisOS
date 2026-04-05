@@ -1,9 +1,54 @@
 #include "capability.h"
 
 #include <stdio.h>
+#include <stdarg.h>
+#include <string.h>
 
 static aegis_capability_audit_event_t g_audit_events[512];
 static size_t g_audit_count = 0;
+
+static size_t capability_audit_base(void) {
+  if (g_audit_count > 512u) {
+    return g_audit_count - 512u;
+  }
+  return 0u;
+}
+
+static int append_format(char *out, size_t out_size, size_t *offset, const char *fmt, ...) {
+  int written = 0;
+  va_list args;
+  if (out == 0 || offset == 0 || fmt == 0 || *offset >= out_size) {
+    return -1;
+  }
+  va_start(args, fmt);
+  written = vsnprintf(out + *offset, out_size - *offset, fmt, args);
+  va_end(args);
+  if (written < 0 || (size_t)written >= (out_size - *offset)) {
+    return -1;
+  }
+  *offset += (size_t)written;
+  return 0;
+}
+
+static int append_json_escaped(char *out, size_t out_size, size_t *offset, const char *src) {
+  size_t i = 0;
+  if (src == 0) {
+    return append_format(out, out_size, offset, "");
+  }
+  while (src[i] != '\0') {
+    if (src[i] == '\\' || src[i] == '"') {
+      if (append_format(out, out_size, offset, "\\%c", src[i]) != 0) {
+        return -1;
+      }
+    } else {
+      if (append_format(out, out_size, offset, "%c", src[i]) != 0) {
+        return -1;
+      }
+    }
+    i += 1;
+  }
+  return 0;
+}
 
 static void capability_audit_log(uint8_t event_type, uint64_t now_epoch, uint32_t process_id,
                                  uint32_t requested_permissions, uint32_t resulting_permissions,
@@ -191,12 +236,91 @@ int aegis_capability_audit_get(size_t index, aegis_capability_audit_event_t *eve
   if (event == 0 || index >= g_audit_count) {
     return -1;
   }
-  if (g_audit_count > 512) {
-    base = g_audit_count - 512;
-  }
+  base = capability_audit_base();
   if (index < base) {
     return -1;
   }
   *event = g_audit_events[index % 512];
   return 0;
+}
+
+int aegis_capability_audit_export_json(char *out, size_t out_size) {
+  size_t offset = 0;
+  size_t start = capability_audit_base();
+  size_t i = 0;
+  aegis_capability_audit_event_t event;
+  if (out == 0 || out_size == 0u) {
+    return -1;
+  }
+  out[0] = '\0';
+  if (append_format(out, out_size, &offset, "[") != 0) {
+    return -1;
+  }
+  for (i = start; i < g_audit_count; ++i) {
+    if (aegis_capability_audit_get(i, &event) != 0) {
+      return -1;
+    }
+    if (i > start) {
+      if (append_format(out, out_size, &offset, ",") != 0) {
+        return -1;
+      }
+    }
+    if (append_format(out, out_size, &offset,
+                      "{\"timestamp_epoch\":%llu,\"process_id\":%u,\"requested_permissions\":%u,"
+                      "\"resulting_permissions\":%u,\"actor_id\":%u,\"event_type\":%u,\"reason\":\"",
+                      (unsigned long long)event.timestamp_epoch, event.process_id,
+                      event.requested_permissions, event.resulting_permissions, event.actor_id,
+                      event.event_type) != 0) {
+      return -1;
+    }
+    if (append_json_escaped(out, out_size, &offset, event.reason) != 0) {
+      return -1;
+    }
+    if (append_format(out, out_size, &offset, "\"}") != 0) {
+      return -1;
+    }
+  }
+  if (append_format(out, out_size, &offset, "]") != 0) {
+    return -1;
+  }
+  return (int)offset;
+}
+
+int aegis_capability_audit_export_csv(char *out, size_t out_size) {
+  size_t offset = 0;
+  size_t start = capability_audit_base();
+  size_t i = 0;
+  aegis_capability_audit_event_t event;
+  char safe_reason[64];
+  size_t r = 0;
+  if (out == 0 || out_size == 0u) {
+    return -1;
+  }
+  out[0] = '\0';
+  if (append_format(out, out_size, &offset,
+                    "timestamp_epoch,process_id,requested_permissions,resulting_permissions,"
+                    "actor_id,event_type,reason\n") != 0) {
+    return -1;
+  }
+  for (i = start; i < g_audit_count; ++i) {
+    if (aegis_capability_audit_get(i, &event) != 0) {
+      return -1;
+    }
+    snprintf(safe_reason, sizeof(safe_reason), "%s", event.reason);
+    for (r = 0; safe_reason[r] != '\0'; ++r) {
+      if (safe_reason[r] == ',') {
+        safe_reason[r] = ';';
+      }
+      if (safe_reason[r] == '\n' || safe_reason[r] == '\r') {
+        safe_reason[r] = ' ';
+      }
+    }
+    if (append_format(out, out_size, &offset, "%llu,%u,%u,%u,%u,%u,%s\n",
+                      (unsigned long long)event.timestamp_epoch, event.process_id,
+                      event.requested_permissions, event.resulting_permissions, event.actor_id,
+                      event.event_type, safe_reason) != 0) {
+      return -1;
+    }
+  }
+  return (int)offset;
 }
