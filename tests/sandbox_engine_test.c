@@ -308,6 +308,52 @@ static int test_symlink_scope_resolution(void) {
   return 0;
 }
 
+static int test_filesystem_wildcard_scope(void) {
+  aegis_capability_store_t cap_store;
+  aegis_policy_engine_t engine;
+  aegis_sandbox_policy_t policy = {
+      5100u, AEGIS_CAP_FS_READ | AEGIS_CAP_FS_WRITE, 1u, 1u, 0u, 0u, 0u};
+  aegis_policy_decision_t decision;
+
+  aegis_capability_store_init(&cap_store);
+  aegis_policy_engine_init(&engine);
+  if (aegis_capability_issue(&cap_store, 5100u, AEGIS_CAP_FS_READ | AEGIS_CAP_FS_WRITE) != 0) {
+    fprintf(stderr, "wildcard capability issue failed\n");
+    return 1;
+  }
+  if (aegis_policy_engine_set_policy(&engine, &policy) != 0) {
+    fprintf(stderr, "wildcard policy set failed\n");
+    return 1;
+  }
+  if (aegis_policy_engine_add_fs_rule(&engine, 5100u, "/home/*/public/*", AEGIS_FS_SCOPE_READ_WRITE) != 0) {
+    fprintf(stderr, "wildcard fs rule add failed\n");
+    return 1;
+  }
+  if (aegis_policy_engine_check_path(&engine,
+                                     &cap_store,
+                                     5100u,
+                                     AEGIS_ACTION_FS_WRITE,
+                                     "/home/alice/public/file.txt",
+                                     &decision) != 1) {
+    fprintf(stderr, "expected wildcard write allow, got: %s\n", decision.reason);
+    return 1;
+  }
+  if (aegis_policy_engine_check_path(&engine,
+                                     &cap_store,
+                                     5100u,
+                                     AEGIS_ACTION_FS_READ,
+                                     "/home/alice/private/file.txt",
+                                     &decision) != 0) {
+    fprintf(stderr, "expected wildcard no-match deny\n");
+    return 1;
+  }
+  if (strcmp(decision.reason, "no matching filesystem scope rule") != 0) {
+    fprintf(stderr, "unexpected wildcard deny reason: %s\n", decision.reason);
+    return 1;
+  }
+  return 0;
+}
+
 int main(void) {
   if (test_allow_path() != 0) {
     return 1;
@@ -328,6 +374,9 @@ int main(void) {
     return 1;
   }
   if (test_symlink_scope_resolution() != 0) {
+    return 1;
+  }
+  if (test_filesystem_wildcard_scope() != 0) {
     return 1;
   }
   puts("sandbox engine tests passed");

@@ -41,6 +41,44 @@ static int prefix_matches(const char *path, const char *prefix) {
   return strncmp(path, prefix, prefix_len) == 0;
 }
 
+static int wildcard_match(const char *pattern, const char *text) {
+  if (pattern == 0 || text == 0) {
+    return 0;
+  }
+  if (*pattern == '\0') {
+    return *text == '\0';
+  }
+  if (*pattern == '*') {
+    while (*pattern == '*') {
+      pattern++;
+    }
+    if (*pattern == '\0') {
+      return 1;
+    }
+    while (*text != '\0') {
+      if (wildcard_match(pattern, text)) {
+        return 1;
+      }
+      text++;
+    }
+    return wildcard_match(pattern, text);
+  }
+  if (*text == '\0') {
+    return 0;
+  }
+  if (*pattern == *text) {
+    return wildcard_match(pattern + 1, text + 1);
+  }
+  return 0;
+}
+
+static int path_rule_matches(const char *path, const char *rule_pattern) {
+  if (strchr(rule_pattern, '*') != 0) {
+    return wildcard_match(rule_pattern, path);
+  }
+  return prefix_matches(path, rule_pattern);
+}
+
 static int host_matches(const char *host, const char *pattern) {
   size_t host_len;
   if (host == 0 || pattern == 0 || host[0] == '\0' || pattern[0] == '\0') {
@@ -314,7 +352,7 @@ int aegis_policy_engine_check_path(const aegis_policy_engine_t *engine,
     if (engine->fs_rules[i].active == 0 || engine->fs_rules[i].process_id != process_id) {
       continue;
     }
-    if (!prefix_matches(resolved_path, engine->fs_rules[i].path_prefix)) {
+    if (!path_rule_matches(resolved_path, engine->fs_rules[i].path_prefix)) {
       continue;
     }
     if (engine->fs_rules[i].mode == AEGIS_FS_SCOPE_DENY) {
