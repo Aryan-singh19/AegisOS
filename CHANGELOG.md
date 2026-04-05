@@ -1,10 +1,11 @@
 # CHANGELOG
 
 Auto-updated by workflow.
-Last generated: 2026-04-05 10:53:28Z
+Last generated: 2026-04-05 10:54:48Z
 
 ## Unreleased
 
+- 2026-04-05 `087521a` docs: auto-update explain and changelog
 - 2026-04-05 `3895338` Add_tick_based_wait_latency_metrics_for_scheduler
 - 2026-04-05 `b9c15ac` docs: auto-update explain and changelog
 - 2026-04-05 `1cd4bc7` Add_scheduler_metrics_snapshot_endpoint_and_tests
@@ -19,4 +20,3 @@ Last generated: 2026-04-05 10:53:28Z
 - 2026-04-05 `cc8fe1d` docs: auto-update explain and changelog
 - 2026-04-05 `1ffc333` Fix_project_automation_workflow_syntax_and_token_fallback
 - 2026-04-05 `4a6bd9b` docs: auto-update explain and changelog
-- 2026-04-05 `9ebe78b` Fix_project_automation_with_PAT_secret_and_github_script_v8

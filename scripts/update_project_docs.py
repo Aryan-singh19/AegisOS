@@ -33,11 +33,81 @@ def get_recent_commits(limit=12):
   return commits
 
 
+def detect_component_from_path(path):
+  p = path.replace("\\", "/")
+  if p.startswith("kernel/"):
+    return "kernel"
+  if p.startswith("userland/"):
+    return "userland"
+  if p.startswith("packages/"):
+    return "packages"
+  if p.startswith("docs/") or p == "README.md" or p == "EXPLAIN.md" or p == "CHANGELOG.md":
+    return "docs"
+  if p.startswith(".github/workflows/"):
+    return "workflows"
+  if p.startswith("tests/"):
+    return "tests"
+  if p.startswith("tools/"):
+    return "tools"
+  if p.startswith("platform/"):
+    return "platform"
+  if p.startswith("scripts/"):
+    return "scripts"
+  return "other"
+
+
+def get_commit_component_counts(limit=30):
+  raw = run_git("log", f"-n{limit}", "--name-only", "--pretty=format:")
+  counts = {
+      "kernel": 0,
+      "userland": 0,
+      "packages": 0,
+      "docs": 0,
+      "workflows": 0,
+      "tests": 0,
+      "tools": 0,
+      "platform": 0,
+      "scripts": 0,
+      "other": 0,
+  }
+  if not raw:
+    return counts
+  for line in raw.splitlines():
+    path = line.strip()
+    if not path:
+      continue
+    comp = detect_component_from_path(path)
+    counts[comp] += 1
+  return counts
+
+
 def get_open_issues(limit=12):
   repo = os.getenv("GITHUB_REPOSITORY", "")
   token = os.getenv("GITHUB_TOKEN", "")
   if not repo or not token:
-    return []
+    gh = subprocess.run(
+        ["gh", "issue", "list", "--limit", str(limit), "--json", "number,title,labels"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if gh.returncode != 0 or not gh.stdout.strip():
+      return []
+    try:
+      payload = json.loads(gh.stdout)
+    except json.JSONDecodeError:
+      return []
+    items = []
+    for item in payload:
+      items.append(
+          {
+              "number": item.get("number"),
+              "title": item.get("title", ""),
+              "labels": [lbl.get("name", "") for lbl in item.get("labels", [])],
+          }
+      )
+    return items
 
   url = f"https://api.github.com/repos/{repo}/issues?state=open&per_page={limit}"
   req = request.Request(
@@ -67,6 +137,30 @@ def get_open_issues(limit=12):
         }
     )
   return items
+
+
+def get_issue_component_counts(issues):
+  counts = {
+      "security": 0,
+      "kernel": 0,
+      "packages": 0,
+      "docs": 0,
+      "other": 0,
+  }
+  for issue in issues:
+    title = issue.get("title", "").lower()
+    labels = [x.lower() for x in issue.get("labels", [])]
+    if "security" in labels:
+      counts["security"] += 1
+    elif "kernel" in labels:
+      counts["kernel"] += 1
+    elif "package" in title or "packages" in title:
+      counts["packages"] += 1
+    elif "docs" in title or "doc" in title:
+      counts["docs"] += 1
+    else:
+      counts["other"] += 1
+  return counts
 
 
 def has_label(issue, prefix):
@@ -124,7 +218,7 @@ def render_issue_lines(issues):
   return lines
 
 
-def render_explain(now_iso, commits, issues):
+def render_explain(now_iso, commits, issues, commit_components, issue_components):
   grouped = group_issues(issues)
 
   recent_lines = [f"- `{c['hash']}` ({c['date']}): {c['subject']}" for c in commits]
@@ -183,6 +277,29 @@ We implement in vertical slices:
 ### Other
 {os.linesep.join(render_issue_lines(grouped["other"]))}
 
+## Component Activity Heatmap
+
+Recent commit touches (higher means more active recently):
+
+- kernel: {commit_components["kernel"]}
+- userland: {commit_components["userland"]}
+- packages: {commit_components["packages"]}
+- docs: {commit_components["docs"]}
+- workflows: {commit_components["workflows"]}
+- tests: {commit_components["tests"]}
+- tools: {commit_components["tools"]}
+- platform: {commit_components["platform"]}
+- scripts: {commit_components["scripts"]}
+- other: {commit_components["other"]}
+
+Open issue pressure by component signal:
+
+- security: {issue_components["security"]}
+- kernel: {issue_components["kernel"]}
+- packages: {issue_components["packages"]}
+- docs: {issue_components["docs"]}
+- other: {issue_components["other"]}
+
 ## Recent Engineering Changes
 
 {os.linesep.join(recent_lines)}
@@ -220,8 +337,10 @@ def main():
   now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%SZ")
   commits = get_recent_commits(limit=15)
   issues = get_open_issues(limit=20)
+  commit_components = get_commit_component_counts(limit=40)
+  issue_components = get_issue_component_counts(issues)
 
-  explain = render_explain(now_iso, commits, issues)
+  explain = render_explain(now_iso, commits, issues, commit_components, issue_components)
   changelog = render_changelog(now_iso, commits)
 
   changed = False

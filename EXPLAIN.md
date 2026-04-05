@@ -1,7 +1,7 @@
 # EXPLAIN
 
 Auto-updated project explainer for contributors.
-Last generated: 2026-04-05 10:53:28Z
+Last generated: 2026-04-05 10:54:48Z
 
 ## What AegisOS Is Building
 
@@ -36,6 +36,7 @@ We implement in vertical slices:
 - none
 
 ### Priority P1
+- #47 Scheduler_wait_latency_aggregation_report (priority-p1, kernel)
 - #46 Scheduler_metrics_snapshot_serialization (priority-p1, kernel)
 - #45 Capability_audit_actor_identity_model (priority-p1, security)
 - #44 DNS_pin_ipv6_support (priority-p1, security)
@@ -49,7 +50,6 @@ We implement in vertical slices:
 - #35 Package_schema_migration_helper (priority-p1)
 - #34 Sanitizer_suppressions_baseline (priority-p1)
 - #33 Scheduler_context_switch_reason_codes (priority-p1, kernel)
-- #32 Scheduler_tick_counter_usage (priority-p1, kernel)
 - #30 Docs_enrichment_component_heatmap (priority-p1)
 - #29 Scheduler_aging_policy_for_fairness (priority-p1, kernel)
 - #27 Symlink_resolution_filesystem_backend (priority-p1, security)
@@ -68,8 +68,32 @@ We implement in vertical slices:
 ### Other
 - none
 
+## Component Activity Heatmap
+
+Recent commit touches (higher means more active recently):
+
+- kernel: 15
+- userland: 22
+- packages: 15
+- docs: 48
+- workflows: 4
+- tests: 13
+- tools: 0
+- platform: 0
+- scripts: 5
+- other: 0
+
+Open issue pressure by component signal:
+
+- security: 9
+- kernel: 4
+- packages: 3
+- docs: 1
+- other: 3
+
 ## Recent Engineering Changes
 
+- `087521a` (2026-04-05): docs: auto-update explain and changelog
 - `3895338` (2026-04-05): Add_tick_based_wait_latency_metrics_for_scheduler
 - `b9c15ac` (2026-04-05): docs: auto-update explain and changelog
 - `1cd4bc7` (2026-04-05): Add_scheduler_metrics_snapshot_endpoint_and_tests
@@ -84,4 +108,3 @@ We implement in vertical slices:
 - `cc8fe1d` (2026-04-05): docs: auto-update explain and changelog
 - `1ffc333` (2026-04-05): Fix_project_automation_workflow_syntax_and_token_fallback
 - `4a6bd9b` (2026-04-05): docs: auto-update explain and changelog
-- `9ebe78b` (2026-04-05): Fix_project_automation_with_PAT_secret_and_github_script_v8
