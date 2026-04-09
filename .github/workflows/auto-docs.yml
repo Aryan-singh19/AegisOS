@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
       issues: read
     steps:
       - name: Checkout
@@ -27,14 +28,29 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: python3 scripts/update_project_docs.py --heatmap-window weekly
 
-      - name: Commit changes if needed
+      - name: Detect docs changes
+        id: changes
         run: |
           if git diff --quiet -- EXPLAIN.md CHANGELOG.md; then
             echo "No docs changes."
-            exit 0
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add EXPLAIN.md CHANGELOG.md
-          git commit -m "docs: auto-update explain and changelog"
-          git push
+
+      - name: Create docs update pull request
+        if: steps.changes.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "docs: auto-update explain and changelog"
+          title: "docs: auto-update explain and changelog"
+          body: |
+            Automated docs refresh from workflow.
+            - Updates `EXPLAIN.md`
+            - Updates `CHANGELOG.md`
+          branch: "bot/docs-auto-update"
+          delete-branch: true
+          add-paths: |
+            EXPLAIN.md
+            CHANGELOG.md

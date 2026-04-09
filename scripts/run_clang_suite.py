@@ -6,6 +6,8 @@ import sys
 
 
 def run(cmd):
+  if os.name != "nt" and len(cmd) == 1 and cmd[0].startswith("out_") and "/" not in cmd[0]:
+    cmd = [f"./{cmd[0]}"]
   return subprocess.run(cmd, capture_output=True, text=True, check=False)
 
 
@@ -75,6 +77,8 @@ def cleanup_artifacts(artifact_suffix):
     try:
       os.remove(artifact)
     except FileNotFoundError:
+      pass
+    except PermissionError:
       pass
 
 
