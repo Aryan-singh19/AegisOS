@@ -5,6 +5,18 @@ Last generated: 2026-04-05 13:14:30Z
 
 ## Unreleased
 
+- 2026-04-11 `local` "Add_delta_update_manifest_schema_validation_and_core_manifest_fields"
+- 2026-04-11 `local` "Add_telemetry_privacy_redaction_engine_with_recursive_rules_and_tests"
+- 2026-04-11 `local` "Add_device_profile_boot_budget_enforcer_policy_and_batch_reports"
+- 2026-04-11 `local` "Add_memory_zone_budget_accounting_and_reclaim_hook_telemetry"
+- 2026-04-11 `local` "Add_release_channel_pinning_policy_store_with_rejection_paths"
+- 2026-04-11 `local` "Add_compatibility_runtime_syscall_allowlist_and_violation_logs"
+- 2026-04-11 `local` "Add_syscall_capability_gate_matrix_with_enforcement_snapshot_and_tests"
+- 2026-04-11 `local` "Add_ipc_channel_quota_backpressure_simulator_with_metrics_and_tests"
+- 2026-04-11 `local` "Add_scheduler_profile_name_resolver_and_profile_metrics_surface"
+- 2026-04-10 `local` "Add_namespace_isolation_simulator_with_pid_translation_and_json_snapshot"
+- 2026-04-10 `local` "Add_atomic_update_rollback_index_store_with_monotonic_guardrails"
+- 2026-04-10 `local` "Add_scheduler_admission_limits_drop_counters_snapshot_and_tests"
 - 2026-04-05 `5707523` "Add_actor_registry_snapshot_and_restore_persistence_api"
 - 2026-04-05 `b49f9a3` docs: auto-update explain and changelog
 - 2026-04-05 `1091117` "Add_cross_platform_toolchain_bootstrap_scripts_for_contributors"

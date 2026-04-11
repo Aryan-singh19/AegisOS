@@ -14,3 +14,6 @@ Helper scripts for local development and automation live here.
 - `validate_repo_index.py`: validates repository index trust policy, signature metadata, and manifest alignment.
 - `atomic_update_txn.py`: atomic update transaction state machine skeleton (`begin/stage/commit/rollback/reset`) with JSON/file persistence helpers (`summary_json`, `load_from_json`, `save_to_file`, `load_from_file`), file checksum verification, and state invariant checks.
 - `low_resource_profile_advisor.py`: recommends package profile by CPU/RAM class with rationale, tuning advice, and profile-manifest package preview JSON output.
+- `compat_runtime_allowlist.py`: compatibility runtime syscall allowlist scaffold with per-runtime counters and violation log export.
+- `telemetry_redaction_engine.py`: redacts sensitive fields from logs/metrics/traces and emits redaction summary telemetry.
+- `device_profile_boot_budget_enforcer.py`: enforces per-profile cold/warm boot budgets and emits pass/fail severity reports.

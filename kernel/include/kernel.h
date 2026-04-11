@@ -8,6 +8,12 @@
 #define AEGIS_SCHEDULER_REASON_HISTOGRAM_WINDOW 32u
 #define AEGIS_VM_REGION_CAPACITY 64u
 #define AEGIS_IPC_ENVELOPE_SCHEMA_VERSION 1u
+#define AEGIS_NAMESPACE_CAPACITY 64u
+#define AEGIS_NAMESPACE_PROCESS_CAPACITY 256u
+#define AEGIS_SYSCALL_GATE_CAPACITY 128u
+#define AEGIS_SYSCALL_RULE_CAPACITY 64u
+#define AEGIS_IPC_CHANNEL_CAPACITY 64u
+#define AEGIS_MEMORY_ZONE_CAPACITY 16u
 
 typedef struct {
   uint64_t base;
@@ -33,6 +39,9 @@ typedef struct {
   uint32_t process_ids[64];
   uint8_t priorities[64];
   uint8_t credits[64];
+  uint8_t admission_limits[4];
+  uint64_t admission_drops[4];
+  uint8_t admission_profile_id;
   uint32_t dispatch_counts[64];
   uint64_t enqueued_tick[64];
   uint64_t wait_ticks_total[64];
@@ -103,6 +112,113 @@ typedef enum {
   AEGIS_SWITCH_MANUAL_YIELD = 4
 } aegis_scheduler_switch_reason_t;
 
+typedef enum {
+  AEGIS_SCHED_ADMISSION_PROFILE_CUSTOM = 0,
+  AEGIS_SCHED_ADMISSION_PROFILE_MINIMAL = 1,
+  AEGIS_SCHED_ADMISSION_PROFILE_DESKTOP = 2,
+  AEGIS_SCHED_ADMISSION_PROFILE_SERVER = 3
+} aegis_scheduler_admission_profile_t;
+
+typedef enum {
+  AEGIS_SYSCALL_CLASS_FS = 1,
+  AEGIS_SYSCALL_CLASS_NET = 2,
+  AEGIS_SYSCALL_CLASS_DEVICE = 3,
+  AEGIS_SYSCALL_CLASS_PROCESS = 4,
+  AEGIS_SYSCALL_CLASS_IPC = 5
+} aegis_syscall_class_t;
+
+typedef struct {
+  uint32_t process_id;
+  uint32_t granted_capabilities;
+  uint8_t active;
+} aegis_syscall_process_caps_t;
+
+typedef struct {
+  uint16_t syscall_id;
+  uint8_t syscall_class;
+  uint32_t required_capability;
+  uint8_t policy_gate_required;
+  uint8_t active;
+} aegis_syscall_rule_t;
+
+typedef struct {
+  aegis_syscall_process_caps_t process_caps[AEGIS_SYSCALL_GATE_CAPACITY];
+  aegis_syscall_rule_t rules[AEGIS_SYSCALL_RULE_CAPACITY];
+  uint64_t allow_count;
+  uint64_t deny_missing_rule_count;
+  uint64_t deny_missing_process_count;
+  uint64_t deny_missing_capability_count;
+  uint64_t deny_policy_gate_count;
+} aegis_syscall_gate_matrix_t;
+
+typedef struct {
+  uint32_t channel_id;
+  uint32_t quota_bytes;
+  uint32_t inflight_bytes;
+  uint64_t accepted_messages;
+  uint64_t dropped_messages;
+  uint64_t backpressure_events;
+  uint8_t active;
+} aegis_ipc_channel_state_t;
+
+typedef struct {
+  aegis_ipc_channel_state_t channels[AEGIS_IPC_CHANNEL_CAPACITY];
+  uint64_t total_accepted_messages;
+  uint64_t total_dropped_messages;
+  uint64_t total_backpressure_events;
+} aegis_ipc_channel_table_t;
+
+typedef enum {
+  AEGIS_MEMORY_ZONE_KERNEL = 1,
+  AEGIS_MEMORY_ZONE_USER = 2,
+  AEGIS_MEMORY_ZONE_IO = 3,
+  AEGIS_MEMORY_ZONE_CACHE = 4
+} aegis_memory_zone_kind_t;
+
+typedef struct {
+  uint32_t zone_id;
+  uint8_t zone_kind;
+  uint64_t budget_bytes;
+  uint64_t used_bytes;
+  uint64_t high_watermark_bytes;
+  uint64_t reclaim_target_bytes;
+  uint64_t reclaim_attempts;
+  uint64_t reclaim_successes;
+  uint8_t reclaim_hook_enabled;
+  uint8_t active;
+} aegis_memory_zone_t;
+
+typedef struct {
+  aegis_memory_zone_t zones[AEGIS_MEMORY_ZONE_CAPACITY];
+  uint64_t total_budget_bytes;
+  uint64_t total_used_bytes;
+  uint64_t denied_charges;
+  uint64_t reclaim_events;
+} aegis_memory_zone_table_t;
+
+typedef struct {
+  uint32_t namespace_id;
+  uint32_t parent_namespace_id;
+  uint32_t member_count;
+  uint32_t local_pid_counter;
+  uint8_t active;
+} aegis_namespace_entry_t;
+
+typedef struct {
+  uint32_t process_id;
+  uint32_t namespace_id;
+  uint32_t local_pid;
+  uint8_t active;
+} aegis_namespace_process_entry_t;
+
+typedef struct {
+  aegis_namespace_entry_t namespaces[AEGIS_NAMESPACE_CAPACITY];
+  aegis_namespace_process_entry_t processes[AEGIS_NAMESPACE_PROCESS_CAPACITY];
+  uint32_t next_namespace_id;
+  size_t namespace_count;
+  size_t process_count;
+} aegis_namespace_table_t;
+
 int aegis_kernel_boot_check(void);
 void aegis_vm_space_init(aegis_vm_space_t *space);
 int aegis_vm_map(aegis_vm_space_t *space, uint64_t base, uint64_t size, uint32_t flags);
@@ -169,5 +285,98 @@ int aegis_scheduler_switch_reason_histogram_window_json(const aegis_scheduler_t 
 int aegis_scheduler_fairness_snapshot_json(const aegis_scheduler_t *scheduler,
                                            char *out,
                                            size_t out_size);
+int aegis_scheduler_set_admission_limit(aegis_scheduler_t *scheduler,
+                                        uint8_t priority,
+                                        uint8_t max_processes);
+int aegis_scheduler_get_admission_limit(const aegis_scheduler_t *scheduler,
+                                        uint8_t priority,
+                                        uint8_t *max_processes);
+int aegis_scheduler_admission_drop_count(const aegis_scheduler_t *scheduler,
+                                         uint8_t priority,
+                                         uint64_t *count);
+int aegis_scheduler_admission_snapshot_json(const aegis_scheduler_t *scheduler,
+                                            char *out,
+                                            size_t out_size);
+int aegis_scheduler_apply_admission_profile(aegis_scheduler_t *scheduler, uint8_t profile_id);
+int aegis_scheduler_apply_admission_profile_name(aegis_scheduler_t *scheduler,
+                                                 const char *profile_name);
+int aegis_scheduler_current_admission_profile(const aegis_scheduler_t *scheduler,
+                                              uint8_t *profile_id_out);
+void aegis_namespace_table_init(aegis_namespace_table_t *table);
+int aegis_namespace_create(aegis_namespace_table_t *table,
+                           uint32_t parent_namespace_id,
+                           uint32_t *namespace_id_out);
+int aegis_namespace_destroy(aegis_namespace_table_t *table, uint32_t namespace_id);
+int aegis_namespace_attach_process(aegis_namespace_table_t *table,
+                                   uint32_t process_id,
+                                   uint32_t namespace_id,
+                                   uint32_t *local_pid_out);
+int aegis_namespace_detach_process(aegis_namespace_table_t *table, uint32_t process_id);
+int aegis_namespace_translate_local_to_global(const aegis_namespace_table_t *table,
+                                              uint32_t namespace_id,
+                                              uint32_t local_pid,
+                                              uint32_t *process_id_out);
+int aegis_namespace_translate_global_to_local(const aegis_namespace_table_t *table,
+                                              uint32_t namespace_id,
+                                              uint32_t process_id,
+                                              uint32_t *local_pid_out);
+int aegis_namespace_can_inspect(const aegis_namespace_table_t *table,
+                                uint32_t requester_process_id,
+                                uint32_t target_process_id,
+                                uint8_t *allowed_out);
+int aegis_namespace_snapshot_json(const aegis_namespace_table_t *table,
+                                  char *out,
+                                  size_t out_size);
+void aegis_syscall_gate_matrix_init(aegis_syscall_gate_matrix_t *matrix);
+int aegis_syscall_gate_set_process_caps(aegis_syscall_gate_matrix_t *matrix,
+                                        uint32_t process_id,
+                                        uint32_t granted_capabilities);
+int aegis_syscall_gate_remove_process(aegis_syscall_gate_matrix_t *matrix, uint32_t process_id);
+int aegis_syscall_gate_set_rule(aegis_syscall_gate_matrix_t *matrix,
+                                uint16_t syscall_id,
+                                uint8_t syscall_class,
+                                uint32_t required_capability,
+                                uint8_t policy_gate_required);
+int aegis_syscall_gate_check(aegis_syscall_gate_matrix_t *matrix,
+                             uint32_t process_id,
+                             uint16_t syscall_id,
+                             uint8_t policy_gate_allowed,
+                             uint8_t *allowed_out);
+int aegis_syscall_gate_snapshot_json(const aegis_syscall_gate_matrix_t *matrix,
+                                     char *out,
+                                     size_t out_size);
+void aegis_ipc_channel_table_init(aegis_ipc_channel_table_t *table);
+int aegis_ipc_channel_configure(aegis_ipc_channel_table_t *table,
+                                uint32_t channel_id,
+                                uint32_t quota_bytes);
+int aegis_ipc_channel_reserve_send(aegis_ipc_channel_table_t *table,
+                                   uint32_t channel_id,
+                                   uint32_t payload_bytes,
+                                   uint8_t *accepted_out);
+int aegis_ipc_channel_drain(aegis_ipc_channel_table_t *table,
+                            uint32_t channel_id,
+                            uint32_t drained_bytes);
+int aegis_ipc_channel_snapshot_json(const aegis_ipc_channel_table_t *table,
+                                    char *out,
+                                    size_t out_size);
+void aegis_memory_zone_table_init(aegis_memory_zone_table_t *table);
+int aegis_memory_zone_configure(aegis_memory_zone_table_t *table,
+                                uint32_t zone_id,
+                                uint8_t zone_kind,
+                                uint64_t budget_bytes);
+int aegis_memory_zone_set_reclaim_hook(aegis_memory_zone_table_t *table,
+                                       uint32_t zone_id,
+                                       uint8_t enabled,
+                                       uint64_t reclaim_target_bytes);
+int aegis_memory_zone_charge(aegis_memory_zone_table_t *table,
+                             uint32_t zone_id,
+                             uint64_t bytes,
+                             uint8_t *accepted_out);
+int aegis_memory_zone_release(aegis_memory_zone_table_t *table,
+                              uint32_t zone_id,
+                              uint64_t bytes);
+int aegis_memory_zone_snapshot_json(const aegis_memory_zone_table_t *table,
+                                    char *out,
+                                    size_t out_size);
 
 #endif

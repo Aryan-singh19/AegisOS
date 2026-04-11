@@ -24,3 +24,15 @@ feature scope, defaults, and test expectations.
 - Keep `packages/profiles/*.yaml` aligned with this matrix.
 - If profile package composition changes, update this matrix in the same PR.
 - Validate with `python scripts/validate_packages.py`.
+
+## Boot Budget Baselines
+
+Boot budget policy lives in `packages/profiles/boot-budget-policy.json` and is enforced by
+`python scripts/device_profile_boot_budget_enforcer.py`.
+
+| Profile | Cold Boot Budget | Warm Boot Budget |
+|---|---:|---:|
+| `minimal` | 12.0s | 8.0s |
+| `server` | 18.0s | 12.0s |
+| `desktop` | 24.0s | 16.0s |
+| `developer` | 30.0s | 22.0s |

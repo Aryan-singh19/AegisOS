@@ -51,6 +51,17 @@ This repository contains:
 - CI workflows and contribution templates.
 - Package metadata scaffold for core OS components.
 - Initial compilable kernel simulation target for pipeline validation.
+- Scheduler admission control primitives with per-priority limits, drop counters, and JSON snapshots.
+- Namespace isolation simulator with local/global PID translation and visibility checks.
+- Atomic update rollback-index monotonic guard store with tamper-checked persistence.
+- Syscall capability gate matrix scaffold with enforcement counters and JSON snapshot.
+- IPC channel quota/backpressure simulator with inflight accounting and drop metrics.
+- Memory zone accounting with reclaim hooks and low-memory deny telemetry.
+- Update release channel pinning policy with downgrade rejection guardrails.
+- Compatibility runtime syscall allowlist scaffold with violation log export.
+- Delta update manifest schema validation (payload digest, base version, and fallback digest).
+- Telemetry privacy redaction engine for logs, metrics, and trace exports.
+- Device-profile boot budget enforcer with severity reporting for CI gates.
 
 ## Feature Strategy
 

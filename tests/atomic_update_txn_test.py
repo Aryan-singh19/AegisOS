@@ -14,6 +14,8 @@ spec.loader.exec_module(module)
 
 AtomicUpdateTransaction = module.AtomicUpdateTransaction
 TxnState = module.TxnState
+RollbackIndexStore = module.RollbackIndexStore
+ReleaseChannelPolicyStore = module.ReleaseChannelPolicyStore
 
 
 class AtomicUpdateTxnTest(unittest.TestCase):
@@ -115,6 +117,113 @@ class AtomicUpdateTxnTest(unittest.TestCase):
             state_file.write_text(json.dumps(data, separators=(",", ":")), encoding="utf-8")
             with self.assertRaises(ValueError):
                 txn.load_from_file(str(state_file))
+
+    def test_rollback_index_monotonic_guard(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            idx_file = Path(tmp) / "rollback-index.json"
+            store = RollbackIndexStore(str(idx_file))
+            store.advance(
+                channel="stable",
+                candidate_index=5,
+                transaction_id="txn-1",
+                manifest_hash="sha256:a",
+                now_epoch=100,
+            )
+            store.assert_monotonic("stable", 5)
+            store.assert_monotonic("stable", 6)
+            with self.assertRaises(ValueError):
+                store.assert_monotonic("stable", 4)
+
+    def test_rollback_index_channels_are_isolated(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            idx_file = Path(tmp) / "rollback-index.json"
+            store = RollbackIndexStore(str(idx_file))
+            store.advance("stable", 7, "txn-stable", "sha256:s", 200)
+            store.advance("beta", 2, "txn-beta", "sha256:b", 210)
+            payload = json.loads(store.summary_json())
+            self.assertEqual(payload["channels"]["stable"]["current_index"], 7)
+            self.assertEqual(payload["channels"]["beta"]["current_index"], 2)
+            with self.assertRaises(ValueError):
+                store.assert_monotonic("beta", 1)
+
+    def test_rollback_index_checksum_tamper_detection(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            idx_file = Path(tmp) / "rollback-index.json"
+            store = RollbackIndexStore(str(idx_file))
+            store.advance("stable", 3, "txn-3", "sha256:c", 300)
+            raw = json.loads(idx_file.read_text(encoding="utf-8"))
+            raw["payload"]["channels"]["stable"]["current_index"] = 9
+            idx_file.write_text(json.dumps(raw, separators=(",", ":")), encoding="utf-8")
+            with self.assertRaises(ValueError):
+                store.summary_json()
+
+    def test_rollback_index_history_trims_to_128(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            idx_file = Path(tmp) / "rollback-index.json"
+            store = RollbackIndexStore(str(idx_file))
+            for i in range(140):
+                store.advance("stable", i, f"txn-{i}", f"sha256:{i}", i)
+            payload = json.loads(store.summary_json())
+            history = payload["channels"]["stable"]["history"]
+            self.assertEqual(len(history), 128)
+            self.assertEqual(history[0]["index"], 12)
+            self.assertEqual(history[-1]["index"], 139)
+
+    def test_release_channel_policy_happy_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            policy_file = Path(tmp) / "channel-policy.json"
+            policy = ReleaseChannelPolicyStore(str(policy_file))
+            policy.set_policy(
+                pinned_channel="stable",
+                allow_downgrade=False,
+                allowed_channels=["stable", "beta"],
+                now_epoch=123,
+            )
+            policy.validate_target("stable", "stable", 10, 11)
+            payload = json.loads(policy.summary_json())
+            self.assertEqual(payload["pinned_channel"], "stable")
+            self.assertEqual(payload["allow_downgrade"], 0)
+            self.assertEqual(payload["allowed_channels"], ["stable", "beta"])
+
+    def test_release_channel_policy_rejects_channel_and_downgrade(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            policy_file = Path(tmp) / "channel-policy.json"
+            policy = ReleaseChannelPolicyStore(str(policy_file))
+            policy.set_policy(
+                pinned_channel="beta",
+                allow_downgrade=False,
+                allowed_channels=["beta", "nightly"],
+                now_epoch=55,
+            )
+            with self.assertRaises(ValueError):
+                policy.validate_target("beta", "stable", 10, 11)
+            with self.assertRaises(ValueError):
+                policy.validate_target("beta", "beta", 11, 10)
+            with self.assertRaises(ValueError):
+                policy.validate_target("beta", "nightly", 10, 11)
+
+    def test_release_channel_policy_allows_downgrade_when_enabled(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            policy_file = Path(tmp) / "channel-policy.json"
+            policy = ReleaseChannelPolicyStore(str(policy_file))
+            policy.set_policy(
+                pinned_channel="nightly",
+                allow_downgrade=True,
+                allowed_channels=["nightly"],
+                now_epoch=88,
+            )
+            policy.validate_target("nightly", "nightly", 15, 10)
+
+    def test_release_channel_policy_checksum_tamper(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            policy_file = Path(tmp) / "channel-policy.json"
+            policy = ReleaseChannelPolicyStore(str(policy_file))
+            policy.set_policy("stable", False, ["stable"], 1)
+            raw = json.loads(policy_file.read_text(encoding="utf-8"))
+            raw["payload"]["pinned_channel"] = "nightly"
+            policy_file.write_text(json.dumps(raw, separators=(",", ":")), encoding="utf-8")
+            with self.assertRaises(ValueError):
+                policy.summary_json()
 
 
 if __name__ == "__main__":

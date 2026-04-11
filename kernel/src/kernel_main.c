@@ -1,6 +1,7 @@
 #include "kernel.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #define AEGIS_SCHEDULER_CAPACITY 64u
 #define AEGIS_AGING_TICKS_PER_BOOST 5u
@@ -320,6 +321,27 @@ static uint8_t normalize_priority(uint8_t priority) {
   return priority;
 }
 
+static int priority_bucket_index(uint8_t priority) {
+  if (priority < AEGIS_PRIORITY_LOW || priority > AEGIS_PRIORITY_HIGH) {
+    return -1;
+  }
+  return (int)priority;
+}
+
+static uint8_t scheduler_priority_member_count(const aegis_scheduler_t *scheduler, uint8_t priority) {
+  size_t i;
+  uint8_t count = 0u;
+  if (scheduler == 0) {
+    return 0u;
+  }
+  for (i = 0; i < scheduler->count; ++i) {
+    if (scheduler->priorities[i] == priority) {
+      count += 1u;
+    }
+  }
+  return count;
+}
+
 static void refill_credits(aegis_scheduler_t *scheduler) {
   size_t i;
   for (i = 0; i < scheduler->count; ++i) {
@@ -366,6 +388,7 @@ void aegis_scheduler_init(aegis_scheduler_t *scheduler) {
   scheduler->pending_switch_reason = AEGIS_SWITCH_PROCESS_START;
   scheduler->quantum_ticks = 3;
   scheduler->quantum_remaining = 0;
+  scheduler->admission_profile_id = AEGIS_SCHED_ADMISSION_PROFILE_CUSTOM;
   scheduler->reason_switch_window_head = 0;
   scheduler->reason_switch_window_count = 0;
   for (i = 0; i < AEGIS_SCHEDULER_CAPACITY; ++i) {
@@ -376,6 +399,10 @@ void aegis_scheduler_init(aegis_scheduler_t *scheduler) {
     scheduler->enqueued_tick[i] = 0;
     scheduler->wait_ticks_total[i] = 0;
     scheduler->last_wait_latency[i] = 0;
+  }
+  for (i = 0; i < 4u; ++i) {
+    scheduler->admission_limits[i] = 0u;
+    scheduler->admission_drops[i] = 0u;
   }
   for (i = 0; i < 5u; ++i) {
     scheduler->reason_switch_counts[i] = 0;
@@ -406,6 +433,9 @@ int aegis_scheduler_add(aegis_scheduler_t *scheduler, uint32_t process_id) {
 int aegis_scheduler_add_with_priority(aegis_scheduler_t *scheduler, uint32_t process_id,
                                       uint8_t priority) {
   size_t existing = 0;
+  uint8_t normalized_priority;
+  int bucket;
+  uint8_t limit = 0u;
   if (scheduler == 0 || process_id == 0) {
     return -1;
   }
@@ -415,8 +445,19 @@ int aegis_scheduler_add_with_priority(aegis_scheduler_t *scheduler, uint32_t pro
   if (find_index(scheduler, process_id, &existing)) {
     return -1;
   }
+  normalized_priority = normalize_priority(priority);
+  bucket = priority_bucket_index(normalized_priority);
+  if (bucket < 0) {
+    return -1;
+  }
+  limit = scheduler->admission_limits[(size_t)bucket];
+  if (limit > 0u &&
+      scheduler_priority_member_count(scheduler, normalized_priority) >= limit) {
+    scheduler->admission_drops[(size_t)bucket] += 1u;
+    return -1;
+  }
   scheduler->process_ids[scheduler->count] = process_id;
-  scheduler->priorities[scheduler->count] = normalize_priority(priority);
+  scheduler->priorities[scheduler->count] = normalized_priority;
   scheduler->credits[scheduler->count] = scheduler->priorities[scheduler->count];
   scheduler->dispatch_counts[scheduler->count] = 0;
   scheduler->enqueued_tick[scheduler->count] = scheduler->scheduler_ticks;
@@ -552,6 +593,9 @@ void aegis_scheduler_reset_metrics(aegis_scheduler_t *scheduler) {
   }
   for (i = 0; i < 5u; ++i) {
     scheduler->reason_switch_counts[i] = 0;
+  }
+  for (i = 0; i < 4u; ++i) {
+    scheduler->admission_drops[i] = 0u;
   }
   scheduler->reason_switch_window_head = 0;
   scheduler->reason_switch_window_count = 0;
@@ -929,6 +973,1097 @@ int aegis_scheduler_fairness_snapshot_json(const aegis_scheduler_t *scheduler,
       return -1;
     }
     offset += (size_t)written;
+  }
+  written = snprintf(out + offset, out_size - offset, "]}");
+  if (written < 0 || (size_t)written >= (out_size - offset)) {
+    return -1;
+  }
+  offset += (size_t)written;
+  return (int)offset;
+}
+
+int aegis_scheduler_set_admission_limit(aegis_scheduler_t *scheduler,
+                                        uint8_t priority,
+                                        uint8_t max_processes) {
+  int bucket;
+  if (scheduler == 0) {
+    return -1;
+  }
+  priority = normalize_priority(priority);
+  bucket = priority_bucket_index(priority);
+  if (bucket < 0) {
+    return -1;
+  }
+  scheduler->admission_limits[(size_t)bucket] = max_processes;
+  scheduler->admission_profile_id = AEGIS_SCHED_ADMISSION_PROFILE_CUSTOM;
+  return 0;
+}
+
+int aegis_scheduler_get_admission_limit(const aegis_scheduler_t *scheduler,
+                                        uint8_t priority,
+                                        uint8_t *max_processes) {
+  int bucket;
+  if (scheduler == 0 || max_processes == 0) {
+    return -1;
+  }
+  priority = normalize_priority(priority);
+  bucket = priority_bucket_index(priority);
+  if (bucket < 0) {
+    return -1;
+  }
+  *max_processes = scheduler->admission_limits[(size_t)bucket];
+  return 0;
+}
+
+int aegis_scheduler_admission_drop_count(const aegis_scheduler_t *scheduler,
+                                         uint8_t priority,
+                                         uint64_t *count) {
+  int bucket;
+  if (scheduler == 0 || count == 0) {
+    return -1;
+  }
+  priority = normalize_priority(priority);
+  bucket = priority_bucket_index(priority);
+  if (bucket < 0) {
+    return -1;
+  }
+  *count = scheduler->admission_drops[(size_t)bucket];
+  return 0;
+}
+
+int aegis_scheduler_admission_snapshot_json(const aegis_scheduler_t *scheduler,
+                                            char *out,
+                                            size_t out_size) {
+  uint64_t high_drops;
+  uint64_t normal_drops;
+  uint64_t low_drops;
+  int written;
+  if (scheduler == 0 || out == 0 || out_size == 0u) {
+    return -1;
+  }
+  high_drops = scheduler->admission_drops[AEGIS_PRIORITY_HIGH];
+  normal_drops = scheduler->admission_drops[AEGIS_PRIORITY_NORMAL];
+  low_drops = scheduler->admission_drops[AEGIS_PRIORITY_LOW];
+  written = snprintf(out,
+                     out_size,
+                     "{\"schema_version\":1,\"profile_id\":%u,\"queue_depth\":%llu,"
+                     "\"limits\":{\"high\":%u,\"normal\":%u,\"low\":%u},"
+                     "\"counts\":{\"high\":%u,\"normal\":%u,\"low\":%u},"
+                     "\"drops\":{\"high\":%llu,\"normal\":%llu,\"low\":%llu}}",
+                     (unsigned int)scheduler->admission_profile_id,
+                     (unsigned long long)scheduler->count,
+                     (unsigned int)scheduler->admission_limits[AEGIS_PRIORITY_HIGH],
+                     (unsigned int)scheduler->admission_limits[AEGIS_PRIORITY_NORMAL],
+                     (unsigned int)scheduler->admission_limits[AEGIS_PRIORITY_LOW],
+                     (unsigned int)scheduler_priority_member_count(scheduler, AEGIS_PRIORITY_HIGH),
+                     (unsigned int)scheduler_priority_member_count(scheduler, AEGIS_PRIORITY_NORMAL),
+                     (unsigned int)scheduler_priority_member_count(scheduler, AEGIS_PRIORITY_LOW),
+                     (unsigned long long)high_drops,
+                     (unsigned long long)normal_drops,
+                     (unsigned long long)low_drops);
+  if (written < 0 || (size_t)written >= out_size) {
+    return -1;
+  }
+  return written;
+}
+
+int aegis_scheduler_apply_admission_profile(aegis_scheduler_t *scheduler, uint8_t profile_id) {
+  if (scheduler == 0) {
+    return -1;
+  }
+  if (profile_id == AEGIS_SCHED_ADMISSION_PROFILE_MINIMAL) {
+    scheduler->admission_limits[AEGIS_PRIORITY_HIGH] = 4u;
+    scheduler->admission_limits[AEGIS_PRIORITY_NORMAL] = 8u;
+    scheduler->admission_limits[AEGIS_PRIORITY_LOW] = 4u;
+  } else if (profile_id == AEGIS_SCHED_ADMISSION_PROFILE_DESKTOP) {
+    scheduler->admission_limits[AEGIS_PRIORITY_HIGH] = 8u;
+    scheduler->admission_limits[AEGIS_PRIORITY_NORMAL] = 24u;
+    scheduler->admission_limits[AEGIS_PRIORITY_LOW] = 12u;
+  } else if (profile_id == AEGIS_SCHED_ADMISSION_PROFILE_SERVER) {
+    scheduler->admission_limits[AEGIS_PRIORITY_HIGH] = 12u;
+    scheduler->admission_limits[AEGIS_PRIORITY_NORMAL] = 36u;
+    scheduler->admission_limits[AEGIS_PRIORITY_LOW] = 16u;
+  } else {
+    return -1;
+  }
+  scheduler->admission_profile_id = profile_id;
+  return 0;
+}
+
+int aegis_scheduler_apply_admission_profile_name(aegis_scheduler_t *scheduler,
+                                                 const char *profile_name) {
+  if (scheduler == 0 || profile_name == 0 || profile_name[0] == '\0') {
+    return -1;
+  }
+  if (strcmp(profile_name, "minimal") == 0) {
+    return aegis_scheduler_apply_admission_profile(scheduler, AEGIS_SCHED_ADMISSION_PROFILE_MINIMAL);
+  }
+  if (strcmp(profile_name, "desktop") == 0) {
+    return aegis_scheduler_apply_admission_profile(scheduler, AEGIS_SCHED_ADMISSION_PROFILE_DESKTOP);
+  }
+  if (strcmp(profile_name, "server") == 0) {
+    return aegis_scheduler_apply_admission_profile(scheduler, AEGIS_SCHED_ADMISSION_PROFILE_SERVER);
+  }
+  return -1;
+}
+
+int aegis_scheduler_current_admission_profile(const aegis_scheduler_t *scheduler,
+                                              uint8_t *profile_id_out) {
+  if (scheduler == 0 || profile_id_out == 0) {
+    return -1;
+  }
+  *profile_id_out = scheduler->admission_profile_id;
+  return 0;
+}
+
+static int namespace_find_index(const aegis_namespace_table_t *table,
+                                uint32_t namespace_id,
+                                size_t *index_out) {
+  size_t i;
+  if (table == 0 || index_out == 0 || namespace_id == 0u) {
+    return 0;
+  }
+  for (i = 0; i < AEGIS_NAMESPACE_CAPACITY; ++i) {
+    if (table->namespaces[i].active != 0u &&
+        table->namespaces[i].namespace_id == namespace_id) {
+      *index_out = i;
+      return 1;
+    }
+  }
+  return 0;
+}
+
+static int namespace_process_find_by_global(const aegis_namespace_table_t *table,
+                                            uint32_t process_id,
+                                            size_t *index_out) {
+  size_t i;
+  if (table == 0 || index_out == 0 || process_id == 0u) {
+    return 0;
+  }
+  for (i = 0; i < AEGIS_NAMESPACE_PROCESS_CAPACITY; ++i) {
+    if (table->processes[i].active != 0u &&
+        table->processes[i].process_id == process_id) {
+      *index_out = i;
+      return 1;
+    }
+  }
+  return 0;
+}
+
+void aegis_namespace_table_init(aegis_namespace_table_t *table) {
+  size_t i;
+  if (table == 0) {
+    return;
+  }
+  table->next_namespace_id = 2u;
+  table->namespace_count = 0u;
+  table->process_count = 0u;
+  for (i = 0; i < AEGIS_NAMESPACE_CAPACITY; ++i) {
+    table->namespaces[i].namespace_id = 0u;
+    table->namespaces[i].parent_namespace_id = 0u;
+    table->namespaces[i].member_count = 0u;
+    table->namespaces[i].local_pid_counter = 0u;
+    table->namespaces[i].active = 0u;
+  }
+  for (i = 0; i < AEGIS_NAMESPACE_PROCESS_CAPACITY; ++i) {
+    table->processes[i].process_id = 0u;
+    table->processes[i].namespace_id = 0u;
+    table->processes[i].local_pid = 0u;
+    table->processes[i].active = 0u;
+  }
+  table->namespaces[0].namespace_id = 1u;
+  table->namespaces[0].parent_namespace_id = 0u;
+  table->namespaces[0].member_count = 0u;
+  table->namespaces[0].local_pid_counter = 100u;
+  table->namespaces[0].active = 1u;
+  table->namespace_count = 1u;
+}
+
+int aegis_namespace_create(aegis_namespace_table_t *table,
+                           uint32_t parent_namespace_id,
+                           uint32_t *namespace_id_out) {
+  size_t i;
+  size_t parent_index = 0u;
+  if (table == 0 || namespace_id_out == 0) {
+    return -1;
+  }
+  if (parent_namespace_id != 0u &&
+      !namespace_find_index(table, parent_namespace_id, &parent_index)) {
+    return -1;
+  }
+  for (i = 0; i < AEGIS_NAMESPACE_CAPACITY; ++i) {
+    if (table->namespaces[i].active != 0u) {
+      continue;
+    }
+    table->namespaces[i].namespace_id = table->next_namespace_id;
+    table->namespaces[i].parent_namespace_id = parent_namespace_id;
+    table->namespaces[i].member_count = 0u;
+    table->namespaces[i].local_pid_counter = 100u;
+    table->namespaces[i].active = 1u;
+    *namespace_id_out = table->next_namespace_id;
+    table->next_namespace_id += 1u;
+    table->namespace_count += 1u;
+    return 0;
+  }
+  (void)parent_index;
+  return -1;
+}
+
+int aegis_namespace_destroy(aegis_namespace_table_t *table, uint32_t namespace_id) {
+  size_t ns_index = 0u;
+  size_t i;
+  if (table == 0 || namespace_id == 0u || namespace_id == 1u) {
+    return -1;
+  }
+  if (!namespace_find_index(table, namespace_id, &ns_index)) {
+    return -1;
+  }
+  for (i = 0; i < AEGIS_NAMESPACE_PROCESS_CAPACITY; ++i) {
+    if (table->processes[i].active != 0u &&
+        table->processes[i].namespace_id == namespace_id) {
+      return -1;
+    }
+  }
+  for (i = 0; i < AEGIS_NAMESPACE_CAPACITY; ++i) {
+    if (table->namespaces[i].active != 0u &&
+        table->namespaces[i].parent_namespace_id == namespace_id) {
+      return -1;
+    }
+  }
+  table->namespaces[ns_index].active = 0u;
+  table->namespaces[ns_index].namespace_id = 0u;
+  table->namespaces[ns_index].parent_namespace_id = 0u;
+  table->namespaces[ns_index].member_count = 0u;
+  table->namespaces[ns_index].local_pid_counter = 0u;
+  if (table->namespace_count > 0u) {
+    table->namespace_count -= 1u;
+  }
+  return 0;
+}
+
+int aegis_namespace_attach_process(aegis_namespace_table_t *table,
+                                   uint32_t process_id,
+                                   uint32_t namespace_id,
+                                   uint32_t *local_pid_out) {
+  size_t ns_index = 0u;
+  size_t existing = 0u;
+  size_t i;
+  uint32_t local_pid;
+  if (table == 0 || process_id == 0u || local_pid_out == 0) {
+    return -1;
+  }
+  if (!namespace_find_index(table, namespace_id, &ns_index)) {
+    return -1;
+  }
+  if (namespace_process_find_by_global(table, process_id, &existing)) {
+    return -1;
+  }
+  local_pid = table->namespaces[ns_index].local_pid_counter + 1u;
+  table->namespaces[ns_index].local_pid_counter = local_pid;
+  for (i = 0; i < AEGIS_NAMESPACE_PROCESS_CAPACITY; ++i) {
+    if (table->processes[i].active != 0u) {
+      continue;
+    }
+    table->processes[i].process_id = process_id;
+    table->processes[i].namespace_id = namespace_id;
+    table->processes[i].local_pid = local_pid;
+    table->processes[i].active = 1u;
+    table->namespaces[ns_index].member_count += 1u;
+    table->process_count += 1u;
+    *local_pid_out = local_pid;
+    return 0;
+  }
+  return -1;
+}
+
+int aegis_namespace_detach_process(aegis_namespace_table_t *table, uint32_t process_id) {
+  size_t proc_index = 0u;
+  size_t ns_index = 0u;
+  if (table == 0 || process_id == 0u) {
+    return -1;
+  }
+  if (!namespace_process_find_by_global(table, process_id, &proc_index)) {
+    return -1;
+  }
+  if (!namespace_find_index(table, table->processes[proc_index].namespace_id, &ns_index)) {
+    return -1;
+  }
+  table->processes[proc_index].active = 0u;
+  table->processes[proc_index].process_id = 0u;
+  table->processes[proc_index].namespace_id = 0u;
+  table->processes[proc_index].local_pid = 0u;
+  if (table->namespaces[ns_index].member_count > 0u) {
+    table->namespaces[ns_index].member_count -= 1u;
+  }
+  if (table->process_count > 0u) {
+    table->process_count -= 1u;
+  }
+  return 0;
+}
+
+int aegis_namespace_translate_local_to_global(const aegis_namespace_table_t *table,
+                                              uint32_t namespace_id,
+                                              uint32_t local_pid,
+                                              uint32_t *process_id_out) {
+  size_t i;
+  if (table == 0 || local_pid == 0u || process_id_out == 0) {
+    return -1;
+  }
+  for (i = 0; i < AEGIS_NAMESPACE_PROCESS_CAPACITY; ++i) {
+    if (table->processes[i].active == 0u) {
+      continue;
+    }
+    if (table->processes[i].namespace_id == namespace_id &&
+        table->processes[i].local_pid == local_pid) {
+      *process_id_out = table->processes[i].process_id;
+      return 0;
+    }
+  }
+  return -1;
+}
+
+int aegis_namespace_translate_global_to_local(const aegis_namespace_table_t *table,
+                                              uint32_t namespace_id,
+                                              uint32_t process_id,
+                                              uint32_t *local_pid_out) {
+  size_t i;
+  if (table == 0 || process_id == 0u || local_pid_out == 0) {
+    return -1;
+  }
+  for (i = 0; i < AEGIS_NAMESPACE_PROCESS_CAPACITY; ++i) {
+    if (table->processes[i].active == 0u) {
+      continue;
+    }
+    if (table->processes[i].namespace_id == namespace_id &&
+        table->processes[i].process_id == process_id) {
+      *local_pid_out = table->processes[i].local_pid;
+      return 0;
+    }
+  }
+  return -1;
+}
+
+int aegis_namespace_can_inspect(const aegis_namespace_table_t *table,
+                                uint32_t requester_process_id,
+                                uint32_t target_process_id,
+                                uint8_t *allowed_out) {
+  size_t req_index = 0u;
+  size_t tgt_index = 0u;
+  if (table == 0 || requester_process_id == 0u || target_process_id == 0u || allowed_out == 0) {
+    return -1;
+  }
+  *allowed_out = 0u;
+  if (!namespace_process_find_by_global(table, requester_process_id, &req_index) ||
+      !namespace_process_find_by_global(table, target_process_id, &tgt_index)) {
+    return 0;
+  }
+  if (table->processes[req_index].namespace_id == table->processes[tgt_index].namespace_id) {
+    *allowed_out = 1u;
+  }
+  return 0;
+}
+
+int aegis_namespace_snapshot_json(const aegis_namespace_table_t *table,
+                                  char *out,
+                                  size_t out_size) {
+  size_t i;
+  size_t offset = 0u;
+  int written;
+  int first_ns = 1;
+  int first_proc = 1;
+  if (table == 0 || out == 0 || out_size == 0u) {
+    return -1;
+  }
+  written = snprintf(out,
+                     out_size,
+                     "{\"schema_version\":1,\"namespace_count\":%llu,\"process_count\":%llu,"
+                     "\"namespaces\":[",
+                     (unsigned long long)table->namespace_count,
+                     (unsigned long long)table->process_count);
+  if (written < 0 || (size_t)written >= out_size) {
+    return -1;
+  }
+  offset = (size_t)written;
+  for (i = 0; i < AEGIS_NAMESPACE_CAPACITY; ++i) {
+    const aegis_namespace_entry_t *entry = &table->namespaces[i];
+    if (entry->active == 0u) {
+      continue;
+    }
+    written = snprintf(out + offset,
+                       out_size - offset,
+                       "%s{\"namespace_id\":%u,\"parent_namespace_id\":%u,\"member_count\":%u}",
+                       first_ns ? "" : ",",
+                       entry->namespace_id,
+                       entry->parent_namespace_id,
+                       entry->member_count);
+    if (written < 0 || (size_t)written >= (out_size - offset)) {
+      return -1;
+    }
+    offset += (size_t)written;
+    first_ns = 0;
+  }
+  written = snprintf(out + offset, out_size - offset, "],\"processes\":[");
+  if (written < 0 || (size_t)written >= (out_size - offset)) {
+    return -1;
+  }
+  offset += (size_t)written;
+  for (i = 0; i < AEGIS_NAMESPACE_PROCESS_CAPACITY; ++i) {
+    const aegis_namespace_process_entry_t *proc = &table->processes[i];
+    if (proc->active == 0u) {
+      continue;
+    }
+    written = snprintf(out + offset,
+                       out_size - offset,
+                       "%s{\"process_id\":%u,\"namespace_id\":%u,\"local_pid\":%u}",
+                       first_proc ? "" : ",",
+                       proc->process_id,
+                       proc->namespace_id,
+                       proc->local_pid);
+    if (written < 0 || (size_t)written >= (out_size - offset)) {
+      return -1;
+    }
+    offset += (size_t)written;
+    first_proc = 0;
+  }
+  written = snprintf(out + offset, out_size - offset, "]}");
+  if (written < 0 || (size_t)written >= (out_size - offset)) {
+    return -1;
+  }
+  offset += (size_t)written;
+  return (int)offset;
+}
+
+static int syscall_process_find_index(const aegis_syscall_gate_matrix_t *matrix,
+                                      uint32_t process_id,
+                                      size_t *index_out) {
+  size_t i;
+  if (matrix == 0 || index_out == 0 || process_id == 0u) {
+    return 0;
+  }
+  for (i = 0; i < AEGIS_SYSCALL_GATE_CAPACITY; ++i) {
+    if (matrix->process_caps[i].active != 0u &&
+        matrix->process_caps[i].process_id == process_id) {
+      *index_out = i;
+      return 1;
+    }
+  }
+  return 0;
+}
+
+static int syscall_rule_find_index(const aegis_syscall_gate_matrix_t *matrix,
+                                   uint16_t syscall_id,
+                                   size_t *index_out) {
+  size_t i;
+  if (matrix == 0 || index_out == 0 || syscall_id == 0u) {
+    return 0;
+  }
+  for (i = 0; i < AEGIS_SYSCALL_RULE_CAPACITY; ++i) {
+    if (matrix->rules[i].active != 0u &&
+        matrix->rules[i].syscall_id == syscall_id) {
+      *index_out = i;
+      return 1;
+    }
+  }
+  return 0;
+}
+
+void aegis_syscall_gate_matrix_init(aegis_syscall_gate_matrix_t *matrix) {
+  size_t i;
+  if (matrix == 0) {
+    return;
+  }
+  for (i = 0; i < AEGIS_SYSCALL_GATE_CAPACITY; ++i) {
+    matrix->process_caps[i].process_id = 0u;
+    matrix->process_caps[i].granted_capabilities = 0u;
+    matrix->process_caps[i].active = 0u;
+  }
+  for (i = 0; i < AEGIS_SYSCALL_RULE_CAPACITY; ++i) {
+    matrix->rules[i].syscall_id = 0u;
+    matrix->rules[i].syscall_class = 0u;
+    matrix->rules[i].required_capability = 0u;
+    matrix->rules[i].policy_gate_required = 0u;
+    matrix->rules[i].active = 0u;
+  }
+  matrix->allow_count = 0u;
+  matrix->deny_missing_rule_count = 0u;
+  matrix->deny_missing_process_count = 0u;
+  matrix->deny_missing_capability_count = 0u;
+  matrix->deny_policy_gate_count = 0u;
+}
+
+int aegis_syscall_gate_set_process_caps(aegis_syscall_gate_matrix_t *matrix,
+                                        uint32_t process_id,
+                                        uint32_t granted_capabilities) {
+  size_t i;
+  size_t existing = 0u;
+  if (matrix == 0 || process_id == 0u) {
+    return -1;
+  }
+  if (syscall_process_find_index(matrix, process_id, &existing)) {
+    matrix->process_caps[existing].granted_capabilities = granted_capabilities;
+    return 0;
+  }
+  for (i = 0; i < AEGIS_SYSCALL_GATE_CAPACITY; ++i) {
+    if (matrix->process_caps[i].active != 0u) {
+      continue;
+    }
+    matrix->process_caps[i].process_id = process_id;
+    matrix->process_caps[i].granted_capabilities = granted_capabilities;
+    matrix->process_caps[i].active = 1u;
+    return 0;
+  }
+  return -1;
+}
+
+int aegis_syscall_gate_remove_process(aegis_syscall_gate_matrix_t *matrix, uint32_t process_id) {
+  size_t existing = 0u;
+  if (matrix == 0 || process_id == 0u) {
+    return -1;
+  }
+  if (!syscall_process_find_index(matrix, process_id, &existing)) {
+    return -1;
+  }
+  matrix->process_caps[existing].active = 0u;
+  matrix->process_caps[existing].process_id = 0u;
+  matrix->process_caps[existing].granted_capabilities = 0u;
+  return 0;
+}
+
+int aegis_syscall_gate_set_rule(aegis_syscall_gate_matrix_t *matrix,
+                                uint16_t syscall_id,
+                                uint8_t syscall_class,
+                                uint32_t required_capability,
+                                uint8_t policy_gate_required) {
+  size_t i;
+  size_t existing = 0u;
+  if (matrix == 0 || syscall_id == 0u) {
+    return -1;
+  }
+  if (syscall_class < AEGIS_SYSCALL_CLASS_FS || syscall_class > AEGIS_SYSCALL_CLASS_IPC) {
+    return -1;
+  }
+  if (syscall_rule_find_index(matrix, syscall_id, &existing)) {
+    matrix->rules[existing].syscall_class = syscall_class;
+    matrix->rules[existing].required_capability = required_capability;
+    matrix->rules[existing].policy_gate_required = policy_gate_required != 0u ? 1u : 0u;
+    return 0;
+  }
+  for (i = 0; i < AEGIS_SYSCALL_RULE_CAPACITY; ++i) {
+    if (matrix->rules[i].active != 0u) {
+      continue;
+    }
+    matrix->rules[i].syscall_id = syscall_id;
+    matrix->rules[i].syscall_class = syscall_class;
+    matrix->rules[i].required_capability = required_capability;
+    matrix->rules[i].policy_gate_required = policy_gate_required != 0u ? 1u : 0u;
+    matrix->rules[i].active = 1u;
+    return 0;
+  }
+  return -1;
+}
+
+int aegis_syscall_gate_check(aegis_syscall_gate_matrix_t *matrix,
+                             uint32_t process_id,
+                             uint16_t syscall_id,
+                             uint8_t policy_gate_allowed,
+                             uint8_t *allowed_out) {
+  size_t rule_index = 0u;
+  size_t proc_index = 0u;
+  uint32_t required_caps;
+  if (matrix == 0 || process_id == 0u || syscall_id == 0u || allowed_out == 0) {
+    return -1;
+  }
+  *allowed_out = 0u;
+  if (!syscall_rule_find_index(matrix, syscall_id, &rule_index)) {
+    matrix->deny_missing_rule_count += 1u;
+    return 0;
+  }
+  if (!syscall_process_find_index(matrix, process_id, &proc_index)) {
+    matrix->deny_missing_process_count += 1u;
+    return 0;
+  }
+  if (matrix->rules[rule_index].policy_gate_required != 0u && policy_gate_allowed == 0u) {
+    matrix->deny_policy_gate_count += 1u;
+    return 0;
+  }
+  required_caps = matrix->rules[rule_index].required_capability;
+  if (required_caps != 0u &&
+      (matrix->process_caps[proc_index].granted_capabilities & required_caps) != required_caps) {
+    matrix->deny_missing_capability_count += 1u;
+    return 0;
+  }
+  matrix->allow_count += 1u;
+  *allowed_out = 1u;
+  return 1;
+}
+
+int aegis_syscall_gate_snapshot_json(const aegis_syscall_gate_matrix_t *matrix,
+                                     char *out,
+                                     size_t out_size) {
+  size_t offset = 0u;
+  size_t i;
+  int first_rule = 1;
+  int first_proc = 1;
+  int written;
+  if (matrix == 0 || out == 0 || out_size == 0u) {
+    return -1;
+  }
+  written = snprintf(out,
+                     out_size,
+                     "{\"schema_version\":1,\"allow_count\":%llu,"
+                     "\"deny_missing_rule_count\":%llu,\"deny_missing_process_count\":%llu,"
+                     "\"deny_missing_capability_count\":%llu,\"deny_policy_gate_count\":%llu,"
+                     "\"rules\":[",
+                     (unsigned long long)matrix->allow_count,
+                     (unsigned long long)matrix->deny_missing_rule_count,
+                     (unsigned long long)matrix->deny_missing_process_count,
+                     (unsigned long long)matrix->deny_missing_capability_count,
+                     (unsigned long long)matrix->deny_policy_gate_count);
+  if (written < 0 || (size_t)written >= out_size) {
+    return -1;
+  }
+  offset = (size_t)written;
+  for (i = 0; i < AEGIS_SYSCALL_RULE_CAPACITY; ++i) {
+    const aegis_syscall_rule_t *rule = &matrix->rules[i];
+    if (rule->active == 0u) {
+      continue;
+    }
+    written = snprintf(out + offset,
+                       out_size - offset,
+                       "%s{\"syscall_id\":%u,\"syscall_class\":%u,"
+                       "\"required_capability\":%u,\"policy_gate_required\":%u}",
+                       first_rule ? "" : ",",
+                       (unsigned int)rule->syscall_id,
+                       (unsigned int)rule->syscall_class,
+                       (unsigned int)rule->required_capability,
+                       (unsigned int)rule->policy_gate_required);
+    if (written < 0 || (size_t)written >= (out_size - offset)) {
+      return -1;
+    }
+    offset += (size_t)written;
+    first_rule = 0;
+  }
+  written = snprintf(out + offset, out_size - offset, "],\"process_caps\":[");
+  if (written < 0 || (size_t)written >= (out_size - offset)) {
+    return -1;
+  }
+  offset += (size_t)written;
+  for (i = 0; i < AEGIS_SYSCALL_GATE_CAPACITY; ++i) {
+    const aegis_syscall_process_caps_t *proc = &matrix->process_caps[i];
+    if (proc->active == 0u) {
+      continue;
+    }
+    written = snprintf(out + offset,
+                       out_size - offset,
+                       "%s{\"process_id\":%u,\"granted_capabilities\":%u}",
+                       first_proc ? "" : ",",
+                       proc->process_id,
+                       proc->granted_capabilities);
+    if (written < 0 || (size_t)written >= (out_size - offset)) {
+      return -1;
+    }
+    offset += (size_t)written;
+    first_proc = 0;
+  }
+  written = snprintf(out + offset, out_size - offset, "]}");
+  if (written < 0 || (size_t)written >= (out_size - offset)) {
+    return -1;
+  }
+  offset += (size_t)written;
+  return (int)offset;
+}
+
+static int ipc_channel_find_index(const aegis_ipc_channel_table_t *table,
+                                  uint32_t channel_id,
+                                  size_t *index_out) {
+  size_t i;
+  if (table == 0 || index_out == 0 || channel_id == 0u) {
+    return 0;
+  }
+  for (i = 0; i < AEGIS_IPC_CHANNEL_CAPACITY; ++i) {
+    if (table->channels[i].active != 0u &&
+        table->channels[i].channel_id == channel_id) {
+      *index_out = i;
+      return 1;
+    }
+  }
+  return 0;
+}
+
+void aegis_ipc_channel_table_init(aegis_ipc_channel_table_t *table) {
+  size_t i;
+  if (table == 0) {
+    return;
+  }
+  for (i = 0; i < AEGIS_IPC_CHANNEL_CAPACITY; ++i) {
+    table->channels[i].channel_id = 0u;
+    table->channels[i].quota_bytes = 0u;
+    table->channels[i].inflight_bytes = 0u;
+    table->channels[i].accepted_messages = 0u;
+    table->channels[i].dropped_messages = 0u;
+    table->channels[i].backpressure_events = 0u;
+    table->channels[i].active = 0u;
+  }
+  table->total_accepted_messages = 0u;
+  table->total_dropped_messages = 0u;
+  table->total_backpressure_events = 0u;
+}
+
+int aegis_ipc_channel_configure(aegis_ipc_channel_table_t *table,
+                                uint32_t channel_id,
+                                uint32_t quota_bytes) {
+  size_t i;
+  size_t existing = 0u;
+  if (table == 0 || channel_id == 0u || quota_bytes == 0u) {
+    return -1;
+  }
+  if (ipc_channel_find_index(table, channel_id, &existing)) {
+    table->channels[existing].quota_bytes = quota_bytes;
+    if (table->channels[existing].inflight_bytes > quota_bytes) {
+      table->channels[existing].inflight_bytes = quota_bytes;
+    }
+    return 0;
+  }
+  for (i = 0; i < AEGIS_IPC_CHANNEL_CAPACITY; ++i) {
+    if (table->channels[i].active != 0u) {
+      continue;
+    }
+    table->channels[i].channel_id = channel_id;
+    table->channels[i].quota_bytes = quota_bytes;
+    table->channels[i].inflight_bytes = 0u;
+    table->channels[i].accepted_messages = 0u;
+    table->channels[i].dropped_messages = 0u;
+    table->channels[i].backpressure_events = 0u;
+    table->channels[i].active = 1u;
+    return 0;
+  }
+  return -1;
+}
+
+int aegis_ipc_channel_reserve_send(aegis_ipc_channel_table_t *table,
+                                   uint32_t channel_id,
+                                   uint32_t payload_bytes,
+                                   uint8_t *accepted_out) {
+  size_t index = 0u;
+  uint64_t projected;
+  if (table == 0 || channel_id == 0u || payload_bytes == 0u || accepted_out == 0) {
+    return -1;
+  }
+  *accepted_out = 0u;
+  if (!ipc_channel_find_index(table, channel_id, &index)) {
+    return -1;
+  }
+  projected = (uint64_t)table->channels[index].inflight_bytes + (uint64_t)payload_bytes;
+  if (projected > (uint64_t)table->channels[index].quota_bytes) {
+    table->channels[index].dropped_messages += 1u;
+    table->channels[index].backpressure_events += 1u;
+    table->total_dropped_messages += 1u;
+    table->total_backpressure_events += 1u;
+    return 0;
+  }
+  table->channels[index].inflight_bytes = (uint32_t)projected;
+  table->channels[index].accepted_messages += 1u;
+  table->total_accepted_messages += 1u;
+  *accepted_out = 1u;
+  return 1;
+}
+
+int aegis_ipc_channel_drain(aegis_ipc_channel_table_t *table,
+                            uint32_t channel_id,
+                            uint32_t drained_bytes) {
+  size_t index = 0u;
+  if (table == 0 || channel_id == 0u || drained_bytes == 0u) {
+    return -1;
+  }
+  if (!ipc_channel_find_index(table, channel_id, &index)) {
+    return -1;
+  }
+  if (drained_bytes >= table->channels[index].inflight_bytes) {
+    table->channels[index].inflight_bytes = 0u;
+    return 0;
+  }
+  table->channels[index].inflight_bytes -= drained_bytes;
+  return 0;
+}
+
+int aegis_ipc_channel_snapshot_json(const aegis_ipc_channel_table_t *table,
+                                    char *out,
+                                    size_t out_size) {
+  size_t offset = 0u;
+  size_t i;
+  int first = 1;
+  int written;
+  if (table == 0 || out == 0 || out_size == 0u) {
+    return -1;
+  }
+  written = snprintf(out,
+                     out_size,
+                     "{\"schema_version\":1,\"total_accepted_messages\":%llu,"
+                     "\"total_dropped_messages\":%llu,\"total_backpressure_events\":%llu,"
+                     "\"channels\":[",
+                     (unsigned long long)table->total_accepted_messages,
+                     (unsigned long long)table->total_dropped_messages,
+                     (unsigned long long)table->total_backpressure_events);
+  if (written < 0 || (size_t)written >= out_size) {
+    return -1;
+  }
+  offset = (size_t)written;
+  for (i = 0; i < AEGIS_IPC_CHANNEL_CAPACITY; ++i) {
+    const aegis_ipc_channel_state_t *ch = &table->channels[i];
+    if (ch->active == 0u) {
+      continue;
+    }
+    written = snprintf(out + offset,
+                       out_size - offset,
+                       "%s{\"channel_id\":%u,\"quota_bytes\":%u,\"inflight_bytes\":%u,"
+                       "\"accepted_messages\":%llu,\"dropped_messages\":%llu,"
+                       "\"backpressure_events\":%llu}",
+                       first ? "" : ",",
+                       ch->channel_id,
+                       ch->quota_bytes,
+                       ch->inflight_bytes,
+                       (unsigned long long)ch->accepted_messages,
+                       (unsigned long long)ch->dropped_messages,
+                       (unsigned long long)ch->backpressure_events);
+    if (written < 0 || (size_t)written >= (out_size - offset)) {
+      return -1;
+    }
+    offset += (size_t)written;
+    first = 0;
+  }
+  written = snprintf(out + offset, out_size - offset, "]}");
+  if (written < 0 || (size_t)written >= (out_size - offset)) {
+    return -1;
+  }
+  offset += (size_t)written;
+  return (int)offset;
+}
+
+static int memory_zone_find_index(const aegis_memory_zone_table_t *table,
+                                  uint32_t zone_id,
+                                  size_t *index_out) {
+  size_t i;
+  if (table == 0 || zone_id == 0u || index_out == 0) {
+    return 0;
+  }
+  for (i = 0; i < AEGIS_MEMORY_ZONE_CAPACITY; ++i) {
+    if (table->zones[i].active != 0u && table->zones[i].zone_id == zone_id) {
+      *index_out = i;
+      return 1;
+    }
+  }
+  return 0;
+}
+
+void aegis_memory_zone_table_init(aegis_memory_zone_table_t *table) {
+  size_t i;
+  if (table == 0) {
+    return;
+  }
+  table->total_budget_bytes = 0u;
+  table->total_used_bytes = 0u;
+  table->denied_charges = 0u;
+  table->reclaim_events = 0u;
+  for (i = 0; i < AEGIS_MEMORY_ZONE_CAPACITY; ++i) {
+    table->zones[i].zone_id = 0u;
+    table->zones[i].zone_kind = 0u;
+    table->zones[i].budget_bytes = 0u;
+    table->zones[i].used_bytes = 0u;
+    table->zones[i].high_watermark_bytes = 0u;
+    table->zones[i].reclaim_target_bytes = 0u;
+    table->zones[i].reclaim_attempts = 0u;
+    table->zones[i].reclaim_successes = 0u;
+    table->zones[i].reclaim_hook_enabled = 0u;
+    table->zones[i].active = 0u;
+  }
+}
+
+int aegis_memory_zone_configure(aegis_memory_zone_table_t *table,
+                                uint32_t zone_id,
+                                uint8_t zone_kind,
+                                uint64_t budget_bytes) {
+  size_t i;
+  size_t idx = 0u;
+  uint64_t old_budget = 0u;
+  if (table == 0 || zone_id == 0u || budget_bytes == 0u) {
+    return -1;
+  }
+  if (zone_kind < AEGIS_MEMORY_ZONE_KERNEL || zone_kind > AEGIS_MEMORY_ZONE_CACHE) {
+    return -1;
+  }
+  if (memory_zone_find_index(table, zone_id, &idx)) {
+    old_budget = table->zones[idx].budget_bytes;
+    table->zones[idx].zone_kind = zone_kind;
+    table->zones[idx].budget_bytes = budget_bytes;
+    if (table->total_budget_bytes >= old_budget) {
+      table->total_budget_bytes -= old_budget;
+    }
+    table->total_budget_bytes += budget_bytes;
+    if (table->zones[idx].used_bytes > budget_bytes) {
+      table->zones[idx].used_bytes = budget_bytes;
+    }
+    return 0;
+  }
+  for (i = 0; i < AEGIS_MEMORY_ZONE_CAPACITY; ++i) {
+    if (table->zones[i].active != 0u) {
+      continue;
+    }
+    table->zones[i].zone_id = zone_id;
+    table->zones[i].zone_kind = zone_kind;
+    table->zones[i].budget_bytes = budget_bytes;
+    table->zones[i].used_bytes = 0u;
+    table->zones[i].high_watermark_bytes = 0u;
+    table->zones[i].reclaim_target_bytes = 0u;
+    table->zones[i].reclaim_attempts = 0u;
+    table->zones[i].reclaim_successes = 0u;
+    table->zones[i].reclaim_hook_enabled = 0u;
+    table->zones[i].active = 1u;
+    table->total_budget_bytes += budget_bytes;
+    return 0;
+  }
+  return -1;
+}
+
+int aegis_memory_zone_set_reclaim_hook(aegis_memory_zone_table_t *table,
+                                       uint32_t zone_id,
+                                       uint8_t enabled,
+                                       uint64_t reclaim_target_bytes) {
+  size_t idx = 0u;
+  if (table == 0 || zone_id == 0u) {
+    return -1;
+  }
+  if (!memory_zone_find_index(table, zone_id, &idx)) {
+    return -1;
+  }
+  table->zones[idx].reclaim_hook_enabled = enabled != 0u ? 1u : 0u;
+  table->zones[idx].reclaim_target_bytes = reclaim_target_bytes;
+  return 0;
+}
+
+int aegis_memory_zone_charge(aegis_memory_zone_table_t *table,
+                             uint32_t zone_id,
+                             uint64_t bytes,
+                             uint8_t *accepted_out) {
+  size_t idx = 0u;
+  uint64_t projected;
+  if (table == 0 || zone_id == 0u || bytes == 0u || accepted_out == 0) {
+    return -1;
+  }
+  *accepted_out = 0u;
+  if (!memory_zone_find_index(table, zone_id, &idx)) {
+    return -1;
+  }
+  projected = table->zones[idx].used_bytes + bytes;
+  if (projected <= table->zones[idx].budget_bytes) {
+    table->zones[idx].used_bytes = projected;
+    table->total_used_bytes += bytes;
+    if (table->zones[idx].used_bytes > table->zones[idx].high_watermark_bytes) {
+      table->zones[idx].high_watermark_bytes = table->zones[idx].used_bytes;
+    }
+    *accepted_out = 1u;
+    return 1;
+  }
+  if (table->zones[idx].reclaim_hook_enabled != 0u && table->zones[idx].reclaim_target_bytes > 0u) {
+    uint64_t reclaimed = table->zones[idx].reclaim_target_bytes;
+    table->zones[idx].reclaim_attempts += 1u;
+    table->reclaim_events += 1u;
+    if (reclaimed > table->zones[idx].used_bytes) {
+      reclaimed = table->zones[idx].used_bytes;
+    }
+    table->zones[idx].used_bytes -= reclaimed;
+    if (table->total_used_bytes >= reclaimed) {
+      table->total_used_bytes -= reclaimed;
+    } else {
+      table->total_used_bytes = 0u;
+    }
+    projected = table->zones[idx].used_bytes + bytes;
+    if (projected <= table->zones[idx].budget_bytes) {
+      table->zones[idx].used_bytes = projected;
+      table->total_used_bytes += bytes;
+      table->zones[idx].reclaim_successes += 1u;
+      if (table->zones[idx].used_bytes > table->zones[idx].high_watermark_bytes) {
+        table->zones[idx].high_watermark_bytes = table->zones[idx].used_bytes;
+      }
+      *accepted_out = 1u;
+      return 1;
+    }
+  }
+  table->denied_charges += 1u;
+  return 0;
+}
+
+int aegis_memory_zone_release(aegis_memory_zone_table_t *table,
+                              uint32_t zone_id,
+                              uint64_t bytes) {
+  size_t idx = 0u;
+  uint64_t drained;
+  if (table == 0 || zone_id == 0u || bytes == 0u) {
+    return -1;
+  }
+  if (!memory_zone_find_index(table, zone_id, &idx)) {
+    return -1;
+  }
+  drained = bytes;
+  if (drained > table->zones[idx].used_bytes) {
+    drained = table->zones[idx].used_bytes;
+  }
+  table->zones[idx].used_bytes -= drained;
+  if (table->total_used_bytes >= drained) {
+    table->total_used_bytes -= drained;
+  } else {
+    table->total_used_bytes = 0u;
+  }
+  return 0;
+}
+
+int aegis_memory_zone_snapshot_json(const aegis_memory_zone_table_t *table,
+                                    char *out,
+                                    size_t out_size) {
+  size_t offset = 0u;
+  size_t i;
+  int first = 1;
+  int written;
+  if (table == 0 || out == 0 || out_size == 0u) {
+    return -1;
+  }
+  written = snprintf(out,
+                     out_size,
+                     "{\"schema_version\":1,\"total_budget_bytes\":%llu,\"total_used_bytes\":%llu,"
+                     "\"denied_charges\":%llu,\"reclaim_events\":%llu,\"zones\":[",
+                     (unsigned long long)table->total_budget_bytes,
+                     (unsigned long long)table->total_used_bytes,
+                     (unsigned long long)table->denied_charges,
+                     (unsigned long long)table->reclaim_events);
+  if (written < 0 || (size_t)written >= out_size) {
+    return -1;
+  }
+  offset = (size_t)written;
+  for (i = 0; i < AEGIS_MEMORY_ZONE_CAPACITY; ++i) {
+    const aegis_memory_zone_t *zone = &table->zones[i];
+    if (zone->active == 0u) {
+      continue;
+    }
+    written = snprintf(
+        out + offset,
+        out_size - offset,
+        "%s{\"zone_id\":%u,\"zone_kind\":%u,\"budget_bytes\":%llu,\"used_bytes\":%llu,"
+        "\"high_watermark_bytes\":%llu,\"reclaim_target_bytes\":%llu,\"reclaim_attempts\":%llu,"
+        "\"reclaim_successes\":%llu,\"reclaim_hook_enabled\":%u}",
+        first ? "" : ",",
+        zone->zone_id,
+        (unsigned int)zone->zone_kind,
+        (unsigned long long)zone->budget_bytes,
+        (unsigned long long)zone->used_bytes,
+        (unsigned long long)zone->high_watermark_bytes,
+        (unsigned long long)zone->reclaim_target_bytes,
+        (unsigned long long)zone->reclaim_attempts,
+        (unsigned long long)zone->reclaim_successes,
+        (unsigned int)zone->reclaim_hook_enabled);
+    if (written < 0 || (size_t)written >= (out_size - offset)) {
+      return -1;
+    }
+    offset += (size_t)written;
+    first = 0;
   }
   written = snprintf(out + offset, out_size - offset, "]}");
   if (written < 0 || (size_t)written >= (out_size - offset)) {

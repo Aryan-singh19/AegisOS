@@ -9,6 +9,35 @@ CORE_DIR = os.path.join(ROOT, "packages", "core")
 PROFILES_DIR = os.path.join(ROOT, "packages", "profiles")
 
 
+def validate_delta_manifest_fields(data, path):
+  delta_keys = [
+      "delta_base_version",
+      "delta_payload_digest",
+      "delta_payload_url",
+      "delta_fallback_full_digest",
+  ]
+  present = [k for k in delta_keys if k in data]
+  if not present:
+    return
+  missing = [k for k in delta_keys if k not in data]
+  if missing:
+    raise ValueError(f"{path}: incomplete delta metadata, missing: {', '.join(missing)}")
+  base_version = str(data["delta_base_version"]).strip()
+  if not base_version or not all(part.isdigit() for part in base_version.split(".")):
+    raise ValueError(f"{path}: invalid delta_base_version {base_version}")
+  delta_digest = str(data["delta_payload_digest"])
+  full_digest = str(data["delta_fallback_full_digest"])
+  if not delta_digest.startswith("sha256:"):
+    raise ValueError(f"{path}: delta_payload_digest must start with sha256:")
+  if not full_digest.startswith("sha256:"):
+    raise ValueError(f"{path}: delta_fallback_full_digest must start with sha256:")
+  if len(delta_digest) != 71 or len(full_digest) != 71:
+    raise ValueError(f"{path}: delta digest values must be sha256 hex length")
+  delta_url = str(data["delta_payload_url"]).strip()
+  if not (delta_url.startswith("https://") or delta_url.startswith("s3://")):
+    raise ValueError(f"{path}: delta_payload_url must start with https:// or s3://")
+
+
 def validate_signature_placeholders(data, path):
   required = ["signature_format", "signature_key_id", "signature_digest", "signature_value"]
   missing = [k for k in required if k not in data]
@@ -74,6 +103,7 @@ def validate_core_manifest(path):
   if data["license"] != "Apache-2.0":
     raise ValueError(f"{path}: unsupported license {data['license']}")
   validate_signature_placeholders(data, path)
+  validate_delta_manifest_fields(data, path)
   return data
 
 
